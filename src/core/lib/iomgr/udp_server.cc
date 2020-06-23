@@ -44,8 +44,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "absl/container/inlined_vector.h"
-
 #include <grpc/grpc.h>
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
@@ -54,6 +52,7 @@
 #include <grpc/support/time.h>
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/inlined_vector.h"
 #include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/iomgr/error.h"
 #include "src/core/lib/iomgr/ev_posix.h"
@@ -148,9 +147,11 @@ GrpcUdpListener::GrpcUdpListener(grpc_udp_server* server, int fd,
       server_(server),
       orphan_notified_(false),
       already_shutdown_(false) {
+  char* addr_str;
   char* name;
-  std::string addr_str = grpc_sockaddr_to_string(addr, true);
-  gpr_asprintf(&name, "udp-server-listener:%s", addr_str.c_str());
+  grpc_sockaddr_to_string(&addr_str, addr, 1);
+  gpr_asprintf(&name, "udp-server-listener:%s", addr_str);
+  gpr_free(addr_str);
   emfd_ = grpc_fd_create(fd, name, true);
   memcpy(&addr_, addr, sizeof(grpc_resolved_address));
   GPR_ASSERT(emfd_);
@@ -176,7 +177,7 @@ struct grpc_udp_server {
   int shutdown;
 
   /* An array of listeners */
-  absl::InlinedVector<GrpcUdpListener, 16> listeners;
+  grpc_core::InlinedVector<GrpcUdpListener, 16> listeners;
 
   /* factory for use to create udp listeners */
   GrpcUdpHandlerFactory* handler_factory;
@@ -411,8 +412,10 @@ static int prepare_socket(grpc_socket_factory* socket_factory, int fd,
   }
 
   if (bind_socket(socket_factory, fd, addr) < 0) {
-    std::string addr_str = grpc_sockaddr_to_string(addr, false);
-    gpr_log(GPR_ERROR, "bind addr=%s: %s", addr_str.c_str(), strerror(errno));
+    char* addr_str;
+    grpc_sockaddr_to_string(&addr_str, addr, 0);
+    gpr_log(GPR_ERROR, "bind addr=%s: %s", addr_str, strerror(errno));
+    gpr_free(addr_str);
     goto error;
   }
 
@@ -579,8 +582,10 @@ int grpc_udp_server_add_port(grpc_udp_server* s,
             "Try to have multiple listeners on same port, but SO_REUSEPORT is "
             "not supported. Only create 1 listener.");
   }
-  std::string addr_str = grpc_sockaddr_to_string(addr, true);
-  gpr_log(GPR_DEBUG, "add address: %s to server", addr_str.c_str());
+  char* addr_str;
+  grpc_sockaddr_to_string(&addr_str, addr, 1);
+  gpr_log(GPR_DEBUG, "add address: %s to server", addr_str);
+  gpr_free(addr_str);
 
   int allocated_port1 = -1;
   int allocated_port2 = -1;

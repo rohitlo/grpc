@@ -34,7 +34,8 @@ std::shared_ptr<Channel> CreateChannelInternal(
     std::vector<std::unique_ptr<
         ::grpc::experimental::ClientInterceptorFactoryInterface>>
         interceptor_creators);
-
+grpc_channel* inproc_channel(grpc_server* server, grpc_channel_args* args,
+                             void*);
 }  // namespace grpc
 
 #endif  // GRPC_INTERNAL_CPP_CLIENT_CREATE_CHANNEL_INTERNAL_H

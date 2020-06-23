@@ -41,14 +41,16 @@
 
 #define GRPC_MAX_SOCKADDR_SIZE 128
 
-struct grpc_resolved_address {
+typedef struct {
   char addr[GRPC_MAX_SOCKADDR_SIZE];
   socklen_t len;
-};
-struct grpc_resolved_addresses {
+} grpc_resolved_address;
+
+typedef struct {
   size_t naddrs;
   grpc_resolved_address* addrs;
-};
+} grpc_resolved_addresses;
+
 typedef struct grpc_address_resolver_vtable {
   void (*resolve_address)(const char* addr, const char* default_port,
                           grpc_pollset_set* interested_parties,

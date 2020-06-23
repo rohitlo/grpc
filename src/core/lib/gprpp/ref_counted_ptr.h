@@ -182,11 +182,6 @@ inline RefCountedPtr<T> MakeRefCounted(Args&&... args) {
   return RefCountedPtr<T>(new T(std::forward<Args>(args)...));
 }
 
-template <typename T>
-bool operator<(const RefCountedPtr<T>& p1, const RefCountedPtr<T>& p2) {
-  return p1.get() < p2.get();
-}
-
 }  // namespace grpc_core
 
 #endif /* GRPC_CORE_LIB_GPRPP_REF_COUNTED_PTR_H */

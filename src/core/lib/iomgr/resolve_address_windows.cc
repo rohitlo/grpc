@@ -42,14 +42,15 @@
 #include "src/core/lib/iomgr/executor.h"
 #include "src/core/lib/iomgr/iomgr_internal.h"
 #include "src/core/lib/iomgr/sockaddr_utils.h"
-
-struct request {
+#include "windows_sockets_win.h"
+typedef struct {
   char* name;
   char* default_port;
   grpc_closure request_closure;
   grpc_closure* on_done;
   grpc_resolved_addresses** addresses;
-};
+} request;
+
 static grpc_error* windows_blocking_resolve_address(
     const char* name, const char* default_port,
     grpc_resolved_addresses** addresses) {
@@ -60,18 +61,25 @@ static grpc_error* windows_blocking_resolve_address(
   size_t i;
   grpc_error* error = GRPC_ERROR_NONE;
 
+  /*Named pipe support*/
+  if (name[0] == '\\' && name[1] == '\\' && name[2] == '.' && name[3] == '\\') {
+    return grpc_resolve_named_pipe_address(name + 9, addresses);
+  }
+
+
+
   /* parse name, splitting it into host and port parts */
-  std::string host;
-  std::string port;
+  grpc_core::UniquePtr<char> host;
+  grpc_core::UniquePtr<char> port;
   grpc_core::SplitHostPort(name, &host, &port);
-  if (host.empty()) {
+  if (host == NULL) {
     char* msg;
     gpr_asprintf(&msg, "unparseable host:port: '%s'", name);
     error = GRPC_ERROR_CREATE_FROM_COPIED_STRING(msg);
     gpr_free(msg);
     goto done;
   }
-  if (port.empty()) {
+  if (port == NULL) {
     if (default_port == NULL) {
       char* msg;
       gpr_asprintf(&msg, "no port in name '%s'", name);
@@ -79,7 +87,7 @@ static grpc_error* windows_blocking_resolve_address(
       gpr_free(msg);
       goto done;
     }
-    port = default_port;
+    port.reset(gpr_strdup(default_port));
   }
 
   /* Call getaddrinfo */
@@ -89,7 +97,7 @@ static grpc_error* windows_blocking_resolve_address(
   hints.ai_flags = AI_PASSIVE;     /* for wildcard IP address */
 
   GRPC_SCHEDULING_START_BLOCKING_REGION;
-  s = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
+  s = getaddrinfo(host.get(), port.get(), &hints, &result);
   GRPC_SCHEDULING_END_BLOCKING_REGION;
   if (s != 0) {
     error = GRPC_WSA_ERROR(WSAGetLastError(), "getaddrinfo");
@@ -110,6 +118,14 @@ static grpc_error* windows_blocking_resolve_address(
     memcpy(&(*addresses)->addrs[i].addr, resp->ai_addr, resp->ai_addrlen);
     (*addresses)->addrs[i].len = resp->ai_addrlen;
     i++;
+  }
+
+  {
+    for (i = 0; i < (*addresses)->naddrs; i++) {
+      char* buf;
+      grpc_sockaddr_to_string(&buf, &(*addresses)->addrs[i], 0);
+      gpr_free(buf);
+    }
   }
 
 done:

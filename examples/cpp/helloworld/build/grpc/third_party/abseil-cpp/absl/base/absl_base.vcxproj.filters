@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\cycleclock.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\spinlock.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\sysinfo.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\thread_identity.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\unscaledcycleclock.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\call_once.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\casts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\cycleclock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\low_level_scheduling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\per_thread_tls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\spinlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\sysinfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\thread_identity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\tsan_mutex_interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\internal\unscaledcycleclock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\base\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6E3F098B-8FB4-345E-B955-B5849EB62C5E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8851FE02-A1C3-347F-90C7-5A7CF0B6B405}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

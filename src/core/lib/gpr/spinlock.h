@@ -25,9 +25,10 @@
 
 /* Simple spinlock. No backoff strategy, gpr_spinlock_lock is almost always
    a concurrency code smell. */
-struct gpr_spinlock {
+typedef struct {
   gpr_atm atm;
-};
+} gpr_spinlock;
+
 #ifdef __cplusplus
 #define GPR_SPINLOCK_INITIALIZER (gpr_spinlock{0})
 #else

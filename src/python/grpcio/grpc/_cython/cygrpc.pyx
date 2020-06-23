@@ -59,8 +59,6 @@ include "_cygrpc/iomgr.pyx.pxi"
 
 include "_cygrpc/grpc_gevent.pyx.pxi"
 
-include "_cygrpc/thread.pyx.pxi"
-
 IF UNAME_SYSNAME == "Windows":
     include "_cygrpc/fork_windows.pyx.pxi"
 ELSE:
@@ -73,7 +71,6 @@ include "_cygrpc/aio/iomgr/timer.pyx.pxi"
 include "_cygrpc/aio/iomgr/resolver.pyx.pxi"
 include "_cygrpc/aio/common.pyx.pxi"
 include "_cygrpc/aio/rpc_status.pyx.pxi"
-include "_cygrpc/aio/completion_queue.pyx.pxi"
 include "_cygrpc/aio/callback_common.pyx.pxi"
 include "_cygrpc/aio/grpc_aio.pyx.pxi"
 include "_cygrpc/aio/call.pyx.pxi"

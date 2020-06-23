@@ -25,10 +25,11 @@
 #include "src/core/ext/transport/chttp2/transport/frame.h"
 #include "src/core/lib/transport/transport.h"
 
-struct grpc_chttp2_rst_stream_parser {
+typedef struct {
   uint8_t byte;
   uint8_t reason_bytes[4];
-};
+} grpc_chttp2_rst_stream_parser;
+
 grpc_slice grpc_chttp2_rst_stream_create(uint32_t stream_id, uint32_t code,
                                          grpc_transport_one_way_stats* stats);
 

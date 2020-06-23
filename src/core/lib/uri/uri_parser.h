@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 
-struct grpc_uri {
+typedef struct {
   char* scheme;
   char* authority;
   char* path;
@@ -35,7 +35,8 @@ struct grpc_uri {
   /** Split each query part by '='. NULL if not present. */
   char** query_parts_values;
   char* fragment;
-};
+} grpc_uri;
+
 /** parse a uri, return NULL on failure */
 grpc_uri* grpc_uri_parse(const char* uri_text, bool suppress_errors);
 

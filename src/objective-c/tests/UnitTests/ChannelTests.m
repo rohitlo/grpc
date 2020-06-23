@@ -40,13 +40,12 @@ static NSString *kDummyPath = @"/dummy/path";
 
 - (void)testPooledChannelCreatingChannel {
   GRPCCallOptions *options = [[GRPCCallOptions alloc] init];
-  GRPCChannelConfiguration *config = [[GRPCChannelConfiguration alloc] initWithHost:kDummyHost
-                                                                        callOptions:options];
+  GRPCChannelConfiguration *config =
+      [[GRPCChannelConfiguration alloc] initWithHost:kDummyHost callOptions:options];
   GRPCPooledChannel *channel = [[GRPCPooledChannel alloc] initWithChannelConfiguration:config];
   GRPCCompletionQueue *cq = [GRPCCompletionQueue completionQueue];
-  GRPCWrappedCall *wrappedCall = [channel wrappedCallWithPath:kDummyPath
-                                              completionQueue:cq
-                                                  callOptions:options];
+  GRPCWrappedCall *wrappedCall =
+      [channel wrappedCallWithPath:kDummyPath completionQueue:cq callOptions:options];
   XCTAssertNotNil(channel.wrappedChannel);
   (void)wrappedCall;
 }
@@ -54,8 +53,8 @@ static NSString *kDummyPath = @"/dummy/path";
 - (void)testTimedDestroyChannel {
   const NSTimeInterval kDestroyDelay = 1.0;
   GRPCCallOptions *options = [[GRPCCallOptions alloc] init];
-  GRPCChannelConfiguration *config = [[GRPCChannelConfiguration alloc] initWithHost:kDummyHost
-                                                                        callOptions:options];
+  GRPCChannelConfiguration *config =
+      [[GRPCChannelConfiguration alloc] initWithHost:kDummyHost callOptions:options];
   GRPCPooledChannel *channel =
       [[GRPCPooledChannel alloc] initWithChannelConfiguration:config destroyDelay:kDestroyDelay];
   GRPCCompletionQueue *cq = [GRPCCompletionQueue completionQueue];
@@ -84,14 +83,13 @@ static NSString *kDummyPath = @"/dummy/path";
 - (void)testDisconnect {
   const NSTimeInterval kDestroyDelay = 1.0;
   GRPCCallOptions *options = [[GRPCCallOptions alloc] init];
-  GRPCChannelConfiguration *config = [[GRPCChannelConfiguration alloc] initWithHost:kDummyHost
-                                                                        callOptions:options];
+  GRPCChannelConfiguration *config =
+      [[GRPCChannelConfiguration alloc] initWithHost:kDummyHost callOptions:options];
   GRPCPooledChannel *channel =
       [[GRPCPooledChannel alloc] initWithChannelConfiguration:config destroyDelay:kDestroyDelay];
   GRPCCompletionQueue *cq = [GRPCCompletionQueue completionQueue];
-  GRPCWrappedCall *wrappedCall = [channel wrappedCallWithPath:kDummyPath
-                                              completionQueue:cq
-                                                  callOptions:options];
+  GRPCWrappedCall *wrappedCall =
+      [channel wrappedCallWithPath:kDummyPath completionQueue:cq callOptions:options];
   XCTAssertNotNil(channel.wrappedChannel);
 
   // Disconnect; expect wrapped channel to be dropped
@@ -100,9 +98,8 @@ static NSString *kDummyPath = @"/dummy/path";
 
   // Create a new call and unref the old call; confirm that destroy of the old call does not make
   // the channel disconnect, even after the destroy delay.
-  GRPCWrappedCall *wrappedCall2 = [channel wrappedCallWithPath:kDummyPath
-                                               completionQueue:cq
-                                                   callOptions:options];
+  GRPCWrappedCall *wrappedCall2 =
+      [channel wrappedCallWithPath:kDummyPath completionQueue:cq callOptions:options];
   XCTAssertNotNil(channel.wrappedChannel);
   GRPCChannel *wrappedChannel = channel.wrappedChannel;
   wrappedCall = nil;

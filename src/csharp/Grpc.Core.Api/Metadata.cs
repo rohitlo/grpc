@@ -75,72 +75,7 @@ namespace Grpc.Core
             return this;
         }
 
-        /// <summary>
-        /// Gets the last metadata entry with the specified key.
-        /// If there are no matching entries then <c>null</c> is returned.
-        /// </summary>
-        public Entry Get(string key)
-        {
-            for (int i = entries.Count - 1; i >= 0; i--)
-            {
-                if (entries[i].Key == key)
-                {
-                    return entries[i];
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the string value of the last metadata entry with the specified key.
-        /// If the metadata entry is binary then an exception is thrown.
-        /// If there are no matching entries then <c>null</c> is returned.
-        /// </summary>
-        public string GetValue(string key)
-        {
-            return Get(key)?.Value;
-        }
-
-        /// <summary>
-        /// Gets the bytes value of the last metadata entry with the specified key.
-        /// If the metadata entry is not binary the string value will be returned as ASCII encoded bytes.
-        /// If there are no matching entries then <c>null</c> is returned.
-        /// </summary>
-        public byte[] GetValueBytes(string key)
-        {
-            return Get(key)?.ValueBytes;
-        }
-
-        /// <summary>
-        /// Gets all metadata entries with the specified key.
-        /// </summary>
-        public IEnumerable<Entry> GetAll(string key)
-        {
-            for (int i = 0; i < entries.Count; i++)
-            {
-                if (entries[i].Key == key)
-                {
-                    yield return entries[i];
-                }
-            }
-        }
-
-        /// <summary>
-        /// Adds a new ASCII-valued metadata entry. See <c>Metadata.Entry</c> constructor for params.
-        /// </summary>
-        public void Add(string key, string value)
-        {
-            Add(new Entry(key, value));
-        }
-
-        /// <summary>
-        /// Adds a new binary-valued metadata entry. See <c>Metadata.Entry</c> constructor for params.
-        /// </summary>
-        public void Add(string key, byte[] valueBytes)
-        {
-            Add(new Entry(key, valueBytes));
-        }
+        // TODO: add support for access by key
 
         #region IList members
 
@@ -198,6 +133,22 @@ namespace Grpc.Core
             GrpcPreconditions.CheckNotNull(item);
             CheckWriteable();
             entries.Add(item);
+        }
+
+        /// <summary>
+        /// Adds a new ASCII-valued metadata entry. See <c>Metadata.Entry</c> constructor for params.
+        /// </summary>
+        public void Add(string key, string value)
+        {
+            Add(new Entry(key, value));
+        }
+
+        /// <summary>
+        /// Adds a new binary-valued metadata entry. See <c>Metadata.Entry</c> constructor for params.
+        /// </summary>
+        public void Add(string key, byte[] valueBytes)
+        {
+            Add(new Entry(key, valueBytes));
         }
 
         /// <summary>
@@ -329,7 +280,6 @@ namespace Grpc.Core
 
             /// <summary>
             /// Gets the binary value of this metadata entry.
-            /// If the metadata entry is not binary the string value will be returned as ASCII encoded bytes.
             /// </summary>
             public byte[] ValueBytes
             {
@@ -349,14 +299,13 @@ namespace Grpc.Core
 
             /// <summary>
             /// Gets the string value of this metadata entry.
-            /// If the metadata entry is binary then an exception is thrown.
             /// </summary>
             public string Value
             {
                 get
                 {
                     GrpcPreconditions.CheckState(!IsBinary, "Cannot access string value of a binary metadata entry");
-                    return value;
+                    return value ?? EncodingASCII.GetString(valueBytes);
                 }
             }
 

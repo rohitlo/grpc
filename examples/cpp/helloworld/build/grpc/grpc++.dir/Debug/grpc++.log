@@ -1,0 +1,23 @@
+﻿  insecure_credentials.cc
+  secure_credentials.cc
+E:\Job\Project\repo\grpc\src/core/lib/security/credentials/credentials.h(205,16): warning C5208: unnamed class used in typedef name cannot declare members other than non-static data members, member enumerations, or member classes
+  channel_cc.cc
+  client_context.cc
+  client_interceptor.cc
+  create_channel.cc
+  create_channel_internal.cc
+  create_channel_posix.cc
+  credentials_cc.cc
+  channel_arguments.cc
+  rpc_method.cc
+  version_cc.cc
+  async_generic_service.cc
+  external_connection_acceptor_impl.cc
+  default_health_check_service.cc
+  server_builder.cc
+  server_callback.cc
+  server_cc.cc
+  server_context.cc
+  server_posix.cc
+  Generating Code...
+  grpc++.vcxproj -> E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\grpc\Debug\grpc++.lib

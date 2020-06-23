@@ -225,9 +225,7 @@ struct grpc_call {
   grpc_closure receiving_initial_metadata_ready;
   grpc_closure receiving_trailing_metadata_ready;
   uint32_t test_only_last_message_flags = 0;
-  // Status about operation of call
-  bool sent_server_trailing_metadata = false;
-  gpr_atm cancelled_with_error = 0;
+  gpr_atm cancelled = 0;
 
   grpc_closure release_call;
 
@@ -326,6 +324,7 @@ size_t grpc_call_get_initial_size_estimate() {
 
 grpc_error* grpc_call_create(const grpc_call_create_args* args,
                              grpc_call** out_call) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("grpc_call_create", 0);
 
   GRPC_CHANNEL_INTERNAL_REF(args->channel, "call");
@@ -480,7 +479,7 @@ grpc_error* grpc_call_create(const grpc_call_create_args* args,
   }
 
   grpc_slice_unref_internal(path);
-
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   return error;
 }
 
@@ -620,6 +619,7 @@ grpc_call_error grpc_call_cancel(grpc_call* call, void* reserved) {
 // This is called via the call combiner to start sending a batch down
 // the filter stack.
 static void execute_batch_in_call_combiner(void* arg, grpc_error* /*ignored*/) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("execute_batch_in_call_combiner", 0);
   grpc_transport_stream_op_batch* batch =
       static_cast<grpc_transport_stream_op_batch*>(arg);
@@ -634,6 +634,7 @@ static void execute_batch_in_call_combiner(void* arg, grpc_error* /*ignored*/) {
 static void execute_batch(grpc_call* call,
                           grpc_transport_stream_op_batch* batch,
                           grpc_closure* start_batch_closure) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   batch->handler_private.extra_arg = call;
   GRPC_CLOSURE_INIT(start_batch_closure, execute_batch_in_call_combiner, batch,
                     grpc_schedule_on_exec_ctx);
@@ -672,11 +673,12 @@ grpc_call_error grpc_call_cancel_with_status(grpc_call* c,
   return GRPC_CALL_OK;
 }
 
-struct cancel_state {
+typedef struct {
   grpc_call* call;
   grpc_closure start_batch;
   grpc_closure finish_batch;
-};
+} cancel_state;
+
 // The on_complete callback used when sending a cancel_stream batch down
 // the filter stack.  Yields the call combiner when the batch is done.
 static void done_termination(void* arg, grpc_error* /*error*/) {
@@ -688,7 +690,7 @@ static void done_termination(void* arg, grpc_error* /*error*/) {
 }
 
 static void cancel_with_error(grpc_call* c, grpc_error* error) {
-  if (!gpr_atm_rel_cas(&c->cancelled_with_error, 0, 1)) {
+  if (!gpr_atm_rel_cas(&c->cancelled, 0, 1)) {
     GRPC_ERROR_UNREF(error);
     return;
   }
@@ -753,13 +755,13 @@ static void set_final_status(grpc_call* call, grpc_error* error) {
     }
   } else {
     *call->final_op.server.cancelled =
-        error != GRPC_ERROR_NONE || !call->sent_server_trailing_metadata;
+        error != GRPC_ERROR_NONE ||
+        reinterpret_cast<grpc_error*>(gpr_atm_acq_load(&call->status_error)) !=
+            GRPC_ERROR_NONE;
     grpc_core::channelz::ServerNode* channelz_server =
         grpc_server_get_channelz_node(call->final_op.server.server);
     if (channelz_server != nullptr) {
-      if (*call->final_op.server.cancelled ||
-          reinterpret_cast<grpc_error*>(
-              gpr_atm_acq_load(&call->status_error)) != GRPC_ERROR_NONE) {
+      if (*call->final_op.server.cancelled) {
         channelz_server->RecordCallFailed();
       } else {
         channelz_server->RecordCallSucceeded();
@@ -1552,6 +1554,7 @@ static void free_no_op_completion(void* /*p*/, grpc_cq_completion* completion) {
 static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
                                         size_t nops, void* notify_tag,
                                         int is_notify_tag_closure) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("call_start_batch", 0);
 
   size_t i;
@@ -1793,8 +1796,6 @@ static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
         }
         stream_op_payload->send_trailing_metadata.send_trailing_metadata =
             &call->metadata_batch[0 /* is_receiving */][1 /* is_trailing */];
-        stream_op_payload->send_trailing_metadata.sent =
-            &call->sent_server_trailing_metadata;
         has_send_ops = true;
         break;
       }
@@ -1927,7 +1928,7 @@ static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
                       grpc_schedule_on_exec_ctx);
     stream_op->on_complete = &bctl->finish_batch;
   }
-
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   gpr_atm_rel_store(&call->any_ops_sent_atm, 1);
   execute_batch(call, stream_op, &bctl->start_batch);
 
@@ -1962,6 +1963,7 @@ done_with_error:
 
 grpc_call_error grpc_call_start_batch(grpc_call* call, const grpc_op* ops,
                                       size_t nops, void* tag, void* reserved) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_error err;
 
   GRPC_API_TRACE(
@@ -1972,6 +1974,7 @@ grpc_call_error grpc_call_start_batch(grpc_call* call, const grpc_op* ops,
   if (reserved != nullptr) {
     err = GRPC_CALL_ERROR;
   } else {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_core::ApplicationCallbackExecCtx callback_exec_ctx;
     grpc_core::ExecCtx exec_ctx;
     err = call_start_batch(call, ops, nops, tag, 0);

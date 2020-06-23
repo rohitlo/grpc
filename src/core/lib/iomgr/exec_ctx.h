@@ -21,8 +21,6 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <limits>
-
 #include <grpc/impl/codegen/grpc_types.h>
 #include <grpc/support/atm.h>
 #include <grpc/support/cpu.h>
@@ -134,12 +132,7 @@ class ExecCtx {
   ExecCtx(const ExecCtx&) = delete;
   ExecCtx& operator=(const ExecCtx&) = delete;
 
-  unsigned starting_cpu() {
-    if (starting_cpu_ == std::numeric_limits<unsigned>::max()) {
-      starting_cpu_ = gpr_cpu_current_cpu();
-    }
-    return starting_cpu_;
-  }
+  unsigned starting_cpu() const { return starting_cpu_; }
 
   struct CombinerData {
     /* currently active combiner: updated only via combiner.c */
@@ -246,7 +239,7 @@ class ExecCtx {
   CombinerData combiner_data_ = {nullptr, nullptr};
   uintptr_t flags_;
 
-  unsigned starting_cpu_ = std::numeric_limits<unsigned>::max();
+  unsigned starting_cpu_ = gpr_cpu_current_cpu();
 
   bool now_is_valid_ = false;
   grpc_millis now_ = 0;
@@ -363,11 +356,6 @@ class ApplicationCallbackExecCtx {
 
   /** Global shutdown for ApplicationCallbackExecCtx. Called by init. */
   static void GlobalShutdown(void) { gpr_tls_destroy(&callback_exec_ctx_); }
-
-  static bool Available() {
-    return reinterpret_cast<ApplicationCallbackExecCtx*>(
-               gpr_tls_get(&callback_exec_ctx_)) != nullptr;
-  }
 
  private:
   uintptr_t flags_{0u};

@@ -158,6 +158,7 @@ void ServerContextBase::CompletionOp::Unref() {
 }
 
 void ServerContextBase::CompletionOp::FillOps(::grpc::internal::Call* call) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_op ops;
   ops.op = GRPC_OP_RECV_CLOSE_ON_SERVER;
   ops.data.recv_close_on_server.cancelled = &cancelled_;
@@ -174,32 +175,31 @@ void ServerContextBase::CompletionOp::FillOps(::grpc::internal::Call* call) {
 }
 
 bool ServerContextBase::CompletionOp::FinalizeResult(void** tag, bool* status) {
-  // Decide whether to call the cancel callback within the lock
-  bool call_cancel;
-
-  {
-    grpc_core::MutexLock lock(&mu_);
-    if (done_intercepting_) {
-      // We are done intercepting.
-      bool has_tag = has_tag_;
-      if (has_tag) {
-        *tag = tag_;
-      }
-      Unref();
-      return has_tag;
+  bool ret = false;
+  grpc_core::ReleasableMutexLock lock(&mu_);
+  if (done_intercepting_) {
+    /* We are done intercepting. */
+    if (has_tag_) {
+      *tag = tag_;
+      ret = true;
     }
-    finalized_ = true;
-
-    // If for some reason the incoming status is false, mark that as a
-    // cancellation.
-    // TODO(vjpai): does this ever happen?
-    if (!*status) {
-      cancelled_ = 1;
-    }
-
-    call_cancel = (cancelled_ != 0);
-    // Release the lock since we may call a callback and interceptors.
+    Unref();
+    return ret;
   }
+  finalized_ = true;
+
+  // If for some reason the incoming status is false, mark that as a
+  // cancellation.
+  // TODO(vjpai): does this ever happen?
+  if (!*status) {
+    cancelled_ = 1;
+  }
+
+  // Decide whether to call the cancel callback before releasing the lock
+  bool call_cancel = (cancelled_ != 0);
+
+  // Release the lock since we may call a callback and interceptors now.
+  lock.Unlock();
 
   if (call_cancel && callback_controller_ != nullptr) {
     callback_controller_->MaybeCallOnCancel();
@@ -208,15 +208,15 @@ bool ServerContextBase::CompletionOp::FinalizeResult(void** tag, bool* status) {
   interceptor_methods_.AddInterceptionHookPoint(
       ::grpc::experimental::InterceptionHookPoints::POST_RECV_CLOSE);
   if (interceptor_methods_.RunInterceptors()) {
-    // No interceptors were run
-    bool has_tag = has_tag_;
-    if (has_tag) {
+    /* No interceptors were run */
+    if (has_tag_) {
       *tag = tag_;
+      ret = true;
     }
     Unref();
-    return has_tag;
+    return ret;
   }
-  // There are interceptors to be run. Return false for now.
+  /* There are interceptors to be run. Return false for now */
   return false;
 }
 

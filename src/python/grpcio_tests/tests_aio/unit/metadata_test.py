@@ -37,20 +37,17 @@ _TEST_STREAM_STREAM = '/test/TestStreamStream'
 _REQUEST = b'\x00\x00\x00'
 _RESPONSE = b'\x01\x01\x01'
 
-_INITIAL_METADATA_FROM_CLIENT_TO_SERVER = aio.Metadata(
+_INITIAL_METADATA_FROM_CLIENT_TO_SERVER = (
     ('client-to-server', 'question'),
     ('client-to-server-bin', b'\x07\x07\x07'),
 )
-_INITIAL_METADATA_FROM_SERVER_TO_CLIENT = aio.Metadata(
+_INITIAL_METADATA_FROM_SERVER_TO_CLIENT = (
     ('server-to-client', 'answer'),
     ('server-to-client-bin', b'\x06\x06\x06'),
 )
-_TRAILING_METADATA = aio.Metadata(
-    ('a-trailing-metadata', 'stack-trace'),
-    ('a-trailing-metadata-bin', b'\x05\x05\x05'),
-)
-_INITIAL_METADATA_FOR_GENERIC_HANDLER = aio.Metadata(
-    ('a-must-have-key', 'secret'),)
+_TRAILING_METADATA = (('a-trailing-metadata', 'stack-trace'),
+                      ('a-trailing-metadata-bin', b'\x05\x05\x05'))
+_INITIAL_METADATA_FOR_GENERIC_HANDLER = (('a-must-have-key', 'secret'),)
 
 _INVALID_METADATA_TEST_CASES = (
     (
@@ -63,15 +60,15 @@ _INVALID_METADATA_TEST_CASES = (
     ),
     (
         TypeError,
-        ((None, {}),),
-    ),
-    (
-        TypeError,
-        (({}, {}),),
-    ),
-    (
-        TypeError,
         (('normal', object()),),
+    ),
+    (
+        TypeError,
+        object(),
+    ),
+    (
+        TypeError,
+        (object(),),
     ),
 )
 
@@ -201,7 +198,6 @@ class TestMetadata(AioTestBase):
     async def test_from_server_to_client(self):
         multicallable = self._client.unary_unary(_TEST_SERVER_TO_CLIENT)
         call = multicallable(_REQUEST)
-
         self.assertEqual(_INITIAL_METADATA_FROM_SERVER_TO_CLIENT, await
                          call.initial_metadata())
         self.assertEqual(_RESPONSE, await call)
@@ -214,21 +210,14 @@ class TestMetadata(AioTestBase):
         self.assertEqual(_RESPONSE, await call)
         self.assertEqual(grpc.StatusCode.OK, await call.code())
 
-    async def test_from_client_to_server_with_list(self):
-        multicallable = self._client.unary_unary(_TEST_CLIENT_TO_SERVER)
-        call = multicallable(
-            _REQUEST, metadata=list(_INITIAL_METADATA_FROM_CLIENT_TO_SERVER))  # pytype: disable=wrong-arg-types
-        self.assertEqual(_RESPONSE, await call)
-        self.assertEqual(grpc.StatusCode.OK, await call.code())
-
     @unittest.skipIf(platform.system() == 'Windows',
                      'https://github.com/grpc/grpc/issues/21943')
     async def test_invalid_metadata(self):
         multicallable = self._client.unary_unary(_TEST_CLIENT_TO_SERVER)
         for exception_type, metadata in _INVALID_METADATA_TEST_CASES:
             with self.subTest(metadata=metadata):
+                call = multicallable(_REQUEST, metadata=metadata)
                 with self.assertRaises(exception_type):
-                    call = multicallable(_REQUEST, metadata=metadata)
                     await call
 
     async def test_generic_handler(self):

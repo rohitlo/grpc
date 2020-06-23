@@ -1,0 +1,5 @@
+﻿  reflection.grpc.pb.cc
+  proto_server_reflection.cc
+  proto_server_reflection_plugin.cc
+  Generating Code...
+  grpc++_reflection.vcxproj -> E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\grpc\Debug\grpc++_reflection.lib

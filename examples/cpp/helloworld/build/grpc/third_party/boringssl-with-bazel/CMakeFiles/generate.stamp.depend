@@ -1,0 +1,6 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.17/Modules/CMakeASMInformation.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/CMakeASM_NASMInformation.cmake
+C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in
+E:/Job/Project/repo/grpc/examples/cpp/helloworld/build/CMakeFiles/3.17.2/CMakeASM_NASMCompiler.cmake
+E:/Job/Project/repo/grpc/third_party/boringssl-with-bazel/CMakeLists.txt

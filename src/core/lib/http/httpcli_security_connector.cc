@@ -22,8 +22,6 @@
 
 #include <string.h>
 
-#include "absl/strings/string_view.h"
-
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/string_util.h>
@@ -32,6 +30,7 @@
 #include "src/core/lib/channel/handshaker_registry.h"
 #include "src/core/lib/gpr/string.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
+#include "src/core/lib/gprpp/string_view.h"
 #include "src/core/lib/iomgr/pollset.h"
 #include "src/core/lib/security/credentials/credentials.h"
 #include "src/core/lib/security/security_connector/ssl_utils.h"
@@ -112,7 +111,7 @@ class grpc_httpcli_ssl_channel_security_connector final
     return strcmp(secure_peer_name_, other->secure_peer_name_);
   }
 
-  bool check_call_host(absl::string_view /*host*/,
+  bool check_call_host(grpc_core::StringView /*host*/,
                        grpc_auth_context* /*auth_context*/,
                        grpc_closure* /*on_call_host_checked*/,
                        grpc_error** error) override {
@@ -155,11 +154,12 @@ httpcli_ssl_channel_security_connector_create(
 
 /* handshaker */
 
-struct on_done_closure {
+typedef struct {
   void (*func)(void* arg, grpc_endpoint* endpoint);
   void* arg;
   grpc_core::RefCountedPtr<grpc_core::HandshakeManager> handshake_mgr;
-};
+} on_done_closure;
+
 static void on_handshake_done(void* arg, grpc_error* error) {
   auto* args = static_cast<grpc_core::HandshakerArgs*>(arg);
   on_done_closure* c = static_cast<on_done_closure*>(args->user_data);

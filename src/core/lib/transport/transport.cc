@@ -225,6 +225,7 @@ static void destroy_made_transport_op(void* arg, grpc_error* error) {
 }
 
 grpc_transport_op* grpc_make_transport_op(grpc_closure* on_complete) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   made_transport_op* op = new made_transport_op();
   GRPC_CLOSURE_INIT(&op->outer_on_complete, destroy_made_transport_op, op,
                     grpc_schedule_on_exec_ctx);
@@ -233,12 +234,13 @@ grpc_transport_op* grpc_make_transport_op(grpc_closure* on_complete) {
   return &op->op;
 }
 
-struct made_transport_stream_op {
+typedef struct {
   grpc_closure outer_on_complete;
   grpc_closure* inner_on_complete;
   grpc_transport_stream_op_batch op;
   grpc_transport_stream_op_batch_payload payload;
-};
+} made_transport_stream_op;
+
 static void destroy_made_transport_stream_op(void* arg, grpc_error* error) {
   made_transport_stream_op* op = static_cast<made_transport_stream_op*>(arg);
   grpc_closure* c = op->inner_on_complete;

@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\CMakeFiles\7642f6ca5375cb7d3f212f145b4233a5\tools.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\Job\Project\repo\grpc\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\grpc\CMakeFiles\tools" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{CAA25DDB-810C-36F5-B0C4-3A83A3AE4A82}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

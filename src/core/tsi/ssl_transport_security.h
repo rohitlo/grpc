@@ -21,7 +21,7 @@
 
 #include <grpc/support/port_platform.h>
 
-#include "absl/strings/string_view.h"
+#include "src/core/lib/gprpp/string_view.h"
 #include "src/core/tsi/transport_security_interface.h"
 
 extern "C" {
@@ -42,8 +42,6 @@ extern "C" {
 #define TSI_X509_PEM_CERT_CHAIN_PROPERTY "x509_pem_cert_chain"
 
 #define TSI_SSL_ALPN_SELECTED_PROTOCOL "ssl_alpn_selected_protocol"
-
-#define TSI_X509_URI_PEER_PROPERTY "x509_uri"
 
 /* --- tsi_ssl_root_certs_store object ---
 
@@ -83,7 +81,7 @@ typedef struct tsi_ssl_client_handshaker_factory
     tsi_ssl_client_handshaker_factory;
 
 /* Object that holds a private key / certificate chain pair in PEM format. */
-struct tsi_ssl_pem_key_cert_pair {
+typedef struct {
   /* private_key is the NULL-terminated string containing the PEM encoding of
      the client's private key. */
   const char* private_key;
@@ -91,7 +89,8 @@ struct tsi_ssl_pem_key_cert_pair {
   /* cert_chain is the NULL-terminated string containing the PEM encoding of
      the client's certificate chain. */
   const char* cert_chain;
-};
+} tsi_ssl_pem_key_cert_pair;
+
 /* TO BE DEPRECATED.
    Creates a client handshaker factory.
    - pem_key_cert_pair is a pointer to the object containing client's private
@@ -318,7 +317,7 @@ void tsi_ssl_server_handshaker_factory_unref(
    - handle mixed case.
    - handle %encoded chars.
    - handle public suffix wildchar more strictly (e.g. *.co.uk) */
-int tsi_ssl_peer_matches_name(const tsi_peer* peer, absl::string_view name);
+int tsi_ssl_peer_matches_name(const tsi_peer* peer, grpc_core::StringView name);
 
 /* --- Testing support. ---
 
@@ -333,9 +332,10 @@ typedef void (*tsi_ssl_handshaker_factory_destructor)(
     tsi_ssl_handshaker_factory* factory);
 
 /* Virtual table for tsi_ssl_handshaker_factory. */
-struct tsi_ssl_handshaker_factory_vtable {
+typedef struct {
   tsi_ssl_handshaker_factory_destructor destroy;
-};
+} tsi_ssl_handshaker_factory_vtable;
+
 /* Set destructor of handshaker_factory to new_destructor, returns previous
    destructor. */
 const tsi_ssl_handshaker_factory_vtable* tsi_ssl_handshaker_factory_swap_vtable(

@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\Job\Project\repo\grpc\src\cpp\server\channelz\channelz_service.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\src\cpp\server\channelz\channelz_service_plugin.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\gens\src\proto\grpc\channelz\channelz.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\gens\src\proto\grpc\channelz\channelz.grpc.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\gens\src\proto\grpc\channelz\channelz.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\gens\src\proto\grpc\channelz\channelz.grpc.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\CMakeFiles\b20baf035686935121627ff302d11abf\channelz.grpc.pb.cc.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\Job\Project\repo\grpc\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{CAA25DDB-810C-36F5-B0C4-3A83A3AE4A82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6E3F098B-8FB4-345E-B955-B5849EB62C5E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8851FE02-A1C3-347F-90C7-5A7CF0B6B405}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

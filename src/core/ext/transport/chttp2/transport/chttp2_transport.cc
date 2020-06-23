@@ -20,18 +20,19 @@
 
 #include "src/core/ext/transport/chttp2/transport/chttp2_transport.h"
 
-#include <grpc/slice_buffer.h>
-#include <grpc/support/alloc.h>
-#include <grpc/support/log.h>
-#include <grpc/support/port_platform.h>
-#include <grpc/support/string_util.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <grpc/slice_buffer.h>
+#include <grpc/support/alloc.h>
+#include <grpc/support/log.h>
+#include <grpc/support/string_util.h>
+
 #include "absl/strings/str_format.h"
+
 #include "src/core/ext/transport/chttp2/transport/context_list.h"
 #include "src/core/ext/transport/chttp2/transport/frame_data.h"
 #include "src/core/ext/transport/chttp2/transport/internal.h"
@@ -99,7 +100,6 @@ static int g_default_max_ping_strikes = DEFAULT_MAX_PING_STRIKES;
 
 #define MAX_CLIENT_STREAM_ID 0x7fffffffu
 grpc_core::TraceFlag grpc_http_trace(false, "http");
-grpc_core::TraceFlag grpc_keepalive_trace(false, "http_keepalive");
 grpc_core::DebugOnlyTraceFlag grpc_trace_chttp2_refcount(false,
                                                          "chttp2_refcount");
 
@@ -1097,14 +1097,13 @@ void grpc_chttp2_add_incoming_goaway(grpc_chttp2_transport* t,
             "Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug "
             "data equal to \"too_many_pings\"");
     double current_keepalive_time_ms = static_cast<double>(t->keepalive_time);
-    constexpr int max_keepalive_time_ms =
-        INT_MAX / KEEPALIVE_TIME_BACKOFF_MULTIPLIER;
     t->keepalive_time =
-        current_keepalive_time_ms > static_cast<double>(max_keepalive_time_ms)
+        current_keepalive_time_ms > INT_MAX / KEEPALIVE_TIME_BACKOFF_MULTIPLIER
             ? GRPC_MILLIS_INF_FUTURE
             : static_cast<grpc_millis>(current_keepalive_time_ms *
                                        KEEPALIVE_TIME_BACKOFF_MULTIPLIER);
   }
+
   /* lie: use transient failure from the transport to indicate goaway has been
    * received */
   connectivity_state_set(t, GRPC_CHANNEL_TRANSIENT_FAILURE, "got_goaway");
@@ -1355,8 +1354,10 @@ static void perform_stream_op_locked(void* stream_op,
   s->context = op->payload->context;
   s->traced = op->is_traced;
   if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
-    gpr_log(GPR_INFO, "perform_stream_op_locked: %s; on_complete = %p",
-            grpc_transport_stream_op_batch_string(op).c_str(), op->on_complete);
+    char* str = grpc_transport_stream_op_batch_string(op);
+    gpr_log(GPR_INFO, "perform_stream_op_locked: %s; on_complete = %p", str,
+            op->on_complete);
+    gpr_free(str);
     if (op->send_initial_metadata) {
       log_metadata(op_payload->send_initial_metadata.send_initial_metadata,
                    s->id, t->is_client, true);
@@ -1525,7 +1526,6 @@ static void perform_stream_op_locked(void* stream_op,
     s->send_trailing_metadata_finished = add_closure_barrier(on_complete);
     s->send_trailing_metadata =
         op_payload->send_trailing_metadata.send_trailing_metadata;
-    s->sent_trailing_metadata_op = op_payload->send_trailing_metadata.sent;
     s->write_buffering = false;
     const size_t metadata_size =
         grpc_metadata_batch_size(s->send_trailing_metadata);
@@ -1551,7 +1551,6 @@ static void perform_stream_op_locked(void* stream_op,
       }
       if (s->write_closed) {
         s->send_trailing_metadata = nullptr;
-        s->sent_trailing_metadata_op = nullptr;
         grpc_chttp2_complete_closure_step(
             t, s, &s->send_trailing_metadata_finished,
             grpc_metadata_batch_is_empty(
@@ -1653,8 +1652,9 @@ static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
   }
 
   if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
-    gpr_log(GPR_INFO, "perform_stream_op[s=%p]: %s", s,
-            grpc_transport_stream_op_batch_string(op).c_str());
+    char* str = grpc_transport_stream_op_batch_string(op);
+    gpr_log(GPR_INFO, "perform_stream_op[s=%p]: %s", s, str);
+    gpr_free(str);
   }
 
   GRPC_CHTTP2_STREAM_REF(s, "perform_stream_op");
@@ -1795,15 +1795,6 @@ void grpc_chttp2_add_ping_strike(grpc_chttp2_transport* t) {
   }
 }
 
-void grpc_chttp2_reset_ping_clock(grpc_chttp2_transport* t) {
-  if (!t->is_client) {
-    t->ping_recv_state.last_ping_recv_time = GRPC_MILLIS_INF_PAST;
-    t->ping_recv_state.ping_strikes = 0;
-  }
-  t->ping_state.pings_before_data_required =
-      t->ping_policy.max_pings_without_data;
-}
-
 static void perform_transport_op_locked(void* stream_op,
                                         grpc_error* /*error_ignored*/) {
   grpc_transport_op* op = static_cast<grpc_transport_op*>(stream_op);
@@ -1852,8 +1843,9 @@ static void perform_transport_op_locked(void* stream_op,
 static void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
   grpc_chttp2_transport* t = reinterpret_cast<grpc_chttp2_transport*>(gt);
   if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
-    gpr_log(GPR_INFO, "perform_transport_op[t=%p]: %s", t,
-            grpc_transport_op_string(op).c_str());
+    char* msg = grpc_transport_op_string(op);
+    gpr_log(GPR_INFO, "perform_transport_op[t=%p]: %s", t, msg);
+    gpr_free(msg);
   }
   op->handler_private.extra_arg = gt;
   GRPC_CHTTP2_REF_TRANSPORT(t, "transport_op");
@@ -2187,7 +2179,6 @@ void grpc_chttp2_fail_pending_writes(grpc_chttp2_transport* t,
                                     "send_initial_metadata_finished");
 
   s->send_trailing_metadata = nullptr;
-  s->sent_trailing_metadata_op = nullptr;
   grpc_chttp2_complete_closure_step(t, s, &s->send_trailing_metadata_finished,
                                     GRPC_ERROR_REF(error),
                                     "send_trailing_metadata_finished");
@@ -2401,7 +2392,6 @@ static void close_from_api(grpc_chttp2_transport* t, grpc_chttp2_stream* s,
   grpc_slice_buffer_add(&t->qbuf, status_hdr);
   grpc_slice_buffer_add(&t->qbuf, message_pfx);
   grpc_slice_buffer_add(&t->qbuf, grpc_slice_ref_internal(slice));
-  grpc_chttp2_reset_ping_clock(t);
   grpc_chttp2_add_rst_stream_to_next_write(t, s->id, GRPC_HTTP2_NO_ERROR,
                                            &s->stats.outgoing);
 
@@ -2409,10 +2399,10 @@ static void close_from_api(grpc_chttp2_transport* t, grpc_chttp2_stream* s,
   grpc_chttp2_initiate_write(t, GRPC_CHTTP2_INITIATE_WRITE_CLOSE_FROM_API);
 }
 
-struct cancel_stream_cb_args {
+typedef struct {
   grpc_error* error;
   grpc_chttp2_transport* t;
-};
+} cancel_stream_cb_args;
 
 static void cancel_stream_cb(void* user_data, uint32_t /*key*/, void* stream) {
   cancel_stream_cb_args* args = static_cast<cancel_stream_cb_args*>(user_data);
@@ -2493,8 +2483,7 @@ static grpc_error* try_http_parsing(grpc_chttp2_transport* t) {
         grpc_error_set_int(GRPC_ERROR_CREATE_FROM_STATIC_STRING(
                                "Trying to connect an http1.x server"),
                            GRPC_ERROR_INT_HTTP_STATUS, response.status),
-        GRPC_ERROR_INT_GRPC_STATUS,
-        grpc_http2_status_to_grpc_status(response.status));
+        GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_UNAVAILABLE);
   }
   GRPC_ERROR_UNREF(parse_error);
 
@@ -2827,8 +2816,7 @@ static void start_keepalive_ping_locked(void* arg, grpc_error* error) {
   if (t->channelz_socket != nullptr) {
     t->channelz_socket->RecordKeepaliveSent();
   }
-  if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace) ||
-      GRPC_TRACE_FLAG_ENABLED(grpc_keepalive_trace)) {
+  if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
     gpr_log(GPR_INFO, "%s: Start keepalive ping", t->peer_string);
   }
   GRPC_CHTTP2_REF_TRANSPORT(t, "keepalive watchdog");
@@ -2851,8 +2839,7 @@ static void finish_keepalive_ping_locked(void* arg, grpc_error* error) {
   grpc_chttp2_transport* t = static_cast<grpc_chttp2_transport*>(arg);
   if (t->keepalive_state == GRPC_CHTTP2_KEEPALIVE_STATE_PINGING) {
     if (error == GRPC_ERROR_NONE) {
-      if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace) ||
-          GRPC_TRACE_FLAG_ENABLED(grpc_keepalive_trace)) {
+      if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
         gpr_log(GPR_INFO, "%s: Finish keepalive ping", t->peer_string);
       }
       if (!t->keepalive_ping_started) {

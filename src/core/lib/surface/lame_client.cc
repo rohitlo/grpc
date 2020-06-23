@@ -173,6 +173,7 @@ const grpc_channel_filter grpc_lame_filter = {
 grpc_channel* grpc_lame_client_channel_create(const char* target,
                                               grpc_status_code error_code,
                                               const char* error_message) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_core::ExecCtx exec_ctx;
   grpc_channel_element* elem;
   grpc_channel* channel =

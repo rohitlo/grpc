@@ -21,8 +21,6 @@
 #include <algorithm>
 #include <cstring>
 
-#include "absl/container/inlined_vector.h"
-
 #include "src/core/lib/channel/channel_trace.h"
 #include "src/core/lib/channel/channelz.h"
 #include "src/core/lib/channel/channelz_registry.h"
@@ -84,7 +82,7 @@ RefCountedPtr<BaseNode> ChannelzRegistry::InternalGet(intptr_t uuid) {
 
 std::string ChannelzRegistry::InternalGetTopChannels(
     intptr_t start_channel_id) {
-  absl::InlinedVector<RefCountedPtr<BaseNode>, 10> top_level_channels;
+  InlinedVector<RefCountedPtr<BaseNode>, 10> top_level_channels;
   RefCountedPtr<BaseNode> node_after_pagination_limit;
   {
     MutexLock lock(&mu_);
@@ -122,7 +120,7 @@ std::string ChannelzRegistry::InternalGetTopChannels(
 }
 
 std::string ChannelzRegistry::InternalGetServers(intptr_t start_server_id) {
-  absl::InlinedVector<RefCountedPtr<BaseNode>, 10> servers;
+  InlinedVector<RefCountedPtr<BaseNode>, 10> servers;
   RefCountedPtr<BaseNode> node_after_pagination_limit;
   {
     MutexLock lock(&mu_);
@@ -160,7 +158,7 @@ std::string ChannelzRegistry::InternalGetServers(intptr_t start_server_id) {
 }
 
 void ChannelzRegistry::InternalLogAllEntities() {
-  absl::InlinedVector<RefCountedPtr<BaseNode>, 10> nodes;
+  InlinedVector<RefCountedPtr<BaseNode>, 10> nodes;
   {
     MutexLock lock(&mu_);
     for (auto& p : node_map_) {

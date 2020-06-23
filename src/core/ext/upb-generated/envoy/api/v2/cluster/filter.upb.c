@@ -11,7 +11,6 @@
 #include "envoy/api/v2/cluster/filter.upb.h"
 #include "google/protobuf/any.upb.h"
 #include "udpa/annotations/migrate.upb.h"
-#include "udpa/annotations/status.upb.h"
 #include "validate/validate.upb.h"
 
 #include "upb/port_def.inc"

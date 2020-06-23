@@ -26,31 +26,15 @@ syntax = "proto3";
 package envoy.api.v2;
 
 import "google/protobuf/any.proto";
-import "google/protobuf/wrappers.proto";
 import "src/proto/grpc/testing/xds/cds_for_test.proto";
 
-message BoolValue {
-  // The bool value.
-  bool value = 1;
-}
 
 message RouteMatch {
   oneof path_specifier {
     // If specified, the route is a prefix rule meaning that the prefix must
     // match the beginning of the *:path* header.
     string prefix = 1;
-    string path = 2;
   }
-  BoolValue case_sensitive = 4;
-}
-
-message WeightedCluster {
-  message ClusterWeight {
-    string name = 1;
-    google.protobuf.UInt32Value weight = 2;
-  }
-  repeated ClusterWeight clusters = 1;
-  google.protobuf.UInt32Value  total_weight = 3;
 }
 
 message RouteAction {
@@ -69,12 +53,6 @@ message RouteAction {
     //   Internally, Envoy always uses the HTTP/2 *:authority* header to represent the HTTP/1
     //   *Host* header. Thus, if attempting to match on *Host*, match on *:authority* instead.
     string cluster_header = 2;
-    // Multiple upstream clusters can be specified for a given route. The
-    // request is routed to one of the upstream clusters based on weights
-    // assigned to each cluster. See
-    // :ref:`traffic splitting <config_http_conn_man_route_table_traffic_splitting_split>`
-    // for additional documentation.
-    WeightedCluster weighted_clusters = 3;
   }
 }
 

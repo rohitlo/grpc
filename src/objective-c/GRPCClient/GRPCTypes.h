@@ -16,8 +16,6 @@
  *
  */
 
-#import <Foundation/Foundation.h>
-
 /**
  * gRPC error codes.
  * Note that a few of these are never produced by the gRPC libraries, but are of

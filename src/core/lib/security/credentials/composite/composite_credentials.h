@@ -21,10 +21,7 @@
 
 #include <grpc/support/port_platform.h>
 
-#include <string>
-
-#include "absl/container/inlined_vector.h"
-
+#include "src/core/lib/gprpp/inlined_vector.h"
 #include "src/core/lib/gprpp/ref_counted_ptr.h"
 #include "src/core/lib/security/credentials/credentials.h"
 
@@ -72,7 +69,8 @@ class grpc_composite_channel_credentials : public grpc_channel_credentials {
 class grpc_composite_call_credentials : public grpc_call_credentials {
  public:
   using CallCredentialsList =
-      absl::InlinedVector<grpc_core::RefCountedPtr<grpc_call_credentials>, 2>;
+      grpc_core::InlinedVector<grpc_core::RefCountedPtr<grpc_call_credentials>,
+                               2>;
 
   grpc_composite_call_credentials(
       grpc_core::RefCountedPtr<grpc_call_credentials> creds1,
@@ -93,7 +91,6 @@ class grpc_composite_call_credentials : public grpc_call_credentials {
   }
 
   const CallCredentialsList& inner() const { return inner_; }
-  std::string debug_string() override;
 
  private:
   void push_to_inner(grpc_core::RefCountedPtr<grpc_call_credentials> creds,

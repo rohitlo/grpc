@@ -9,7 +9,6 @@
 #include <stddef.h>
 #include "upb/msg.h"
 #include "envoy/api/v2/endpoint/endpoint.upb.h"
-#include "udpa/annotations/status.upb.h"
 #include "envoy/api/v2/endpoint/endpoint_components.upb.h"
 
 #include "upb/port_def.inc"

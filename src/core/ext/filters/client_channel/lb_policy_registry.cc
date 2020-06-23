@@ -22,9 +22,8 @@
 
 #include <string.h>
 
-#include "absl/container/inlined_vector.h"
-
 #include "src/core/lib/gpr/string.h"
+#include "src/core/lib/gprpp/inlined_vector.h"
 
 namespace grpc_core {
 
@@ -36,8 +35,6 @@ class RegistryState {
 
   void RegisterLoadBalancingPolicyFactory(
       std::unique_ptr<LoadBalancingPolicyFactory> factory) {
-    gpr_log(GPR_DEBUG, "registering LB policy factory for \"%s\"",
-            factory->name());
     for (size_t i = 0; i < factories_.size(); ++i) {
       GPR_ASSERT(strcmp(factories_[i]->name(), factory->name()) != 0);
     }
@@ -55,8 +52,7 @@ class RegistryState {
   }
 
  private:
-  absl::InlinedVector<std::unique_ptr<LoadBalancingPolicyFactory>, 10>
-      factories_;
+  InlinedVector<std::unique_ptr<LoadBalancingPolicyFactory>, 10> factories_;
 };
 
 RegistryState* g_state = nullptr;

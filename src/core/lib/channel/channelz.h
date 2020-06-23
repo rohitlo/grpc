@@ -25,11 +25,10 @@
 
 #include <string>
 
-#include "absl/container/inlined_vector.h"
-
 #include "src/core/lib/channel/channel_trace.h"
 #include "src/core/lib/gpr/time_precise.h"
 #include "src/core/lib/gprpp/atomic.h"
+#include "src/core/lib/gprpp/inlined_vector.h"
 #include "src/core/lib/gprpp/manual_constructor.h"
 #include "src/core/lib/gprpp/map.h"
 #include "src/core/lib/gprpp/ref_counted.h"
@@ -168,7 +167,7 @@ class CallCountingHelper {
   void CollectData(CounterData* out);
 
   // Really zero-sized, but 0-sized arrays are illegal on MSVC.
-  absl::InlinedVector<AtomicCounterData, 1> per_cpu_counter_data_storage_;
+  InlinedVector<AtomicCounterData, 1> per_cpu_counter_data_storage_;
   size_t num_cores_ = 0;
 };
 

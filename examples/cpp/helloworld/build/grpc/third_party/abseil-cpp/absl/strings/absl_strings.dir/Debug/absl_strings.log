@@ -1,0 +1,16 @@
+﻿  Building Custom Rule E:/Job/Project/repo/grpc/third_party/abseil-cpp/absl/strings/CMakeLists.txt
+  ascii.cc
+  charconv.cc
+  escaping.cc
+  charconv_bigint.cc
+  charconv_parse.cc
+  memutil.cc
+  match.cc
+  numbers.cc
+  str_cat.cc
+  str_replace.cc
+  str_split.cc
+  string_view.cc
+  substitute.cc
+  Generating Code...
+  absl_strings.vcxproj -> E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\grpc\third_party\abseil-cpp\absl\strings\Debug\absl_strings.lib

@@ -29,7 +29,6 @@
 #include "src/core/lib/gprpp/orphanable.h"
 #include "src/core/lib/iomgr/closure.h"
 #include "src/core/lib/iomgr/exec_ctx.h"
-#include "src/core/lib/iomgr/work_serializer.h"
 
 namespace grpc_core {
 
@@ -71,15 +70,14 @@ class AsyncConnectivityStateWatcherInterface
 
   // If \a combiner is nullptr, then the notification will be scheduled on the
   // ExecCtx.
-  explicit AsyncConnectivityStateWatcherInterface(
-      std::shared_ptr<WorkSerializer> work_serializer = nullptr)
-      : work_serializer_(std::move(work_serializer)) {}
+  explicit AsyncConnectivityStateWatcherInterface(Combiner* combiner = nullptr)
+      : combiner_(combiner) {}
 
   // Invoked asynchronously when Notify() is called.
   virtual void OnConnectivityStateChange(grpc_connectivity_state new_state) = 0;
 
  private:
-  std::shared_ptr<WorkSerializer> work_serializer_;
+  Combiner* combiner_;
 };
 
 // Tracks connectivity state.  Maintains a list of watchers that are

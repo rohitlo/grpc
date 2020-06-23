@@ -39,10 +39,11 @@ grpc_core::TraceFlag grpc_resource_quota_trace(false, "resource_quota");
 #define MEMORY_USAGE_ESTIMATION_MAX 65536
 
 /* Internal linked list pointers for a resource user */
-struct grpc_resource_user_link {
+typedef struct {
   grpc_resource_user* next;
   grpc_resource_user* prev;
-};
+} grpc_resource_user_link;
+
 /* Resource users are kept in (potentially) several intrusive linked lists
    at once. These are the list names. */
 typedef enum {
@@ -320,9 +321,9 @@ static bool rq_alloc(grpc_resource_quota* resource_quota) {
     if (GRPC_TRACE_FLAG_ENABLED(grpc_resource_quota_trace)) {
       gpr_log(GPR_INFO,
               "RQ: check allocation for user %p shutdown=%" PRIdPTR
-              " free_pool=%" PRId64 " outstanding_allocations=%" PRId64,
+              " free_pool=%" PRId64,
               resource_user, gpr_atm_no_barrier_load(&resource_user->shutdown),
-              resource_user->free_pool, resource_user->outstanding_allocations);
+              resource_user->free_pool);
     }
     if (gpr_atm_no_barrier_load(&resource_user->shutdown)) {
       resource_user->allocating = false;
@@ -334,9 +335,7 @@ static bool rq_alloc(grpc_resource_quota* resource_quota) {
       resource_user->free_pool += aborted_allocations;
       grpc_core::ExecCtx::RunList(DEBUG_LOCATION, &resource_user->on_allocated);
       gpr_mu_unlock(&resource_user->mu);
-      if (aborted_allocations > 0) {
-        ru_unref_by(resource_user, static_cast<gpr_atm>(aborted_allocations));
-      }
+      ru_unref_by(resource_user, static_cast<gpr_atm>(aborted_allocations));
       continue;
     }
     if (resource_user->free_pool < 0 &&
@@ -611,11 +610,12 @@ static void ru_allocated_slices(void* arg, grpc_error* error) {
  * combiner
  */
 
-struct rq_resize_args {
+typedef struct {
   int64_t size;
   grpc_resource_quota* resource_quota;
   grpc_closure closure;
-};
+} rq_resize_args;
+
 static void rq_resize(void* args, grpc_error* /*error*/) {
   rq_resize_args* a = static_cast<rq_resize_args*>(args);
   int64_t delta = a->size - a->resource_quota->size;

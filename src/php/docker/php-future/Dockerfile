@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7.4.5-buster
+FROM php:7.4.0RC1-buster
 
 RUN apt-get -qq update && apt-get -qq install -y \
   autoconf automake git libtool pkg-config \
-  valgrind wget zlib1g-dev
+  wget zlib1g-dev
 
 ARG MAKEFLAGS=-j8
 
@@ -36,4 +36,4 @@ RUN pear package && \
   find . -name grpc-*.tgz | xargs -I{} pecl install {}
 
 
-CMD ["/github/grpc/src/php/bin/run_tests.sh", "--skip-persistent-channel-tests", "--ignore-valgrind-undef-errors"]
+CMD ["/github/grpc/src/php/bin/run_tests.sh", "--skip-persistent-channel-tests"]

@@ -1,0 +1,24 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.17/Modules/CMakeDependentOption.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/CheckCSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/CheckIncludeFile.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/CheckLibraryExists.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/FindPackageHandleStandardArgs.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/FindPackageMessage.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/FindThreads.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/GNUInstallDirs.cmake
+C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/CMakeLists.txt
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/extract_includes.bat.in
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/install.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/libprotobuf-lite.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/libprotobuf.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/libprotoc.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protobuf-config-version.cmake.in
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protobuf-config.cmake.in
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protobuf-lite.pc.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protobuf-module.cmake.in
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protobuf-options.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protobuf.pc.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/protoc.cmake
+E:/Job/Project/repo/grpc/third_party/protobuf/cmake/version.rc.in

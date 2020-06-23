@@ -40,7 +40,7 @@
 #include "src/core/lib/iomgr/tcp_windows.h"
 #include "src/core/lib/iomgr/timer.h"
 
-struct async_connect {
+typedef struct {
   grpc_closure* on_done;
   gpr_mu mu;
   grpc_winsocket* socket;
@@ -51,7 +51,8 @@ struct async_connect {
   grpc_closure on_connect;
   grpc_endpoint** endpoint;
   grpc_channel_args* channel_args;
-};
+} async_connect;
+
 static void async_connect_unlock_and_cleanup(async_connect* ac,
                                              grpc_winsocket* socket) {
   int done = (--ac->refs == 0);
@@ -77,6 +78,7 @@ static void on_alarm(void* acp, grpc_error* error) {
 }
 
 static void on_connect(void* acp, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   async_connect* ac = (async_connect*)acp;
   grpc_endpoint** ep = ac->endpoint;
   GPR_ASSERT(*ep == NULL);
@@ -126,6 +128,7 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
                         const grpc_channel_args* channel_args,
                         const grpc_resolved_address* addr,
                         grpc_millis deadline) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   SOCKET sock = INVALID_SOCKET;
   BOOL success;
   int status;

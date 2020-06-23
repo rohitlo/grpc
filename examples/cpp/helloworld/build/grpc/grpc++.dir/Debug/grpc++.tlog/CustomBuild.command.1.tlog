@@ -1,0 +1,10 @@
+^E:\JOB\PROJECT\REPO\GRPC\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo/grpc/examples/cpp/helloworld -BE:/Job/Project/repo/grpc/examples/cpp/helloworld/build --check-stamp-file E:/Job/Project/repo/grpc/examples/cpp/helloworld/build/grpc/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -504,8 +504,8 @@ class PythonPluginTest(unittest.TestCase):
         service.server.stop(None)
 
 
-@unittest.skipIf(sys.version_info[0] < 3 or sys.version_info[1] < 6,
-                 "Unsupported on Python 2.")
+@unittest.skipIf(sys.version_info[0] != 3 or sys.version_info[1] < 6,
+                 "Unsupported on interpreters older than 3.6.")
 class SimpleStubsPluginTest(unittest.TestCase):
     servicer_methods = _ServicerMethods()
 
@@ -552,16 +552,6 @@ class SimpleStubsPluginTest(unittest.TestCase):
             channel_credentials=grpc.experimental.insecure_channel_credentials(
             ),
             wait_for_ready=True)
-        expected_response = self.servicer_methods.UnaryCall(
-            request, 'not a real context!')
-        self.assertEqual(expected_response, response)
-
-    def testUnaryCallInsecureSugar(self):
-        request = request_pb2.SimpleRequest(response_size=13)
-        response = service_pb2_grpc.TestService.UnaryCall(request,
-                                                          self._target,
-                                                          insecure=True,
-                                                          wait_for_ready=True)
         expected_response = self.servicer_methods.UnaryCall(
             request, 'not a real context!')
         self.assertEqual(expected_response, response)

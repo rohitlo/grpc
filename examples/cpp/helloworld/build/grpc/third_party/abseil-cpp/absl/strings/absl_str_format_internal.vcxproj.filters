@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\arg.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\bind.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\extension.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\float_conversion.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\output.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\parser.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\arg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\bind.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\checker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\extension.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\float_conversion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\internal\str_format\parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo\grpc\third_party\abseil-cpp\absl\strings\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6E3F098B-8FB4-345E-B955-B5849EB62C5E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8851FE02-A1C3-347F-90C7-5A7CF0B6B405}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

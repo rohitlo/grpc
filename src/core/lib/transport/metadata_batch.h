@@ -154,10 +154,11 @@ inline grpc_error* GRPC_MUST_USE_RESULT grpc_metadata_batch_add_tail(
 
 grpc_error* grpc_attach_md_to_error(grpc_error* src, grpc_mdelem md);
 
-struct grpc_filtered_mdelem {
+typedef struct {
   grpc_error* error;
   grpc_mdelem md;
-};
+} grpc_filtered_mdelem;
+
 #define GRPC_FILTERED_ERROR(error) \
   { (error), GRPC_MDNULL }
 #define GRPC_FILTERED_MDELEM(md) \

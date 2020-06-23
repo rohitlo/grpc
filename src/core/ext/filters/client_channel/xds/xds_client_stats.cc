@@ -34,9 +34,9 @@ namespace grpc_core {
 //
 
 XdsClusterDropStats::XdsClusterDropStats(RefCountedPtr<XdsClient> xds_client,
-                                         absl::string_view lrs_server_name,
-                                         absl::string_view cluster_name,
-                                         absl::string_view eds_service_name)
+                                         StringView lrs_server_name,
+                                         StringView cluster_name,
+                                         StringView eds_service_name)
     : xds_client_(std::move(xds_client)),
       lrs_server_name_(lrs_server_name),
       cluster_name_(cluster_name),
@@ -64,8 +64,8 @@ void XdsClusterDropStats::AddCallDropped(const std::string& category) {
 //
 
 XdsClusterLocalityStats::XdsClusterLocalityStats(
-    RefCountedPtr<XdsClient> xds_client, absl::string_view lrs_server_name,
-    absl::string_view cluster_name, absl::string_view eds_service_name,
+    RefCountedPtr<XdsClient> xds_client, StringView lrs_server_name,
+    StringView cluster_name, StringView eds_service_name,
     RefCountedPtr<XdsLocalityName> name)
     : xds_client_(std::move(xds_client)),
       lrs_server_name_(lrs_server_name),
@@ -89,12 +89,13 @@ uint64_t GetAndResetCounter(Atomic<uint64_t>* from) {
 
 XdsClusterLocalityStats::Snapshot
 XdsClusterLocalityStats::GetSnapshotAndReset() {
-  Snapshot snapshot = {GetAndResetCounter(&total_successful_requests_),
-                       // Don't reset total_requests_in_progress because it's
-                       // not related to a single reporting interval.
-                       total_requests_in_progress_.Load(MemoryOrder::RELAXED),
-                       GetAndResetCounter(&total_error_requests_),
-                       GetAndResetCounter(&total_issued_requests_)};
+  Snapshot snapshot = {
+      GetAndResetCounter(&total_successful_requests_),
+      // Don't reset total_requests_in_progress because it's not
+      // related to a single reporting interval.
+      total_requests_in_progress_.Load(MemoryOrder::RELAXED),
+      GetAndResetCounter(&total_error_requests_),
+      GetAndResetCounter(&total_issued_requests_)};
   MutexLock lock(&backend_metrics_mu_);
   snapshot.backend_metrics = std::move(backend_metrics_);
   return snapshot;

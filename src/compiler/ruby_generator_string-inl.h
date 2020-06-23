@@ -119,13 +119,12 @@ inline grpc::string RubyPackage(const grpc::protobuf::FileDescriptor* file) {
 inline grpc::string RubyTypeOf(const grpc::protobuf::Descriptor* descriptor,
                                const grpc::string& package) {
   std::string proto_type = descriptor->full_name();
-  ReplacePrefix(&proto_type, package,
-                "");                    // remove the leading package if present
-  ReplacePrefix(&proto_type, ".", "");  // remove the leading . (no package)
   if (descriptor->file()->options().has_ruby_package()) {
-    proto_type = RubyPackage(descriptor->file()) + "." + proto_type;
+    proto_type = RubyPackage(descriptor->file()) + "." + descriptor->name();
   }
   grpc::string res(proto_type);
+  ReplacePrefix(&res, package, "");  // remove the leading package if present
+  ReplacePrefix(&res, ".", "");      // remove the leading . (no package)
   if (res.find('.') == grpc::string::npos) {
     return res;
   } else {

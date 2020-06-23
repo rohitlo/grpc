@@ -13,18 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+set +e
 cd $(dirname $0)/../../..
 
-# protoc and grpc_*_plugin binaries can be obtained by running
-# $ bazel build @com_google_protobuf//:protoc //src/compiler:all
-PROTOC=bazel-bin/external/com_google_protobuf/protoc
-PLUGIN=protoc-gen-grpc=bazel-bin/src/compiler/grpc_php_plugin
-
-$PROTOC --proto_path=src/proto/math \
+protoc --proto_path=src/proto/math \
        --php_out=src/php/tests/generated_code \
        --grpc_out=src/php/tests/generated_code \
-       --plugin=$PLUGIN \
+       --plugin=protoc-gen-grpc=bins/opt/grpc_php_plugin \
        src/proto/math/math.proto
 
 # replace the Empty message with EmptyMessage
@@ -37,11 +32,10 @@ sed 's/grpc\.testing\.Empty/grpc\.testing\.EmptyMessage/g' \
   src/proto/grpc/testing/test.proto > $output_file
 mv $output_file ./src/proto/grpc/testing/test.proto
 
-# interop test protos
-$PROTOC --proto_path=. \
+protoc --proto_path=. \
        --php_out=src/php/tests/interop \
        --grpc_out=src/php/tests/interop \
-       --plugin=$PLUGIN \
+       --plugin=protoc-gen-grpc=bins/opt/grpc_php_plugin \
        src/proto/grpc/testing/messages.proto \
        src/proto/grpc/testing/empty.proto \
        src/proto/grpc/testing/test.proto
@@ -54,11 +48,3 @@ sed 's/grpc\.testing\.EmptyMessage/grpc\.testing\.Empty/g' \
   src/proto/grpc/testing/test.proto > $output_file
 mv $output_file ./src/proto/grpc/testing/test.proto
 
-# Hack for xDS interop: need this to be a separate file in the correct namespace.
-# To be removed when grpc_php_plugin generates service stubs.
-echo '<?php
-// DO NOT EDIT
-namespace Grpc\Testing;
-class LoadBalancerStatsServiceStub {
-}
-' > ./src/php/tests/interop/Grpc/Testing/LoadBalancerStatsServiceStub.php

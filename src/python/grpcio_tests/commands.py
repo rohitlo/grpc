@@ -151,6 +151,8 @@ class TestAio(setuptools.Command):
 
     def run(self):
         self._add_eggs_to_path()
+        from grpc.experimental.aio import init_grpc_aio
+        init_grpc_aio()
 
         import tests
         loader = tests.Loader()
@@ -220,9 +222,6 @@ class TestGevent(setuptools.Command):
         'unit._cython._channel_test.ChannelTest.test_negative_deadline_connectivity',
         # TODO(https://github.com/grpc/grpc/issues/15411) enable this test
         'unit._local_credentials_test.LocalCredentialsTest',
-        # TODO(https://github.com/grpc/grpc/issues/22020) LocalCredentials
-        # aren't supported with custom io managers.
-        'unit._contextvars_propagation_test',
         'testing._time_test.StrictRealTimeTest',
     )
     BANNED_WINDOWS_TESTS = (

@@ -11,7 +11,6 @@
 #include "envoy/config/listener/v2/api_listener.upb.h"
 #include "google/protobuf/any.upb.h"
 #include "udpa/annotations/migrate.upb.h"
-#include "udpa/annotations/status.upb.h"
 
 #include "upb/port_def.inc"
 

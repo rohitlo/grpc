@@ -19,6 +19,7 @@
 #include <memory>
 
 #include <grpcpp/channel.h>
+#include <src\core\ext\transport\inproc\inproc_transport.h>
 
 struct grpc_channel;
 
@@ -29,8 +30,15 @@ std::shared_ptr<Channel> CreateChannelInternal(
     std::vector<std::unique_ptr<
         ::grpc::experimental::ClientInterceptorFactoryInterface>>
         interceptor_creators) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   return std::shared_ptr<Channel>(
       new Channel(host, c_channel, std::move(interceptor_creators)));
+}
+
+
+grpc_channel* inproc_channel(grpc_server* server, grpc_channel_args* args,
+  void*) {
+  return grpc_inproc_channel_create(server, args, nullptr);
 }
 
 }  // namespace grpc

@@ -16,10 +16,8 @@
  *
  */
 
-#include "absl/container/inlined_vector.h"
-
-#include <grpcpp/security/tls_credentials_options.h>
 #include "src/cpp/common/tls_credentials_options_util.h"
+#include <grpcpp/security/tls_credentials_options.h>
 
 namespace grpc_impl {
 namespace experimental {
@@ -37,7 +35,7 @@ grpc_tls_key_materials_config* ConvertToCKeyMaterialsConfig(
   }
   grpc_tls_key_materials_config* c_config =
       grpc_tls_key_materials_config_create();
-  ::absl::InlinedVector<::grpc_core::PemKeyCertPair, 1>
+  ::grpc_core::InlinedVector<::grpc_core::PemKeyCertPair, 1>
       c_pem_key_cert_pair_list;
   for (const auto& key_cert_pair : config->pem_key_cert_pair_list()) {
     grpc_ssl_pem_key_cert_pair* ssl_pair =
@@ -49,8 +47,10 @@ grpc_tls_key_materials_config* ConvertToCKeyMaterialsConfig(
         ::grpc_core::PemKeyCertPair(ssl_pair);
     c_pem_key_cert_pair_list.push_back(::std::move(c_pem_key_cert_pair));
   }
-  c_config->set_key_materials(config->pem_root_certs().c_str(),
-                              c_pem_key_cert_pair_list);
+  ::grpc_core::UniquePtr<char> c_pem_root_certs(
+      gpr_strdup(config->pem_root_certs().c_str()));
+  c_config->set_key_materials(std::move(c_pem_root_certs),
+                              std::move(c_pem_key_cert_pair_list));
   c_config->set_version(config->version());
   return c_config;
 }

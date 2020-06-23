@@ -83,9 +83,8 @@
           return factory;
         }
       case GRPCTransportTypeCronet: {
-        id<GRPCCoreTransportFactory> transportFactory =
-            (id<GRPCCoreTransportFactory>)[[GRPCTransportRegistry sharedInstance]
-                getTransportFactoryWithID:gGRPCCoreCronetID];
+        id<GRPCCoreTransportFactory> transportFactory = (id<GRPCCoreTransportFactory>)[
+            [GRPCTransportRegistry sharedInstance] getTransportFactoryWithID:gGRPCCoreCronetID];
         return [transportFactory createCoreChannelFactoryWithCallOptions:_callOptions];
       }
       case GRPCTransportTypeInsecure:

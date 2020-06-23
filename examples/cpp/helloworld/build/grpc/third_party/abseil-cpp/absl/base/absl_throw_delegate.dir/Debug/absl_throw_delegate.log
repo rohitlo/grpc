@@ -1,0 +1,3 @@
+﻿  Building Custom Rule E:/Job/Project/repo/grpc/third_party/abseil-cpp/absl/base/CMakeLists.txt
+  throw_delegate.cc
+  absl_throw_delegate.vcxproj -> E:\Job\Project\repo\grpc\examples\cpp\helloworld\build\grpc\third_party\abseil-cpp\absl\base\Debug\absl_throw_delegate.lib

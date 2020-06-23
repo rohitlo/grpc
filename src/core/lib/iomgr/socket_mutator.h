@@ -27,14 +27,15 @@
 #include <stdbool.h>
 
 /** The virtual table of grpc_socket_mutator */
-struct grpc_socket_mutator_vtable {
+typedef struct {
   /** Mutates the socket options of \a fd */
   bool (*mutate_fd)(int fd, grpc_socket_mutator* mutator);
   /** Compare socket mutator \a a and \a b */
   int (*compare)(grpc_socket_mutator* a, grpc_socket_mutator* b);
   /** Destroys the socket mutator instance */
   void (*destroy)(grpc_socket_mutator* mutator);
-};
+} grpc_socket_mutator_vtable;
+
 /** The Socket Mutator interface allows changes on socket options */
 struct grpc_socket_mutator {
   const grpc_socket_mutator_vtable* vtable;

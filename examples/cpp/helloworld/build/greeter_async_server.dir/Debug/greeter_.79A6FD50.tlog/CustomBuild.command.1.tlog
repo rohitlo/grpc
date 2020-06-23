@@ -1,0 +1,20 @@
+^E:\JOB\PROJECT\REPO\GRPC\EXAMPLES\CPP\HELLOWORLD\BUILD\CMAKEFILES\6B1358F8E836CD3D13C70D630228D486\HELLOWORLD.PB.CC.RULE
+setlocal
+grpc\third_party\protobuf\Debug\protoc.exe --grpc_out E:/Job/Project/repo/grpc/examples/cpp/helloworld/build --cpp_out E:/Job/Project/repo/grpc/examples/cpp/helloworld/build -I E:/Job/Project/repo/grpc/examples/protos --plugin=protoc-gen-grpc="E:/Job/Project/repo/grpc/examples/cpp/helloworld/build/grpc/Debug/grpc_cpp_plugin.exe" E:/Job/Project/repo/grpc/examples/protos/helloworld.proto
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^E:\JOB\PROJECT\REPO\GRPC\EXAMPLES\CPP\HELLOWORLD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo/grpc/examples/cpp/helloworld -BE:/Job/Project/repo/grpc/examples/cpp/helloworld/build --check-stamp-file E:/Job/Project/repo/grpc/examples/cpp/helloworld/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

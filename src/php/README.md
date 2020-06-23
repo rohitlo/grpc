@@ -3,7 +3,7 @@
 
 This directory contains source code for PHP implementation of gRPC layered on
 shared C library. The same installation guides with more examples and
-tutorials can be seen at [grpc.io](https://grpc.io/docs/languages/php/quickstart).
+tutorials can be seen at [grpc.io](https://grpc.io/docs/quickstart/php.html).
 gRPC PHP installation instructions for Google Cloud Platform is in
 [cloud.google.com](https://cloud.google.com/php/grpc).
 
@@ -36,7 +36,7 @@ or specific version
 $ [sudo] pecl install grpc-1.25.0
 ```
 
-Note: for users on CentOS/RHEL 6, unfortunately this step won’t work.
+Note: for users on CentOS/RHEL 6, unfortunately this step won’t work. 
 Please follow the instructions below to compile the PECL extension from source.
 
 
@@ -58,7 +58,7 @@ $ git clone -b RELEASE_TAG_HERE https://github.com/grpc/grpc
 ```sh
 $ cd grpc
 $ git submodule update --init
-$ EXTRA_DEFINES=GRPC_POSIX_FORK_ALLOW_PTHREAD_ATFORK make
+$ make
 $ [sudo] make install
 ```
 
@@ -74,8 +74,8 @@ $ make
 $ [sudo] make install
 ```
 
-This will compile and install the `grpc` extension into the
-standard PHP extension directory. You should be able to run
+This will compile and install the `grpc` extension into the 
+standard PHP extension directory. You should be able to run 
 the [unit tests](#unit-tests), with the `grpc` extension installed.
 
 
@@ -100,7 +100,7 @@ composer package as well. Add this to your project's `composer.json` file.
   }
 ```
 
-To run tests with generated stub code from `.proto` files, you will also
+To run tests with generated stub code from `.proto` files, you will also 
 need the `composer` and `protoc` binaries. You can find out how to get these
 below.
 
@@ -120,7 +120,7 @@ classes.
 
 If you don't have it already, you need to install the protobuf compiler
 `protoc`, version 3.5.0+ (the newer the better) for the current gRPC version.
-If you installed already, make the protobuf version is compatible to the
+If you installed already, make the protobuf version is compatible to the 
 grpc version you installed. If you build grpc.so from the souce, you can check
 the version of grpc inside package.xml file.
 
@@ -128,15 +128,15 @@ The compatibility between the grpc and protobuf version is listed as table
 below:
 
 grpc | protobuf
---- | ---
+--- | --- 
 v1.0.0 | 3.0.0(GA)
 v1.0.1 | 3.0.2
-v1.1.0 | 3.1.0
-v1.2.0 | 3.2.0
-v1.2.0 | 3.2.0
-v1.3.4 | 3.3.0
+v1.1.0 | 3.1.0 
+v1.2.0 | 3.2.0 
+v1.2.0 | 3.2.0 
+v1.3.4 | 3.3.0 
 v1.3.5 | 3.2.0
-v1.4.0 | 3.3.0
+v1.4.0 | 3.3.0 
 v1.6.0 | 3.4.0
 v1.8.0 | 3.5.0
 v1.12.0 | 3.5.2
@@ -197,7 +197,7 @@ version you build this plugin.
 ### `protobuf` runtime library
 
 There are two `protobuf` runtime libraries to choose from. They are identical
-in terms of APIs offered. The C implementation provides better performance,
+in terms of APIs offered. The C implementation provides better performance, 
 while the native implementation is easier to install.
 
 #### C implementation (for better performance)
@@ -275,8 +275,12 @@ $ composer install
 
 ### Client Stub
 
-The generate client stub classes have already been generated from `.proto` files
-by the `./bin/generate_proto_php.sh` script.
+Generate client stub classes from `.proto` files
+
+```sh
+$ cd grpc/src/php
+$ ./bin/generate_proto_php.sh
+```
 
 ### Run test server
 
@@ -364,31 +368,5 @@ $client = new Helloworld\GreeterClient('localhost:50051', [
     'grpc.max_receive_message_length' => 8*1024*1024,
 ]);
 ```
-
-### Compression
-
-You can customize the compression behavior on the client side, by specifying the following options when constructing your PHP client.
-
-```
-Possible values for grpc.default_compression_algorithm:
-0 - No compression
-1 - Compress with DEFLATE algorithm
-2 - Compress with GZIP algorithm
-3 - Stream compression with GZIP algorithm
-```
-```
-Possible values for grpc.default_compression_level:
-0 - None
-1 - Low level
-2 - Medium level
-3 - High level
-```
-Here's an example on how you can put them all together:
-```
-$client = new Helloworld\GreeterClient('localhost:50051', [
-        'credentials' => Grpc\ChannelCredentials::createInsecure(),
-        'grpc.default_compression_algorithm' => 2,
-        'grpc.default_compression_level' => 2,
-]);
 
 [Node]:https://github.com/grpc/grpc/tree/master/src/node/examples

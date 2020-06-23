@@ -13,7 +13,6 @@
 #include "google/api/annotations.upb.h"
 #include "envoy/annotations/resource.upb.h"
 #include "udpa/annotations/migrate.upb.h"
-#include "udpa/annotations/status.upb.h"
 #include "envoy/api/v2/cluster.upb.h"
 
 #include "upb/port_def.inc"

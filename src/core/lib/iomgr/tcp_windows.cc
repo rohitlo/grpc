@@ -178,6 +178,7 @@ static void tcp_ref(grpc_tcp* tcp) { gpr_ref(&tcp->refcount); }
 
 /* Asynchronous callback from the IOCP, or the background thread. */
 static void on_read(void* tcpp, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp* tcp = (grpc_tcp*)tcpp;
   grpc_closure* cb = tcp->read_cb;
   grpc_winsocket* socket = tcp->socket;
@@ -240,6 +241,7 @@ static void on_read(void* tcpp, grpc_error* error) {
 #define MAX_WSABUF_COUNT 16
 static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                      grpc_closure* cb, bool urgent) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp* tcp = (grpc_tcp*)ep;
   grpc_winsocket* handle = tcp->socket;
   grpc_winsocket_callback_info* info = &handle->read_info;
@@ -314,6 +316,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
 
 /* Asynchronous callback from the IOCP, or the background thread. */
 static void on_write(void* tcpp, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp* tcp = (grpc_tcp*)tcpp;
   grpc_winsocket* handle = tcp->socket;
   grpc_winsocket_callback_info* info = &handle->write_info;
@@ -345,6 +348,7 @@ static void on_write(void* tcpp, grpc_error* error) {
 /* Initiates a write. */
 static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
                       grpc_closure* cb, void* arg) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp* tcp = (grpc_tcp*)ep;
   grpc_winsocket* socket = tcp->socket;
   grpc_winsocket_callback_info* info = &socket->write_info;

@@ -44,7 +44,6 @@ typedef enum {
   TSI_OUT_OF_RESOURCES = 12,
   TSI_ASYNC = 13,
   TSI_HANDSHAKE_SHUTDOWN = 14,
-  TSI_CLOSE_NOTIFY = 15,  // Indicates that the connection should be closed.
 } tsi_result;
 
 typedef enum {
@@ -208,10 +207,11 @@ typedef struct tsi_peer_property {
   } value;
 } tsi_peer_property;
 
-struct tsi_peer {
+typedef struct {
   tsi_peer_property* properties;
   size_t property_count;
-};
+} tsi_peer;
+
 /* Destructs the tsi_peer object. */
 void tsi_peer_destruct(tsi_peer* self);
 

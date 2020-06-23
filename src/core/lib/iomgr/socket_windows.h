@@ -96,6 +96,10 @@ typedef struct grpc_winsocket {
    it will be responsible for closing it. */
 grpc_winsocket* grpc_winsocket_create(SOCKET socket, const char* name);
 
+/* Create a Pipe and return handle*/
+grpc_winsocket* grpc_pipe_create(SOCKET socket, const char* name);
+
+
 SOCKET grpc_winsocket_wrapped_socket(grpc_winsocket* socket);
 
 /* Initiate an asynchronous shutdown of the socket. Will call off any pending
