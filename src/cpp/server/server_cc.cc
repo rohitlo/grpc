@@ -1074,6 +1074,7 @@ grpc_server* Server::c_server() { return server_; }
 
 std::shared_ptr<grpc::Channel> Server::InProcessChannel(
     const grpc::ChannelArguments& args) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_channel_args channel_args = args.c_channel_args();
   return grpc::CreateChannelInternal(
       "inproc", grpc_inproc_channel_create(server_, &channel_args, nullptr),

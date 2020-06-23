@@ -22,22 +22,20 @@
 
 #ifdef GRPC_WINSOCK_SOCKET
 
-#include "src/core/lib/iomgr/sockaddr.h"
-
-#include <inttypes.h>
-#include <io.h>
-
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
 #include <grpc/support/log_windows.h>
 #include <grpc/support/string_util.h>
 #include <grpc/support/sync.h>
 #include <grpc/support/time.h>
+#include <inttypes.h>
+#include <io.h>
 
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/iomgr/iocp_windows.h"
 #include "src/core/lib/iomgr/pollset_windows.h"
 #include "src/core/lib/iomgr/resolve_address.h"
+#include "src/core/lib/iomgr/sockaddr.h"
 #include "src/core/lib/iomgr/sockaddr_utils.h"
 #include "src/core/lib/iomgr/socket_windows.h"
 #include "src/core/lib/iomgr/tcp_server.h"
@@ -58,6 +56,7 @@ struct grpc_tcp_listener {
   /* The actual TCP port number. */
   int port;
   unsigned port_index;
+  bool isPipe;
   grpc_tcp_server* server;
   /* The cached AcceptEx for that port. */
   LPFN_ACCEPTEX AcceptEx;
@@ -99,6 +98,7 @@ struct grpc_tcp_server {
 static grpc_error* tcp_server_create(grpc_closure* shutdown_complete,
                                      const grpc_channel_args* args,
                                      grpc_tcp_server** server) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp_server* s = (grpc_tcp_server*)gpr_malloc(sizeof(grpc_tcp_server));
   s->channel_args = grpc_channel_args_copy(args);
   gpr_ref_init(&s->refs, 1);
@@ -189,6 +189,7 @@ static void tcp_server_unref(grpc_tcp_server* s) {
 static grpc_error* prepare_socket(SOCKET sock,
                                   const grpc_resolved_address* addr,
                                   int* port) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_resolved_address sockname_temp;
   grpc_error* error = GRPC_ERROR_NONE;
   int sockname_temp_len;
@@ -221,6 +222,7 @@ static grpc_error* prepare_socket(SOCKET sock,
   return GRPC_ERROR_NONE;
 
 failure:
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_ASSERT(error != GRPC_ERROR_NONE);
   char* tgtaddr = grpc_sockaddr_to_uri(addr);
   grpc_error_set_int(
@@ -246,6 +248,7 @@ static void decrement_active_ports_and_notify_locked(grpc_tcp_listener* sp) {
 /* In order to do an async accept, we need to create a socket first which
    will be the one assigned to the new incoming connection. */
 static grpc_error* start_accept_locked(grpc_tcp_listener* port) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   SOCKET sock = INVALID_SOCKET;
   BOOL success;
   DWORD addrlen = sizeof(grpc_sockaddr_in6) + 16;
@@ -256,39 +259,49 @@ static grpc_error* start_accept_locked(grpc_tcp_listener* port) {
     return GRPC_ERROR_NONE;
   }
 
-  sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
-                   grpc_get_default_wsa_socket_flags());
-  if (sock == INVALID_SOCKET) {
-    error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
-    goto failure;
-  }
-
-  error = grpc_tcp_prepare_socket(sock);
-  if (error != GRPC_ERROR_NONE) goto failure;
-
-  /* Start the "accept" asynchronously. */
-  success = port->AcceptEx(port->socket->socket, sock, port->addresses, 0,
-                           addrlen, addrlen, &bytes_received,
-                           &port->socket->read_info.overlapped);
-
-  /* It is possible to get an accept immediately without delay. However, we
-     will still get an IOCP notification for it. So let's just ignore it. */
-  if (!success) {
-    int last_error = WSAGetLastError();
-    if (last_error != ERROR_IO_PENDING) {
-      error = GRPC_WSA_ERROR(last_error, "AcceptEx");
+  // Named pipe as AF_UNSPEC
+  if (port->isPipe == 1) {
+    BOOL connectPipe = ConnectNamedPipe(port->socket, NULL);
+    if (connectPipe == FALSE) {
+      puts("Error");
+    } else {
+      puts("Client Connected");
+    }
+  } else {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
+                     grpc_get_default_wsa_socket_flags());
+    if (sock == INVALID_SOCKET) {
+      error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
       goto failure;
     }
-  }
 
+    error = grpc_tcp_prepare_socket(sock);
+    if (error != GRPC_ERROR_NONE) goto failure;
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    /* Start the "accept" asynchronously. */
+    success = port->AcceptEx(port->socket->socket, sock, port->addresses, 0,
+                             addrlen, addrlen, &bytes_received,
+                             &port->socket->read_info.overlapped);
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    /* It is possible to get an accept immediately without delay. However, we
+       will still get an IOCP notification for it. So let's just ignore it. */
+    if (!success) {
+      int last_error = WSAGetLastError();
+      if (last_error != ERROR_IO_PENDING) {
+        error = GRPC_WSA_ERROR(last_error, "AcceptEx");
+        goto failure;
+      }
+    }
+  }
   /* We're ready to do the accept. Calling grpc_socket_notify_on_read may
      immediately process an accept that happened in the meantime. */
   port->new_socket = sock;
   grpc_socket_notify_on_read(port->socket, &port->on_accept);
   port->outstanding_calls++;
   return error;
-
 failure:
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_ASSERT(error != GRPC_ERROR_NONE);
   if (sock != INVALID_SOCKET) closesocket(sock);
   return error;
@@ -296,6 +309,7 @@ failure:
 
 /* Event manager callback when reads are ready. */
 static void on_accept(void* arg, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp_listener* sp = (grpc_tcp_listener*)arg;
   SOCKET sock = sp->new_socket;
   grpc_winsocket_callback_info* info = &sp->socket->read_info;
@@ -387,11 +401,70 @@ static void on_accept(void* arg, grpc_error* error) {
   }
   gpr_mu_unlock(&sp->server->mu);
 }
+static grpc_error* add_pipe_to_server(grpc_tcp_server* s, SOCKET sock,
+                                      const grpc_resolved_address* addr,
+                                      unsigned port_index,
+                                      grpc_tcp_listener** listener) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  grpc_tcp_listener* sp = NULL;
+  int port = -1;
+  int status;
+  GUID guid = WSAID_ACCEPTEX;
+  DWORD ioctl_num_bytes;
+  LPFN_ACCEPTEX AcceptEx;
+  grpc_error* error = GRPC_ERROR_NONE;
 
+  ///* We need to grab the AcceptEx pointer for that port, as it may be
+  //   interface-dependent. We'll cache it to avoid doing that again. */
+  /* status =
+       WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid),
+                &AcceptEx, sizeof(AcceptEx), &ioctl_num_bytes, NULL, NULL);
+
+   if (status != 0) {
+     char* utf8_message = gpr_format_message(WSAGetLastError());
+     gpr_log(GPR_ERROR, "on_connect error: %s", utf8_message);
+     gpr_free(utf8_message);
+     closesocket(sock);
+     return GRPC_ERROR_NONE;
+   }*/
+
+  // error = prepare_socket(sock, addr, &port);
+  // if (error != GRPC_ERROR_NONE) {
+  //  return error;
+  //}
+
+  // GPR_ASSERT(port >= 0);
+  // gpr_mu_lock(&s->mu);
+  GPR_ASSERT(!s->on_accept_cb && "must add ports before starting server");
+  sp = (grpc_tcp_listener*)gpr_malloc(sizeof(grpc_tcp_listener));
+  sp->next = NULL;
+  if (s->head == NULL) {
+    s->head = sp;
+  } else {
+    s->tail->next = sp;
+  }
+  s->tail = sp;
+  sp->server = s;
+  sp->socket = grpc_pipe_create(sock, "listener");
+  sp->shutting_down = 0;
+  sp->outstanding_calls = 0;
+  sp->isPipe = 1;
+  // sp->AcceptEx = AcceptEx;
+  sp->new_socket = INVALID_SOCKET;
+  sp->port = port;
+  sp->port_index = port_index;
+  GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, sp, grpc_schedule_on_exec_ctx);
+  GPR_ASSERT(sp->socket);
+  gpr_mu_unlock(&s->mu);
+  *listener = sp;
+  printf("\n%p \n", listener);
+  return GRPC_ERROR_NONE;
+}
 static grpc_error* add_socket_to_server(grpc_tcp_server* s, SOCKET sock,
                                         const grpc_resolved_address* addr,
                                         unsigned port_index,
                                         grpc_tcp_listener** listener) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp_listener* sp = NULL;
   int port = -1;
   int status;
@@ -442,13 +515,43 @@ static grpc_error* add_socket_to_server(grpc_tcp_server* s, SOCKET sock,
   GPR_ASSERT(sp->socket);
   gpr_mu_unlock(&s->mu);
   *listener = sp;
-
+  printf("\n%p : \n", listener);
   return GRPC_ERROR_NONE;
+}
+
+static SOCKET create_pipe(const grpc_resolved_address* addr) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  HANDLE namedPipe;
+  BOOL connectPipe;
+
+  // Read
+  BOOL fSuccess;
+  char readBuffer[1023];
+  DWORD bytesRead = 0;
+  DWORD BUFSIZE = 1023;
+  // Write
+  // char writeBuffer[] = "Hey I client got your message \n";
+  DWORD bytesWritten = 0;
+  std::string name = reinterpret_cast<const sockaddr*>(addr->addr)->sa_data;
+  printf("\n%s\n", name.c_str());
+  name = "\\\\.\\pipe\\" + name;
+  // LPCSTR n = strdup(name.c_str());
+  namedPipe =
+      CreateNamedPipe(name.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                      PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                      PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
+  if (namedPipe == INVALID_HANDLE_VALUE) {
+    puts("Error");
+  }
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  return (SOCKET)namedPipe;
 }
 
 static grpc_error* tcp_server_add_port(grpc_tcp_server* s,
                                        const grpc_resolved_address* addr,
                                        int* port) {
+  printf("\n Address in tcp_server_add port :%c\n", addr->addr);
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp_listener* sp = NULL;
   SOCKET sock;
   grpc_resolved_address addr6_v4mapped;
@@ -494,15 +597,24 @@ static grpc_error* tcp_server_add_port(grpc_tcp_server* s,
 
     addr = &wildcard;
   }
+  // Named pipe as AF_UNSPEC
+  if (grpc_sockaddr_get_port(addr) == 1) {
+    sock = create_pipe(addr);
+    if (sock == INVALID_SOCKET) {
+      error = GRPC_WSA_ERROR(WSAGetLastError(), "WSAPIPE");
+      goto done;
+    }
+    error = add_pipe_to_server(s, sock, addr, port_index, &sp);
+  } else {
+    sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
+                     grpc_get_default_wsa_socket_flags());
+    if (sock == INVALID_SOCKET) {
+      error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
+      goto done;
+    }
 
-  sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
-                   grpc_get_default_wsa_socket_flags());
-  if (sock == INVALID_SOCKET) {
-    error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
-    goto done;
+    error = add_socket_to_server(s, sock, addr, port_index, &sp);
   }
-
-  error = add_socket_to_server(s, sock, addr, port_index, &sp);
 
 done:
   gpr_free(allocated_addr);
@@ -521,9 +633,11 @@ done:
 }
 
 static void tcp_server_start(grpc_tcp_server* s, grpc_pollset** pollset,
-                             size_t pollset_count,
+                    
+  size_t pollset_count,
                              grpc_tcp_server_cb on_accept_cb,
                              void* on_accept_cb_arg) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_tcp_listener* sp;
   GPR_ASSERT(on_accept_cb);
   gpr_mu_lock(&s->mu);

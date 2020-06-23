@@ -89,7 +89,8 @@ static void server_connection_state_unref(
   }
 }
 
-static void on_timeout(void* arg, grpc_error* error) {
+static void on_timeout(void* arg, grpc_error* error) { 
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   server_connection_state* connection_state =
       static_cast<server_connection_state*>(arg);
   // Note that we may be called with GRPC_ERROR_NONE when the timer fires
@@ -338,6 +339,7 @@ error:
 grpc_error* grpc_chttp2_server_add_port(grpc_server* server, const char* addr,
                                         grpc_channel_args* args,
                                         int* port_num) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_resolved_addresses* resolved = nullptr;
   grpc_tcp_server* tcp_server = nullptr;
   size_t i;
@@ -375,7 +377,7 @@ grpc_error* grpc_chttp2_server_add_port(grpc_server* server, const char* addr,
   state->args = args;
   state->shutdown = true;
   gpr_mu_init(&state->mu);
-
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   naddrs = resolved->naddrs;
   errors = static_cast<grpc_error**>(gpr_malloc(sizeof(*errors) * naddrs));
   for (i = 0; i < naddrs; i++) {

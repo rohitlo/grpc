@@ -32,6 +32,8 @@
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/surface/api_trace.h"
 #include "src/core/lib/surface/channel.h"
+#include "src/core/ext/transport/diffproc/diffproc_transport.h"
+#include <src\core\ext\transport\chttp2\transport\chttp2_transport.h>
 
 namespace grpc_core {
 
@@ -50,22 +52,46 @@ class Chttp2InsecureClientChannelFactory : public ClientChannelFactory {
 namespace {
 
 grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  printf("Target at 54, :%s", target);
   if (target == nullptr) {
     gpr_log(GPR_ERROR, "cannot create channel with NULL target name");
     return nullptr;
   }
-  // Add channel arg containing the server URI.
-  grpc_core::UniquePtr<char> canonical_target =
-      ResolverRegistry::AddDefaultPrefixIfNeeded(target);
-  grpc_arg arg = grpc_channel_arg_string_create(
-      const_cast<char*>(GRPC_ARG_SERVER_URI), canonical_target.get());
-  const char* to_remove[] = {GRPC_ARG_SERVER_URI};
-  grpc_channel_args* new_args =
-      grpc_channel_args_copy_and_add_and_remove(args, to_remove, 1, &arg, 1);
-  grpc_channel* channel =
-      grpc_channel_create(target, new_args, GRPC_CLIENT_CHANNEL, nullptr);
-  grpc_channel_args_destroy(new_args);
-  return channel;
+
+  // Named pipe support
+  if (target[0] == '\\' && target[1] == '\\' && target[2] == '.' &&
+      target[3] == '\\') {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    grpc_arg arg = grpc_channel_arg_string_create(const_cast<char*>(GRPC_ARG_SERVER_URI),
+                                       const_cast<char*>(target+9));
+    grpc_arg default_authority_arg;
+    default_authority_arg.type = GRPC_ARG_STRING;
+    default_authority_arg.key = (char*)GRPC_ARG_DEFAULT_AUTHORITY;
+    default_authority_arg.value.string = (char*)"diffproc.authority";
+    grpc_channel_args* client_args =
+        grpc_channel_args_copy_and_add(args, &arg, 1);
+    client_args= grpc_channel_args_copy_and_add(args, &default_authority_arg, 1);
+    grpc_transport* transport =
+        diffproc_transport_create(client_args, true);
+    GPR_ASSERT(transport);
+    grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, transport);
+    grpc_channel_args_destroy(client_args);
+    return channel;
+  } else {
+    // Add channel arg containing the server URI.
+    grpc_core::UniquePtr<char> canonical_target =
+        ResolverRegistry::AddDefaultPrefixIfNeeded(target);
+    grpc_arg arg = grpc_channel_arg_string_create(
+        const_cast<char*>(GRPC_ARG_SERVER_URI), canonical_target.get());
+    const char* to_remove[] = {GRPC_ARG_SERVER_URI};
+    grpc_channel_args* new_args =
+        grpc_channel_args_copy_and_add_and_remove(args, to_remove, 1, &arg, 1);
+    grpc_channel* channel =
+        grpc_channel_create(target, new_args, GRPC_CLIENT_CHANNEL, nullptr);
+    grpc_channel_args_destroy(new_args);
+    return channel;
+  }
 }
 
 }  // namespace
@@ -90,6 +116,7 @@ void FactoryInit() {
 grpc_channel* grpc_insecure_channel_create(const char* target,
                                            const grpc_channel_args* args,
                                            void* reserved) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_core::ExecCtx exec_ctx;
   GRPC_API_TRACE(
       "grpc_insecure_channel_create(target=%s, args=%p, reserved=%p)", 3,

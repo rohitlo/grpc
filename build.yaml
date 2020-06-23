@@ -1606,6 +1606,19 @@ filegroups:
   - src/core/ext/transport/cronet/client/secure/cronet_channel_create.cc
   - src/core/ext/transport/cronet/transport/cronet_api_dummy.cc
   - src/core/ext/transport/cronet/transport/cronet_transport.cc
+ - name: grpc_transport_diffproc
+  src:
+  - src/core/ext/transport/diffproc/diffproc_plugin.cc
+  - src/core/ext/transport/diffproc/diffproc_transport.cc
+  plugin: grpc_diffproc_plugin
+  uses:
+  - grpc_transport_diffproc_headers
+  - grpc_base
+- name: grpc_transport_diffproc_headers
+  headers:
+  - src/core/ext/transport/diffproc/diffproc_transport.h
+  uses:
+  - grpc_base_headers
 - name: grpc_transport_inproc
   src:
   - src/core/ext/transport/inproc/inproc_plugin.cc
@@ -1787,6 +1800,7 @@ libs:
   - grpc_transport_chttp2_server_insecure
   - grpc_transport_chttp2_client_insecure
   - grpc_transport_inproc
+  - grpc_transport_diffproc
   - grpc_lb_policy_grpclb_secure
   - grpc_lb_policy_cds_secure
   - grpc_lb_policy_xds_secure
@@ -1864,6 +1878,7 @@ libs:
   - grpc_transport_chttp2_server_insecure
   - grpc_transport_chttp2_client_insecure
   - grpc_transport_inproc
+  - grpc_transport_diffproc
   - grpc_resolver_dns_ares
   - grpc_resolver_dns_native
   - grpc_resolver_sockaddr

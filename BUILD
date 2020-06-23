@@ -1032,6 +1032,7 @@ grpc_cc_library(
         "grpc_transport_chttp2_client_insecure",
         "grpc_transport_chttp2_server_insecure",
         "grpc_transport_inproc",
+		"grpc_transport_diffproc",
         "grpc_workaround_cronet_compression_filter",
         "grpc_server_backward_compatibility",
     ],
@@ -1918,6 +1919,20 @@ grpc_cc_library(
     ],
     hdrs = [
         "src/core/ext/transport/inproc/inproc_transport.h",
+    ],
+    language = "c++",
+    deps = [
+        "grpc_base",
+    ],
+)
+grpc_cc_library(
+    name = "grpc_transport_diffproc",
+    srcs = [
+        "src/core/ext/transport/diffproc/diffproc_plugin.cc",
+        "src/core/ext/transport/diffproc/diffproc_transport.cc",
+    ],
+    hdrs = [
+        "src/core/ext/transport/diffproc/diffproc_transport.h",
     ],
     language = "c++",
     deps = [

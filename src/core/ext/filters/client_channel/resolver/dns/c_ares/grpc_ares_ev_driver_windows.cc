@@ -162,6 +162,7 @@ class GrpcPolledFdWindows {
   }
 
   void InnerContinueRegisterForOnReadableLocked(grpc_error* unused_error) {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     GRPC_CARES_TRACE_LOG(
         "fd:|%s| InnerContinueRegisterForOnReadableLocked "
         "wsa_connect_error_:%d",

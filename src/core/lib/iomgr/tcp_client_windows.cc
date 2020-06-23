@@ -78,6 +78,7 @@ static void on_alarm(void* acp, grpc_error* error) {
 }
 
 static void on_connect(void* acp, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   async_connect* ac = (async_connect*)acp;
   grpc_endpoint** ep = ac->endpoint;
   GPR_ASSERT(*ep == NULL);
@@ -127,6 +128,7 @@ static void tcp_connect(grpc_closure* on_done, grpc_endpoint** endpoint,
                         const grpc_channel_args* channel_args,
                         const grpc_resolved_address* addr,
                         grpc_millis deadline) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   SOCKET sock = INVALID_SOCKET;
   BOOL success;
   int status;

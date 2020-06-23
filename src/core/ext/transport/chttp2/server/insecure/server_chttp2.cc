@@ -28,6 +28,7 @@
 #include "src/core/lib/surface/server.h"
 
 int grpc_server_add_insecure_http2_port(grpc_server* server, const char* addr) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_core::ExecCtx exec_ctx;
   int port_num = 0;
   GRPC_API_TRACE("grpc_server_add_insecure_http2_port(server=%p, addr=%s)", 2,

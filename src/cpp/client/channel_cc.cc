@@ -53,6 +53,7 @@ Channel::Channel(const grpc::string& host, grpc_channel* channel,
                      ::grpc::experimental::ClientInterceptorFactoryInterface>>
                      interceptor_creators)
     : host_(host), c_channel_(channel) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   interceptor_creators_ = std::move(interceptor_creators);
   g_gli_initializer.summon();
 }
@@ -109,6 +110,7 @@ void ChannelResetConnectionBackoff(Channel* channel) {
 ::grpc::internal::Call Channel::CreateCallInternal(
     const ::grpc::internal::RpcMethod& method, ::grpc::ClientContext* context,
     ::grpc::CompletionQueue* cq, size_t interceptor_pos) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   const bool kRegistered = method.channel_tag() && context->authority().empty();
   grpc_call* c_call = nullptr;
   if (kRegistered) {
@@ -155,11 +157,13 @@ void ChannelResetConnectionBackoff(Channel* channel) {
 ::grpc::internal::Call Channel::CreateCall(
     const ::grpc::internal::RpcMethod& method, ::grpc::ClientContext* context,
     CompletionQueue* cq) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   return CreateCallInternal(method, context, cq, 0);
 }
 
 void Channel::PerformOpsOnCall(::grpc::internal::CallOpSetInterface* ops,
                                ::grpc::internal::Call* call) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   ops->FillOps(
       call);  // Make a copy of call. It's fine since Call just has pointers
 }

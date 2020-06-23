@@ -311,6 +311,7 @@ static void shutdown_cleanup(void* arg, grpc_error* /*error*/) {
 
 static void send_shutdown(grpc_channel* channel, bool send_goaway,
                           grpc_error* send_disconnect) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   struct shutdown_cleanup_args* sc =
       static_cast<struct shutdown_cleanup_args*>(gpr_malloc(sizeof(*sc)));
   GRPC_CLOSURE_INIT(&sc->closure, shutdown_cleanup, sc,
@@ -458,6 +459,7 @@ static void finish_destroy_channel(void* cd, grpc_error* /*error*/) {
 }
 
 static void destroy_channel(channel_data* chand) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   if (is_channel_orphaned(chand)) return;
   GPR_ASSERT(chand->server != nullptr);
   orphan_channel(chand);
@@ -1094,6 +1096,7 @@ void* grpc_server_register_method(
 }
 
 void grpc_server_start(grpc_server* server) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   size_t i;
   grpc_core::ExecCtx exec_ctx;
 
@@ -1165,6 +1168,7 @@ void grpc_server_setup_transport(
     const grpc_core::RefCountedPtr<grpc_core::channelz::SocketNode>&
         socket_node,
     grpc_resource_user* resource_user) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   size_t num_registered_methods;
   size_t alloc;
   registered_method* rm;
@@ -1245,7 +1249,7 @@ void grpc_server_setup_transport(
   chand->prev = chand->next->prev;
   chand->next->prev = chand->prev->next = chand;
   gpr_mu_unlock(&s->mu_global);
-
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   op = grpc_make_transport_op(nullptr);
   op->set_accept_stream = true;
   op->set_accept_stream_fn = accept_stream;

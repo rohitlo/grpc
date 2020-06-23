@@ -42,7 +42,7 @@
 #include "src/core/lib/iomgr/executor.h"
 #include "src/core/lib/iomgr/iomgr_internal.h"
 #include "src/core/lib/iomgr/sockaddr_utils.h"
-
+#include "windows_sockets_win.h"
 typedef struct {
   char* name;
   char* default_port;
@@ -60,6 +60,13 @@ static grpc_error* windows_blocking_resolve_address(
   int s;
   size_t i;
   grpc_error* error = GRPC_ERROR_NONE;
+
+  /*Named pipe support*/
+  if (name[0] == '\\' && name[1] == '\\' && name[2] == '.' && name[3] == '\\') {
+    return grpc_resolve_named_pipe_address(name + 9, addresses);
+  }
+
+
 
   /* parse name, splitting it into host and port parts */
   grpc_core::UniquePtr<char> host;

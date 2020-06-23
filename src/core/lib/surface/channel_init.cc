@@ -93,6 +93,7 @@ void grpc_channel_init_shutdown(void) {
 
 bool grpc_channel_init_create_stack(grpc_channel_stack_builder* builder,
                                     grpc_channel_stack_type type) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_ASSERT(g_finalized);
 
   grpc_channel_stack_builder_set_name(builder,
@@ -101,6 +102,7 @@ bool grpc_channel_init_create_stack(grpc_channel_stack_builder* builder,
   for (size_t i = 0; i < g_slots[type].num_slots; i++) {
     const stage_slot* slot = &g_slots[type].slots[i];
     if (!slot->fn(builder, slot->arg)) {
+      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
       return false;
     }
   }

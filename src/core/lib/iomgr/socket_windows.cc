@@ -54,6 +54,23 @@ grpc_winsocket* grpc_winsocket_create(SOCKET socket, const char* name) {
   return r;
 }
 
+
+grpc_winsocket* grpc_pipe_create(SOCKET socket, const char* name) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  char* final_name;
+  grpc_winsocket* r = (grpc_winsocket*)gpr_malloc(sizeof(grpc_winsocket));
+  memset(r, 0, sizeof(grpc_winsocket));
+  r->socket = socket;
+  gpr_mu_init(&r->state_mu);
+  gpr_asprintf(&final_name, "%s:socket=0x%p", name, r);
+  printf("\n%s\n", final_name);
+  grpc_iomgr_register_object(&r->iomgr_object, final_name);
+  gpr_free(final_name);
+  grpc_iocp_add_socket(r);
+  return r;
+}
+
+
 SOCKET grpc_winsocket_wrapped_socket(grpc_winsocket* socket) {
   return socket->socket;
 }
@@ -123,9 +140,11 @@ static void socket_notify_on_iocp(grpc_winsocket* socket, grpc_closure* closure,
   GPR_ASSERT(info->closure == NULL);
   gpr_mu_lock(&socket->state_mu);
   if (info->has_pending_iocp) {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     info->has_pending_iocp = 0;
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, closure, GRPC_ERROR_NONE);
   } else {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     info->closure = closure;
   }
   gpr_mu_unlock(&socket->state_mu);
@@ -137,6 +156,7 @@ void grpc_socket_notify_on_write(grpc_winsocket* socket,
 }
 
 void grpc_socket_notify_on_read(grpc_winsocket* socket, grpc_closure* closure) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   socket_notify_on_iocp(socket, closure, &socket->read_info);
 }
 

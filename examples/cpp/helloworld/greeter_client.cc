@@ -95,13 +95,43 @@ int main(int argc, char** argv) {
       return 0;
     }
   } else {
-    target_str = "localhost:50051";
+    target_str = "\\\\.\\pipe\\namedpipe";
   }
   GreeterClient greeter(grpc::CreateChannel(
       target_str, grpc::InsecureChannelCredentials()));
   std::string user("world");
+  std::cout << "At 103 greeter_client.cc"<<std::endl;
   std::string reply = greeter.SayHello(user);
   std::cout << "Greeter received: " << reply << std::endl;
+
+
+ /* HANDLE cFile;
+  BOOL fSuccess;
+  char writeBuffer[] = "Hey Server, How are you? \n";
+  char readBuffer[1023];
+  DWORD writeBufferSize = strlen(writeBuffer);
+  DWORD bytesRead, bytesWrite = 0;
+  DWORD pipeMode;
+  puts("Starting Client.....");
+
+  cFile = CreateFile(TEXT("\\\\.\\pipe\\namedpipe"),
+                     GENERIC_READ | GENERIC_WRITE,  // Read and Write Access
+                     0,                             // No sharing of file
+                     NULL,                          // Security
+                     OPEN_EXISTING,                 // Open existing pipe
+                     0,                             // Default Attrs
+                     NULL                           // No template file
+  );
+
+  if (cFile == INVALID_HANDLE_VALUE) {
+    std::cout << "Cannot create and connnect to named pipe at server end.."
+         << GetLastError() << std::endl;
+  } else {
+    puts("Connected to server successfully...");
+  }
+  */
+
+
 
   return 0;
 }

@@ -1190,6 +1190,7 @@ void inproc_transports_create(grpc_transport** server_transport,
                               const grpc_channel_args* /*server_args*/,
                               grpc_transport** client_transport,
                               const grpc_channel_args* /*client_args*/) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   INPROC_LOG(GPR_INFO, "inproc_transports_create");
   shared_mu* mu = new (gpr_malloc(sizeof(*mu))) shared_mu();
   inproc_transport* st = new (gpr_malloc(sizeof(*st)))
@@ -1226,9 +1227,10 @@ void grpc_inproc_transport_init(void) {
 grpc_channel* grpc_inproc_channel_create(grpc_server* server,
                                          grpc_channel_args* args,
                                          void* /*reserved*/) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GRPC_API_TRACE("grpc_inproc_channel_create(server=%p, args=%p)", 2,
                  (server, args));
-
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_core::ExecCtx exec_ctx;
 
   // Remove max_connection_idle and max_connection_age channel arguments since

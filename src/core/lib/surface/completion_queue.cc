@@ -673,6 +673,7 @@ static bool cq_begin_op_for_callback(grpc_completion_queue* cq, void* /*tag*/) {
 }
 
 bool grpc_cq_begin_op(grpc_completion_queue* cq, void* tag) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
 #ifndef NDEBUG
   gpr_mu_lock(cq->mu);
   if (cq->outstanding_tag_count == cq->outstanding_tag_capacity) {
