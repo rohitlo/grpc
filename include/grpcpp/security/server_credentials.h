@@ -64,6 +64,10 @@ static inline std::shared_ptr<ServerCredentials> InsecureServerCredentials() {
   return ::grpc_impl::InsecureServerCredentials();
 }
 
+static inline std::shared_ptr<ServerCredentials> NamedPipeServerCredentials() {
+  return ::grpc_impl::NamedPipeServerCredentials();
+}
+
 namespace experimental {
 
 typedef ::grpc_impl::experimental::AltsServerCredentialsOptions

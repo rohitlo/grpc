@@ -136,18 +136,18 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   DWORD bytes_write = 0;
   DWORD flags = 0;
   DWORD pipeMode;
-  WSABUF local_buffers[MAX_WSABUF_COUNT];
-  WSABUF* allocated = NULL;
-  WSABUF* buffers = local_buffers;
+  //WSABUF local_buffers[MAX_WSABUF_COUNT];
+  //WSABUF* allocated = NULL;
+  //WSABUF* buffers = local_buffers;
 
 
-   size_t i;
-  for (i = 0; i < slices->count; i++) {
-    char* data =
-        grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
-    printf( "WRITE %p (peer=%s): %s", np, np->peer_string, data);
-    gpr_free(data);
-  }
+  // size_t i;
+  //for (i = 0; i < slices->count; i++) {
+  //  char* data =
+  //      grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
+  //  printf( "WRITE %p (peer=%s): %s", np, np->peer_string, data);
+  //  gpr_free(data);
+  //}
 
 
 

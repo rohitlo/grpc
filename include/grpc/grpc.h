@@ -426,6 +426,12 @@ GRPCAPI int grpc_server_add_insecure_http2_port(grpc_server* server,
 /** Start a server - tells all listeners to start listening */
 GRPCAPI void grpc_server_start(grpc_server* server);
 
+
+
+/** Add a named pipe to server, 0 on failure.
+    REQUIRES: server not started */
+GRPCAPI int grpc_server_add_np_addr(grpc_server* server, const char* addr);
+
 /** Begin shutting down a server.
     After completion, no new calls or connections will be admitted.
     Existing calls will be allowed to complete.

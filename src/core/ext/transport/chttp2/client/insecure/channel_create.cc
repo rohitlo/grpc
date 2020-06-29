@@ -34,6 +34,7 @@
 #include "src/core/lib/surface/channel.h"
 #include "src/core/ext/transport/diffproc/diffproc_transport.h"
 #include <src\core\ext\transport\chttp2\transport\chttp2_transport.h>
+#include <src\core\ext\transport\diffproc\namedpipe\namedpipe_client.h>
 
 namespace grpc_core {
 
@@ -50,8 +51,9 @@ class Chttp2InsecureClientChannelFactory : public ClientChannelFactory {
 };
 
 namespace {
-
+static void done(void* arg, grpc_error* error) { puts("Success"); }
 grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
+  grpc_core::ExecCtx exec_ctx;
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   printf("Target at 54, :%s", target);
   if (target == nullptr) {
@@ -62,6 +64,8 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   // Named pipe support
   if (target[0] == '\\' && target[1] == '\\' && target[2] == '.' &&
       target[3] == '\\') {
+    grpc_closure conn;
+    GRPC_CLOSURE_INIT(&conn, done, nullptr, grpc_schedule_on_exec_ctx);
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_arg arg = grpc_channel_arg_string_create(const_cast<char*>(GRPC_ARG_SERVER_URI),
                                        const_cast<char*>(target+9));
@@ -72,8 +76,10 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
     grpc_channel_args* client_args =
         grpc_channel_args_copy_and_add(args, &arg, 1);
     client_args= grpc_channel_args_copy_and_add(args, &default_authority_arg, 1);
+    grpc_endpoint* ep;
+    np_connect(&conn, &ep, client_args, target);
     grpc_transport* transport =
-        diffproc_transport_create(client_args, true);
+        grpc_create_diffproc_transport(client_args, ep, 1, nullptr);
     GPR_ASSERT(transport);
     grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, transport);
     grpc_channel_args_destroy(client_args);

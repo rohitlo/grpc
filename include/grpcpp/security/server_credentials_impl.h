@@ -65,6 +65,9 @@ std::shared_ptr<ServerCredentials> SslServerCredentials(
 /// Builds insecure server credentials.
 std::shared_ptr<ServerCredentials> InsecureServerCredentials();
 
+/// Builds named pipe server credentials.
+std::shared_ptr<ServerCredentials> NamedPipeServerCredentials();
+
 namespace experimental {
 
 /// Options to create ServerCredentials with ALTS
