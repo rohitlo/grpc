@@ -1116,6 +1116,9 @@ add_library(alts_test_util
   src/core/lib/iomgr/tcp_server_windows.cc
   src/core/lib/iomgr/tcp_uv.cc
   src/core/lib/iomgr/tcp_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_client_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_server_windows.cc
   src/core/lib/iomgr/time_averaged_stats.cc
   src/core/lib/iomgr/timer.cc
   src/core/lib/iomgr/timer_custom.cc
@@ -1125,8 +1128,8 @@ add_library(alts_test_util
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/windows_sockets_win.cc
+  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
   src/core/lib/iomgr/wakeup_fd_pipe.cc
@@ -1612,6 +1615,9 @@ add_library(grpc
   src/core/lib/iomgr/tcp_server_windows.cc
   src/core/lib/iomgr/tcp_uv.cc
   src/core/lib/iomgr/tcp_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_client_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_server_windows.cc
   src/core/lib/iomgr/time_averaged_stats.cc
   src/core/lib/iomgr/timer.cc
   src/core/lib/iomgr/timer_custom.cc
@@ -1621,8 +1627,8 @@ add_library(grpc
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/windows_sockets_win.cc
+  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
   src/core/lib/iomgr/wakeup_fd_pipe.cc
@@ -1818,12 +1824,15 @@ add_library(grpc
   src/core/tsi/ssl_transport_security.cc
   src/core/tsi/transport_security_grpc.cc
   src/core/ext/transport/chttp2/server/chttp2_server.cc
+  src/core/ext/transport/diffproc/server/server_utils.cc
+  src/core/ext/transport/diffproc/server/server_utils.cc
   src/core/ext/transport/chttp2/client/secure/secure_channel_create.cc
   src/core/ext/transport/chttp2/server/insecure/server_chttp2.cc
   src/core/ext/transport/chttp2/server/insecure/server_chttp2_posix.cc
+    src/core/ext/transport/diffproc/server/server_np.cc
   src/core/ext/transport/inproc/inproc_plugin.cc
   src/core/ext/transport/inproc/inproc_transport.cc
-    src/core/ext/transport/diffproc/diffproc_plugin.cc
+  src/core/ext/transport/diffproc/diffproc_plugin.cc
   src/core/ext/transport/diffproc/diffproc_transport.cc
   src/core/ext/filters/client_channel/lb_policy/grpclb/client_load_reporting_filter.cc
   src/core/ext/filters/client_channel/lb_policy/grpclb/grpclb.cc
@@ -2115,6 +2124,9 @@ add_library(grpc_cronet
   src/core/lib/iomgr/tcp_server_windows.cc
   src/core/lib/iomgr/tcp_uv.cc
   src/core/lib/iomgr/tcp_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_client_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_server_windows.cc
   src/core/lib/iomgr/time_averaged_stats.cc
   src/core/lib/iomgr/timer.cc
   src/core/lib/iomgr/timer_custom.cc
@@ -2124,8 +2136,8 @@ add_library(grpc_cronet
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/windows_sockets_win.cc
+  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
   src/core/lib/iomgr/wakeup_fd_pipe.cc
@@ -2546,6 +2558,9 @@ add_library(grpc_test_util
   src/core/lib/iomgr/tcp_server_windows.cc
   src/core/lib/iomgr/tcp_uv.cc
   src/core/lib/iomgr/tcp_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_client_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_server_windows.cc
   src/core/lib/iomgr/time_averaged_stats.cc
   src/core/lib/iomgr/timer.cc
   src/core/lib/iomgr/timer_custom.cc
@@ -2555,8 +2570,8 @@ add_library(grpc_test_util
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/windows_sockets_win.cc
+  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
   src/core/lib/iomgr/wakeup_fd_pipe.cc
@@ -2892,6 +2907,9 @@ add_library(grpc_test_util_unsecure
   src/core/lib/iomgr/tcp_server_windows.cc
   src/core/lib/iomgr/tcp_uv.cc
   src/core/lib/iomgr/tcp_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_client_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_server_windows.cc
   src/core/lib/iomgr/time_averaged_stats.cc
   src/core/lib/iomgr/timer.cc
   src/core/lib/iomgr/timer_custom.cc
@@ -2901,8 +2919,8 @@ add_library(grpc_test_util_unsecure
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/windows_sockets_win.cc
+  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
   src/core/lib/iomgr/wakeup_fd_pipe.cc
@@ -3214,6 +3232,9 @@ add_library(grpc_unsecure
   src/core/lib/iomgr/tcp_server_windows.cc
   src/core/lib/iomgr/tcp_uv.cc
   src/core/lib/iomgr/tcp_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_client_windows.cc
+  src/core/ext/transport/diffproc/namedpipe/namedpipe_server_windows.cc
   src/core/lib/iomgr/time_averaged_stats.cc
   src/core/lib/iomgr/timer.cc
   src/core/lib/iomgr/timer_custom.cc
@@ -3223,8 +3244,8 @@ add_library(grpc_unsecure
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/windows_sockets_win.cc
+  src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
   src/core/lib/iomgr/wakeup_fd_pipe.cc
@@ -3273,6 +3294,7 @@ add_library(grpc_unsecure
   src/core/lib/debug/trace.cc
   src/core/ext/transport/chttp2/server/insecure/server_chttp2.cc
   src/core/ext/transport/chttp2/server/insecure/server_chttp2_posix.cc
+  src/core/ext/transport/diffproc/server/server_np.cc
   src/core/ext/transport/chttp2/transport/bin_decoder.cc
   src/core/ext/transport/chttp2/transport/bin_encoder.cc
   src/core/ext/transport/chttp2/transport/chttp2_plugin.cc
@@ -3302,6 +3324,7 @@ add_library(grpc_unsecure
   src/core/ext/filters/http/message_compress/message_compress_filter.cc
   src/core/ext/filters/http/server/http_server_filter.cc
   src/core/ext/transport/chttp2/server/chttp2_server.cc
+  src/core/ext/transport/diffproc/server/server_utils.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create_posix.cc
   src/core/ext/transport/chttp2/client/authority.cc
@@ -3349,7 +3372,7 @@ add_library(grpc_unsecure
   src/core/ext/upb-generated/google/rpc/status.upb.c
   src/core/ext/transport/inproc/inproc_plugin.cc
   src/core/ext/transport/inproc/inproc_transport.cc
-  src/core/ext/transport/diffproc/diffproc_plugin.cc
+    src/core/ext/transport/diffproc/diffproc_plugin.cc
   src/core/ext/transport/diffproc/diffproc_transport.cc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/dns_resolver_ares.cc
   src/core/ext/filters/client_channel/resolver/dns/c_ares/grpc_ares_ev_driver.cc
@@ -3737,6 +3760,7 @@ add_library(grpc++
   src/cpp/common/tls_credentials_options.cc
   src/cpp/common/tls_credentials_options_util.cc
   src/cpp/server/insecure_server_credentials.cc
+  src/core/ext/transport/diffproc/credentials/namedpipe_server_credentials.cc
   src/cpp/server/secure_server_credentials.cc
   src/cpp/client/channel_cc.cc
   src/cpp/client/client_context.cc
@@ -4875,6 +4899,7 @@ add_library(grpc++_unsecure
   src/cpp/client/insecure_credentials.cc
   src/cpp/common/insecure_create_auth_context.cc
   src/cpp/server/insecure_server_credentials.cc
+  src/core/ext/transport/diffproc/credentials/namedpipe_server_credentials.cc
   src/cpp/client/channel_cc.cc
   src/cpp/client/client_context.cc
   src/cpp/client/client_interceptor.cc
