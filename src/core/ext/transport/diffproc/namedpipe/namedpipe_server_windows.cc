@@ -39,8 +39,10 @@
 #include "src/core/lib/iomgr/socket_windows.h"
 #include "src/core/lib/iomgr/timer.h"
 #include <src\core\ext\transport\diffproc\namedpipe\namedpipe_windows.h>
+#include <tchar.h>
+#include <strsafe.h>
 #define INSTANCES 4
-#define BUFSIZE 1023
+#define BUFSIZE 4096
 //#define BUFSIZE 1023;
 typedef struct grpc_pipeInstance {
   //HANDLE handle;
@@ -56,10 +58,10 @@ typedef struct grpc_pipeInstance {
   DWORD dwState;
   DWORD cbRead;
   DWORD cbToWrite;
-  TCHAR chRequest[BUFSIZE];
+  BYTE* buf;
   int outstanding_calls;
   HANDLE new_handle;
-  
+  TCHAR chReply[BUFSIZE] = {};
 
   struct grpc_pipeInstance* next;
 } grpc_pipeInstance, *LPgrpc_piepInstance;
@@ -100,6 +102,14 @@ struct grpc_np_server {
 static VOID DisconnectAndReconnect(grpc_np_server*, DWORD);
 static BOOL ConnectToNewClient(HANDLE, LPOVERLAPPED);
 static VOID GetAnswerToRequest(LPgrpc_piepInstance); 
+
+
+VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
+  _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->buf);
+  StringCchCopy(pipe->chReply, BUFSIZE, TEXT("Default answer from server"));
+  pipe->cbToWrite = (lstrlen(pipe->chReply) + 1) * sizeof(TCHAR);
+}
+
 
 /* Public function. Allocates the proper data structures to hold a
    grpc_pipe_server. */
@@ -330,6 +340,7 @@ static void on_accept(void* arg, grpc_error* error) {
           switch (server->pipes[i]->dwState) {
               // Pending connect operation
             case CONNECTING_STATE:
+              puts("pending Connecting state");
               if (!fSuccess) {
                 printf("Error %d.\n", GetLastError());
               }
@@ -338,16 +349,21 @@ static void on_accept(void* arg, grpc_error* error) {
 
               // Pending read operation
             case READING_STATE:
+              puts("pending Read state");
               if (!fSuccess || cbRet == 0) {
                 DisconnectAndReconnect(server, i);
                 continue;
               }
+              _tprintf(TEXT("[%d] %s\n"), server->pipes[i]->handle,
+                       server->pipes[i]->buf);
+              printf("\n Read message  :%s\n", server->pipes[i]->buf);
               server->pipes[i]->cbRead = cbRet;
               server->pipes[i]->dwState = WRITING_STATE;
               break;
 
               // Pending write operation
             case WRITING_STATE:
+              puts("Pending write state");
               if (!fSuccess || cbRet != server->pipes[i]->cbToWrite) {
                 DisconnectAndReconnect(server, i);
                 continue;
@@ -362,38 +378,23 @@ static void on_accept(void* arg, grpc_error* error) {
         }
 
         // The pipe state determines which operation to do next.
-
         switch (server->pipes[i]->dwState) {
             // READING_STATE:
             // The pipe instance is connected to the client
             // and is ready to read a request from the client.
 
           case READING_STATE:
-            //gpr_mu_lock(&server->pipes[i]->server->mu);
-   //         ep = grpc_namedpipe_create(server->pipes[i]->handle,
-   //                                    server->pipes[i]->server->channel_args,"server",0);
-   //         printf("\n SERVER HANDLE : %p \n", server->pipes[i]->handle);
-   //         /* The only time we should call our callback, is where we
-   //successfully managed to accept a connection, and created an endpoint. */
-   //         if (ep) {
-   //           // Create acceptor.
-   //           grpc_np_server_acceptor* acceptor =
-   //               (grpc_np_server_acceptor*)gpr_malloc(sizeof(*acceptor));
-   //           acceptor->from_server = server;
-   //           server->pipes[i]->server->on_accept_cb(
-   //               server->pipes[i]->server->on_accept_cb_arg,
-   //                                                    ep, NULL,
-   //                                    acceptor);
-   //         }
-   //         break;
-            fSuccess = ReadFile(server->pipes[i]->handle, server->pipes[i]->chRequest,
-                         BUFSIZE * sizeof(TCHAR), &server->pipes[i]->cbRead,
+            puts("current read state");
+            fSuccess =
+                ReadFile(server->pipes[i]->handle, server->pipes[i]->buf,
+                         4096, &server->pipes[i]->cbRead,
                          &server->pipes[i]->op);
 
             // The read operation completed successfully.
 
             if (fSuccess && server->pipes[i]->cbRead != 0) {
               puts("Read ops completed successfully...");
+              printf("\n Read message  :%s\n", server->pipes[i]->buf);
               server->pipes[i]->fPendingIO = FALSE;
               server->pipes[i]->dwState = WRITING_STATE;
               continue;
@@ -408,6 +409,35 @@ static void on_accept(void* arg, grpc_error* error) {
               continue;
             }
             DisconnectAndReconnect(server,i);
+            break;
+
+                    case WRITING_STATE:
+            GetAnswerToRequest(server->pipes[i]);
+
+            fSuccess =
+                WriteFile(server->pipes[i]->handle, server->pipes[i]->chReply,
+                          server->pipes[i]->cbToWrite, &cbRet,
+                          &server->pipes[i]->op);
+
+            // The write operation completed successfully.
+
+            if (fSuccess && cbRet == server->pipes[i]->cbToWrite) {
+              server->pipes[i]->fPendingIO = FALSE;
+              server->pipes[i]->dwState = READING_STATE;
+              continue;
+            }
+
+            // The write operation is still pending.
+
+            dwErr = GetLastError();
+            if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
+              server->pipes[i]->fPendingIO = TRUE;
+              continue;
+            }
+
+            // An error occurred; disconnect from the client.
+
+            DisconnectAndReconnect(server, i);
             break;
             /*gpr_mu_unlock(&server->pipes[i]->server->mu);*/
           default: {
@@ -442,6 +472,9 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   sp->handle = hd;
   sp->shutting_down = 0;
   sp->outstanding_calls = 0;
+  //DWORD FileSize = ftell(myfile); 
+  sp->buf = (BYTE*)VirtualAlloc(NULL, 4096, MEM_RESERVE | MEM_COMMIT,
+                                PAGE_EXECUTE_READWRITE);
   sp->new_handle = INVALID_HANDLE_VALUE;
   /*GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, s, grpc_schedule_on_exec_ctx);*/
   GPR_ASSERT(sp->handle);
@@ -470,6 +503,8 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   }
 
    pipeInstance->op.hEvent = s->hEvents[s->count];
+  pipeInstance->op.Offset = 2048;
+   pipeInstance->op.OffsetHigh = 2048;
 
   namedPipe =
        CreateNamedPipe(TEXT(addr),                  // pipe name
@@ -479,8 +514,8 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
                               PIPE_READMODE_MESSAGE |  // message-read mode
                               PIPE_WAIT,               // blocking mode
                               4,                // number of instances
-                              BUFSIZE * sizeof(TCHAR),  // output buffer size
-                              BUFSIZE * sizeof(TCHAR),  // input buffer size
+                              BUFSIZE * sizeof(BYTE),  // output buffer size
+                              BUFSIZE * sizeof(BYTE),  // input buffer size
                               0,             // client time-out
                               NULL);  // default security attributes 
 

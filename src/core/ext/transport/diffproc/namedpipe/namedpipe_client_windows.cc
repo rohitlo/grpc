@@ -93,7 +93,7 @@ static void on_connect(void* cdc, grpc_error* error){
         0, //No sharing of file
         NULL, // Security
         OPEN_EXISTING, // Open existing pipe
-        0, //Default Attrs
+                    FILE_ATTRIBUTE_NORMAL,              // Default Attrs
         NULL // No template file
         );
     
@@ -120,11 +120,10 @@ static void on_connect(void* cdc, grpc_error* error){
          // Testing purpose
          LPCTSTR lpvMessage =
              TEXT("Hey this is the first time I am trying to use pipe");
-         DWORD cbToWrite = (lstrlen(lpvMessage) + 1) * sizeof(TCHAR);
+         DWORD cbToWrite = 4096;
          DWORD cbWritten;
          _tprintf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite,
                   lpvMessage);
-         while (1) {
            fSuccess = WriteFile(clientHandle,  // pipe handle
                                 lpvMessage,    // message
                                 cbToWrite,     // message length
@@ -133,7 +132,8 @@ static void on_connect(void* cdc, grpc_error* error){
            if (!fSuccess) {
              _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"),
                       GetLastError());
-             break;
+             error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
+             goto failure;
            }
 
            printf("\nMessage sent to server, receiving reply as follows:\n");
@@ -153,7 +153,6 @@ static void on_connect(void* cdc, grpc_error* error){
          on_connect(cd, GRPC_ERROR_NONE);
          return;
        }
-    }
 
 failure:
     GPR_ASSERT(error != GRPC_ERROR_NONE);
