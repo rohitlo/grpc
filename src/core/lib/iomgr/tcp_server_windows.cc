@@ -259,15 +259,7 @@ static grpc_error* start_accept_locked(grpc_tcp_listener* port) {
     return GRPC_ERROR_NONE;
   }
 
-  // Named pipe as AF_UNSPEC
-  if (port->isPipe == 1) {
-    BOOL connectPipe = ConnectNamedPipe(port->socket, NULL);
-    if (connectPipe == FALSE) {
-      puts("Error");
-    } else {
-      puts("Client Connected");
-    }
-  } else {
+
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
                      grpc_get_default_wsa_socket_flags());
@@ -293,7 +285,6 @@ static grpc_error* start_accept_locked(grpc_tcp_listener* port) {
         goto failure;
       }
     }
-  }
   /* We're ready to do the accept. Calling grpc_socket_notify_on_read may
      immediately process an accept that happened in the meantime. */
   port->new_socket = sock;
@@ -401,65 +392,8 @@ static void on_accept(void* arg, grpc_error* error) {
   }
   gpr_mu_unlock(&sp->server->mu);
 }
-static grpc_error* add_pipe_to_server(grpc_tcp_server* s, SOCKET sock,
-                                      const grpc_resolved_address* addr,
-                                      unsigned port_index,
-                                      grpc_tcp_listener** listener) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  grpc_tcp_listener* sp = NULL;
-  int port = -1;
-  int status;
-  GUID guid = WSAID_ACCEPTEX;
-  DWORD ioctl_num_bytes;
-  LPFN_ACCEPTEX AcceptEx;
-  grpc_error* error = GRPC_ERROR_NONE;
 
-  ///* We need to grab the AcceptEx pointer for that port, as it may be
-  //   interface-dependent. We'll cache it to avoid doing that again. */
-  /* status =
-       WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid),
-                &AcceptEx, sizeof(AcceptEx), &ioctl_num_bytes, NULL, NULL);
 
-   if (status != 0) {
-     char* utf8_message = gpr_format_message(WSAGetLastError());
-     gpr_log(GPR_ERROR, "on_connect error: %s", utf8_message);
-     gpr_free(utf8_message);
-     closesocket(sock);
-     return GRPC_ERROR_NONE;
-   }*/
-
-  // error = prepare_socket(sock, addr, &port);
-  // if (error != GRPC_ERROR_NONE) {
-  //  return error;
-  //}
-
-  // GPR_ASSERT(port >= 0);
-  // gpr_mu_lock(&s->mu);
-  GPR_ASSERT(!s->on_accept_cb && "must add ports before starting server");
-  sp = (grpc_tcp_listener*)gpr_malloc(sizeof(grpc_tcp_listener));
-  sp->next = NULL;
-  if (s->head == NULL) {
-    s->head = sp;
-  } else {
-    s->tail->next = sp;
-  }
-  s->tail = sp;
-  sp->server = s;
-  sp->socket = grpc_pipe_create(sock, "listener");
-  sp->shutting_down = 0;
-  sp->outstanding_calls = 0;
-  sp->isPipe = 1;
-  // sp->AcceptEx = AcceptEx;
-  sp->new_socket = INVALID_SOCKET;
-  sp->port = port;
-  sp->port_index = port_index;
-  GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, sp, grpc_schedule_on_exec_ctx);
-  GPR_ASSERT(sp->socket);
-  gpr_mu_unlock(&s->mu);
-  *listener = sp;
-  printf("\n%p \n", listener);
-  return GRPC_ERROR_NONE;
-}
 static grpc_error* add_socket_to_server(grpc_tcp_server* s, SOCKET sock,
                                         const grpc_resolved_address* addr,
                                         unsigned port_index,
@@ -597,15 +531,6 @@ static grpc_error* tcp_server_add_port(grpc_tcp_server* s,
 
     addr = &wildcard;
   }
-  // Named pipe as AF_UNSPEC
-  if (grpc_sockaddr_get_port(addr) == 1) {
-    sock = create_pipe(addr);
-    if (sock == INVALID_SOCKET) {
-      error = GRPC_WSA_ERROR(WSAGetLastError(), "WSAPIPE");
-      goto done;
-    }
-    error = add_pipe_to_server(s, sock, addr, port_index, &sp);
-  } else {
     sock = WSASocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP, NULL, 0,
                      grpc_get_default_wsa_socket_flags());
     if (sock == INVALID_SOCKET) {
@@ -614,7 +539,6 @@ static grpc_error* tcp_server_add_port(grpc_tcp_server* s,
     }
 
     error = add_socket_to_server(s, sock, addr, port_index, &sp);
-  }
 
 done:
   gpr_free(allocated_addr);

@@ -41,6 +41,10 @@
     }                                                 \
   } while (0)
 
+
+
+static int writeState = 1;
+
 static const grpc_transport_vtable* get_vtable(void);
 //COTR
 grpc_diffproc_transport::grpc_diffproc_transport(
@@ -55,8 +59,9 @@ grpc_diffproc_transport::grpc_diffproc_transport(
   grpc_slice_buffer_init(&outbuf);
   if (is_client) {
     grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
+    grpc_diffproc_initiate_write(this);
   }
-  grpc_diffproc_initiate_write(this);
+  
 }
 
 //DOTR
@@ -158,6 +163,7 @@ void grpc_diffproc_stream::ref(const char* reason) {
    }
 
     void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
+     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      grpc_diffproc_transport* t = reinterpret_cast<grpc_diffproc_transport*>(gt);
    }
 
@@ -181,6 +187,7 @@ void grpc_diffproc_stream::ref(const char* reason) {
        const grpc_channel_args* channel_args, grpc_endpoint* ep, bool is_client,
        grpc_resource_user* resource_user) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+     printf("\n Endpoint ptr : %p and handle : %p \n ", ep);
      auto t = new grpc_diffproc_transport(channel_args, ep, is_client,
                                           resource_user);
      return &t->base;
@@ -189,20 +196,33 @@ void grpc_diffproc_stream::ref(const char* reason) {
 
    void grpc_diffproc_initiate_write(grpc_diffproc_transport* t) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+     printf("\n Endpoint ptr : %p and handle : %p \n ", t->ep);
        grpc_endpoint_write(t->ep, &t->outbuf,GRPC_CLOSURE_INIT(&t->write_action_end_locked, write_action_end,t, grpc_schedule_on_exec_ctx),nullptr);
+     writeState = 0;
+       printf("\n WriteState %d \n", writeState);
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
    }
 
    void grpc_diffproc_transport_start_reading(
        grpc_transport* transport, grpc_slice_buffer* read_buffer) {
+     //grpc_core::ExecCtx exec_ctx;
      /*grpc_slice_buffer_add(buf, slice);*/
+     grpc_diffproc_transport* t =
+         reinterpret_cast<grpc_diffproc_transport*>(transport);
+   /*  while (1) {
+       printf("\n WriteState %d \n", writeState);
+       if (writeState == 0) {*/
+         grpc_endpoint_read(
+             t->ep, read_buffer,
+             GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end, t,
+                               grpc_schedule_on_exec_ctx),
+             GRPC_ERROR_NONE);
+         //break;
+     /*  }
+     }*/
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-     grpc_diffproc_transport* t = reinterpret_cast<grpc_diffproc_transport*>(transport);
-     grpc_endpoint_read(
-         t->ep, read_buffer,
-         GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end, t,
-                           grpc_schedule_on_exec_ctx),
-         GRPC_ERROR_NONE);
+     
+
    }
 
 

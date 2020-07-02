@@ -54,6 +54,7 @@ typedef struct {
 
   grpc_core::RefCountedPtr<grpc_core::channelz::ListenSocketNode>
       channelz_listen_socket;
+  BOOL pendingOp = 0;
 } server_state;
 
 
@@ -86,7 +87,7 @@ static void on_accept(void* arg, grpc_endpoint* np,
   }  
   grpc_np_server_ref(state->np_server);
   gpr_mu_unlock(&state->mu);
-  grpc_core::ExecCtx::Get()->Now();      
+  //grpc_core::ExecCtx::Get()->Now();      
   if (np != nullptr) {
       puts("Endpoint is not null...  server_utils.cc");
     const char* args_to_remove[] = {GRPC_ARG_MAX_CONNECTION_IDLE_MS,
@@ -98,9 +99,12 @@ static void on_accept(void* arg, grpc_endpoint* np,
         grpc_create_diffproc_transport(server_args, np, false, nullptr);
     grpc_server_setup_transport(state->server, transport, nullptr, server_args,
                                 nullptr, nullptr);
+    //grpc_get_transport_state
       // Use notify_on_receive_settings callback to enforce the
       // handshake deadline.
+    //if (state->pendingOp == 1) {
       grpc_diffproc_transport_start_reading(transport, read_buffer);
+    //}
     grpc_channel_args_destroy(server_args);
     }   
 }
@@ -122,40 +126,6 @@ static void server_start_listener(grpc_server* /*server*/, void* arg,
 static void grpc_np_server_shutdown_complete(void* arg, grpc_error* error) {
   printf("Shutdown");
 }
-
-// static grpc_error* chttp2_server_add_acceptor(grpc_server* server,
-//                                               const char* name,
-//                                               grpc_channel_args* args){
-//   grpc_np_server* np_server = nullptr;
-//   grpc_error* err = GRPC_ERROR_NONE;
-//   server_state* state = nullptr;
-//   const grpc_arg* arg = nullptr;
-//   state = static_cast<server_state*>(gpr_zalloc(sizeof(*state)));
-//   GRPC_CLOSURE_INIT(&state->tcp_server_shutdown_complete,np_server_shutdown_complete, state, grpc_schedule_on_exec_ctx);
-//   err = grpc_tcp_server_create(&state->np_server_shutdown_complete, args, &np_server);
-//   if (err != GRPC_ERROR_NONE) {
-//     goto error;
-//   }
-//   state->server = server;
-//   state->np_server = np_server;
-//   state->args = args;
-//   state->shutdown = true;
-//   gpr_mu_init(&state->mu);
-//   grpc_server_add_listener(server, state, server_start_listener,
-//                            server_destroy_listener, /* node */ nullptr);
-//   return err;
-
-//   /* Error path: cleanup and return */
-// error:
-//   GPR_ASSERT(err != GRPC_ERROR_NONE);
-//   if (np_server) {
-//     grpc_np_server_unref(np_server);
-//   } else {
-//     grpc_channel_args_destroy(args);
-//     gpr_free(state);
-//   }
-//   return err;
-// }
 
 /* Server callback: destroy the tcp listener (so we don't generate further
    callbacks) */
@@ -183,14 +153,10 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
   int port_temp = 1;
   grpc_error* err = GRPC_ERROR_NONE;
   server_state* state = nullptr;
-  grpc_error* error = nullptr;
+  grpc_error** errors = nullptr;
   const grpc_arg* arg = nullptr;
 
   *port = -1;
-
-//   if (strncmp(addr, "external:", 9) == 0) {
-//     return chttp2_server_add_acceptor(server, addr, args);
-//   }
 
   state = static_cast<server_state*>(gpr_zalloc(sizeof(*state)));
   GRPC_CLOSURE_INIT(&state->grpc_np_server_shutdown_complete,
@@ -207,12 +173,13 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
   state->shutdown = true;
   gpr_mu_init(&state->mu);
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  error = grpc_server_np_add_port(np_server, addr);
-   if (error == GRPC_ERROR_NONE) {
-    *port = port_temp;
-     puts("No error");
+  errors = static_cast<grpc_error**>(gpr_malloc(sizeof(*errors) * 4));
+  for (i = 0; i < 4; i++) {
+    errors[i] = grpc_server_np_add_port(np_server, addr);
+    if (errors[i] == GRPC_ERROR_NONE) {
+      count++;
     }
-
+  }
   /* Register with the server only upon success */
   grpc_server_add_listener(server, state, server_start_listener,server_destroy_listener,nullptr);
   goto done;
@@ -228,9 +195,11 @@ error:
   }
 
 done:
-  if (error != nullptr) {
-    GRPC_ERROR_UNREF(error);
-    gpr_free(error);
+  if (errors != nullptr) {
+    for (i = 0; i < 4; i++) {
+      GRPC_ERROR_UNREF(errors[i]);
+    }
+    gpr_free(errors);
   }
   return err;
 }

@@ -34,7 +34,7 @@
  * Takes ownership of the handle.
  */
 grpc_endpoint* grpc_namedpipe_create(HANDLE handle, grpc_channel_args* channel_args,
-                               const char* peer_string);
+                               const char* peer_string, BOOL isClient);
 
 
 #endif

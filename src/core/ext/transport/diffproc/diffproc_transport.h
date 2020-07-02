@@ -57,7 +57,7 @@ struct grpc_diffproc_transport {
   grpc_closure write_action_begin_locked;
   grpc_closure write_action;
   grpc_closure write_action_end_locked;
-
+  BOOL writeState = 1;
   grpc_closure read_action_locked;
   /** incoming read bytes */
   grpc_slice_buffer read_buffer;

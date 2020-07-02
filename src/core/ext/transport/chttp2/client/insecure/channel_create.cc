@@ -51,7 +51,16 @@ class Chttp2InsecureClientChannelFactory : public ClientChannelFactory {
 };
 
 namespace {
-static void done(void* arg, grpc_error* error) { puts("Success"); }
+struct conndetails {
+  grpc_endpoint* endpoint;
+  HANDLE hd;
+};
+
+static void done(void* arg, grpc_error* error) { 
+  //conndetails* cd = (cob*) arg;
+  puts("DONE CONNECTING");
+
+}
 grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   grpc_core::ExecCtx exec_ctx;
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
@@ -65,7 +74,8 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   if (target[0] == '\\' && target[1] == '\\' && target[2] == '.' &&
       target[3] == '\\') {
     grpc_closure conn;
-    GRPC_CLOSURE_INIT(&conn, done, nullptr, grpc_schedule_on_exec_ctx);
+    conndetails* cd = (conndetails*)gpr_malloc(sizeof(conndetails));
+    GRPC_CLOSURE_INIT(&conn, done, cd, grpc_schedule_on_exec_ctx);
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_arg arg = grpc_channel_arg_string_create(const_cast<char*>(GRPC_ARG_SERVER_URI),
                                        const_cast<char*>(target+9));
@@ -76,10 +86,21 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
     grpc_channel_args* client_args =
         grpc_channel_args_copy_and_add(args, &arg, 1);
     client_args= grpc_channel_args_copy_and_add(args, &default_authority_arg, 1);
-    grpc_endpoint* ep;
-    np_connect(&conn, &ep, client_args, target);
+    Mutex mu_;
+    bool shutdown_ = false;
+    grpc_endpoint* endpoint_ = nullptr;
+    grpc_endpoint** ep;
+    {
+
+      MutexLock lock(&mu_);
+      GPR_ASSERT(endpoint_ == nullptr);
+      ep = &endpoint_;
+    }
+    printf("\n 89 channel create Endpoint ptr : %p %p \n ", ep, endpoint_);
+    np_connect(&conn, ep, client_args, target);
+    printf("\n 91 channel create Endpoint ptr : %p %p \n ", ep, endpoint_);
     grpc_transport* transport =
-        grpc_create_diffproc_transport(client_args, ep, 1, nullptr);
+        grpc_create_diffproc_transport(client_args, endpoint_, 1, nullptr);
     GPR_ASSERT(transport);
     grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, transport);
     grpc_channel_args_destroy(client_args);
