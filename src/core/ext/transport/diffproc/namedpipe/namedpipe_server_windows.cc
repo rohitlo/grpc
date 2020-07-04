@@ -58,10 +58,10 @@ typedef struct grpc_pipeInstance {
   DWORD dwState;
   DWORD cbRead;
   DWORD cbToWrite;
-  BYTE* buf;
+  TCHAR chReply[BUFSIZE];
   int outstanding_calls;
   HANDLE new_handle;
-  TCHAR chReply[BUFSIZE] = {};
+  TCHAR chRequest[BUFSIZE] = {};
 
   struct grpc_pipeInstance* next;
 } grpc_pipeInstance, *LPgrpc_piepInstance;
@@ -105,7 +105,7 @@ static VOID GetAnswerToRequest(LPgrpc_piepInstance);
 
 
 VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
-  _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->buf);
+  _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->chRequest);
   StringCchCopy(pipe->chReply, BUFSIZE, TEXT("Default answer from server"));
   pipe->cbToWrite = (lstrlen(pipe->chReply) + 1) * sizeof(TCHAR);
 }
@@ -355,8 +355,8 @@ static void on_accept(void* arg, grpc_error* error) {
                 continue;
               }
               _tprintf(TEXT("[%d] %s\n"), server->pipes[i]->handle,
-                       server->pipes[i]->buf);
-              printf("\n Read message  :%s\n", server->pipes[i]->buf);
+                       server->pipes[i]->chRequest);
+              printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
               server->pipes[i]->cbRead = cbRet;
               server->pipes[i]->dwState = WRITING_STATE;
               break;
@@ -383,10 +383,10 @@ static void on_accept(void* arg, grpc_error* error) {
             // The pipe instance is connected to the client
             // and is ready to read a request from the client.
 
-          case READING_STATE:
+        case READING_STATE:
             puts("current read state");
-            fSuccess =
-                ReadFile(server->pipes[i]->handle, server->pipes[i]->buf,
+            fSuccess = ReadFile(
+                server->pipes[i]->handle, server->pipes[i]->chRequest,
                          4096, &server->pipes[i]->cbRead,
                          &server->pipes[i]->op);
 
@@ -394,7 +394,7 @@ static void on_accept(void* arg, grpc_error* error) {
 
             if (fSuccess && server->pipes[i]->cbRead != 0) {
               puts("Read ops completed successfully...");
-              printf("\n Read message  :%s\n", server->pipes[i]->buf);
+              printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
               server->pipes[i]->fPendingIO = FALSE;
               server->pipes[i]->dwState = WRITING_STATE;
               continue;
@@ -409,35 +409,6 @@ static void on_accept(void* arg, grpc_error* error) {
               continue;
             }
             DisconnectAndReconnect(server,i);
-            break;
-
-                    case WRITING_STATE:
-            GetAnswerToRequest(server->pipes[i]);
-
-            fSuccess =
-                WriteFile(server->pipes[i]->handle, server->pipes[i]->chReply,
-                          server->pipes[i]->cbToWrite, &cbRet,
-                          &server->pipes[i]->op);
-
-            // The write operation completed successfully.
-
-            if (fSuccess && cbRet == server->pipes[i]->cbToWrite) {
-              server->pipes[i]->fPendingIO = FALSE;
-              server->pipes[i]->dwState = READING_STATE;
-              continue;
-            }
-
-            // The write operation is still pending.
-
-            dwErr = GetLastError();
-            if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
-              server->pipes[i]->fPendingIO = TRUE;
-              continue;
-            }
-
-            // An error occurred; disconnect from the client.
-
-            DisconnectAndReconnect(server, i);
             break;
             /*gpr_mu_unlock(&server->pipes[i]->server->mu);*/
           default: {
@@ -473,10 +444,8 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   sp->shutting_down = 0;
   sp->outstanding_calls = 0;
   //DWORD FileSize = ftell(myfile); 
-  sp->buf = (BYTE*)VirtualAlloc(NULL, 4096, MEM_RESERVE | MEM_COMMIT,
-                                PAGE_EXECUTE_READWRITE);
   sp->new_handle = INVALID_HANDLE_VALUE;
-  /*GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, s, grpc_schedule_on_exec_ctx);*/
+  //GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, s, grpc_schedule_on_exec_ctx);
   GPR_ASSERT(sp->handle);
   gpr_mu_unlock(&s->mu);
   pipeInstance = sp;

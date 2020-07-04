@@ -26,12 +26,28 @@
 #include "src/core/lib/iomgr/endpoint.h"
 #include "src/core/lib/iomgr/pollset_set.h"
 #include "src/core/lib/iomgr/resolve_address.h"
+#include <grpcpp\channel.h>
+#include <src/core/ext/transport/diffproc/client_utils.h>
 
 
+typedef void (*grpc_on_done)(void* arg, grpc_error* error);
 
+typedef struct {
+  grpc_closure* on_done;
+  grpc_closure on_connect;
+  HANDLE handle;
+  int refs;
+  gpr_mu mu;
+  const char* addr_name;
+  grpc_endpoint** endpoint;
+  grpc_channel_args* channel_args;
+  conndetails* clientsidedetails;
+  grpc_on_done done;
+} connection_details;
 /*  */
 void np_connect(grpc_closure* on_done, grpc_endpoint** ep,
-                       const grpc_channel_args* channel_args, const char* addr);
+                const grpc_channel_args* channel_args, const char* addr,
+                conndetails* condetail, void* arg);
 
 
 

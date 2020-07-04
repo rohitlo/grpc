@@ -41,44 +41,52 @@
 #include <src/core/ext/transport/diffproc/namedpipe/namedpipe_windows.h>
 #include <src/core/ext/transport/diffproc/namedpipe/namedpipe_client.h>
 #include <tchar.h>
+#include <src\core\lib\transport\transport.h>
 
 
- 
+static void async_connect_unlock_and_cleanup(connection_details* ac,
+                                             HANDLE socket) {
+  int done = (--ac->refs == 0);
+  gpr_mu_unlock(&ac->mu);
+  if (done) {
+    grpc_channel_args_destroy(ac->channel_args);
+    gpr_mu_destroy(&ac->mu);
+    gpr_free(ac);
+  }
+  if (socket != NULL) CloseHandle(socket);
+}
 
-typedef struct{
-    grpc_closure* on_done;
-    grpc_closure on_connect;
-    HANDLE handle;
-    int refs;
-    const char* addr_name;
-    grpc_endpoint** endpoint;
-    grpc_channel_args* channel_args;
-}connection_details;
-
-
-
-static void on_connect(void* cdc, grpc_error* error){
+static void on_connect(void* arg, void* cdc, grpc_error* error){
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     connection_details* cd = (connection_details*) cdc;
     grpc_endpoint** ep = cd->endpoint;
+    gpr_mu_unlock(&cd->mu);
+    gpr_mu_lock(&cd->mu);
     HANDLE hd = cd->handle;
-    grpc_closure* on_done = cd->on_done;
-    printf("\n 65 on_connect n_c_w Endpoint ptr : %p %p \n ", ep, &ep);
+    cd->handle = NULL;
+    gpr_mu_unlock(&cd->mu);
+    gpr_mu_lock(&cd->mu);
+    /*grpc_closure* on_done = cd->on_done;*/
     if(error == GRPC_ERROR_NONE){
         *ep = grpc_namedpipe_create(hd, cd->channel_args, cd->addr_name, 1);
-        //hd = NULL;
+        cd->clientsidedetails->endpoint = *ep;
+        cd->clientsidedetails->hd = hd;
+        printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
+               *ep, hd);
+        hd = NULL;
     }else{
         puts("Fail");
     }
-    printf("\n 72 on_connect n_c_w Endpoint ptr : %p %p \n ", ep, &ep);
-    printf("\n 72 Endpoint ptr : %p and handle : %p \n ", cd->endpoint, hd);
-    grpc_core::ExecCtx::Run(DEBUG_LOCATION, on_done, error);
+    async_connect_unlock_and_cleanup(cd, hd);
+    cd->done(cd->clientsidedetails,error);
 }
 
 
 
  void np_connect(grpc_closure* on_done, grpc_endpoint** ep,
-                             const grpc_channel_args* channel_args, const char* addr){
+                const grpc_channel_args* channel_args, const char* addr,
+                conndetails* condetail, void* done) {
+  grpc_on_done d = (grpc_on_done)done;
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     HANDLE clientHandle;
     BOOL fSuccess;
@@ -86,7 +94,7 @@ static void on_connect(void* cdc, grpc_error* error){
     DWORD pipeMode;
     grpc_error* error = GRPC_ERROR_NONE;
     *ep = NULL;
-    puts("Starting Client.....");
+    puts("Starting Client....."); 
     printf("\n Address of pipe is %s\n", addr);
     clientHandle = CreateFile("\\\\.\\pipe\\namedpipe",
         GENERIC_READ | GENERIC_WRITE, // Read and Write Access
@@ -101,58 +109,37 @@ static void on_connect(void* cdc, grpc_error* error){
         printf("Cannot create and connnect to named pipe at server end..");
         error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
         goto failure;
-    }else{
-        puts("Connected to server successfully...");
-      printf("\n 104 n_c_w CLIENT SIDE HANDLE : %p\n", clientHandle);
+    } else {
+      puts("Connected to server successfully...");
       pipeMode = PIPE_READMODE_MESSAGE;
-      fSuccess = SetNamedPipeHandleState(clientHandle,      // pipe handle
-                                        &pipeMode,  // new pipe mode
-                                         NULL,       // don't set maximum bytes
-                                         NULL);      // don't set maximum time 
+      fSuccess = SetNamedPipeHandleState(clientHandle,  // pipe handle
+                                         &pipeMode,     // new pipe mode
+                                         NULL,   // don't set maximum bytes
+                                         NULL);  // don't set maximum time
 
-       if (!fSuccess) {
+      if (!fSuccess) {
         puts("Failed changing modes");
-         error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
+        error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
         goto failure;
-        }
+      }
 
-       else {
-         // Testing purpose
-         LPCTSTR lpvMessage =
-             TEXT("Hey this is the first time I am trying to use pipe");
-         DWORD cbToWrite = 4096;
-         DWORD cbWritten;
-         _tprintf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite,
-                  lpvMessage);
-           fSuccess = WriteFile(clientHandle,  // pipe handle
-                                lpvMessage,    // message
-                                cbToWrite,     // message length
-                                &cbWritten,    // bytes written
-                                NULL);
-           if (!fSuccess) {
-             _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"),
-                      GetLastError());
-             error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
-             goto failure;
-           }
+      else {
 
-           printf("\nMessage sent to server, receiving reply as follows:\n");
-         }
-         // if (!fSuccess) {
-         //  puts("Failed Writing modes");
-         //  goto failure;
-         //}
-         cd = (connection_details*)gpr_malloc(sizeof(connection_details));
-         cd->on_done = on_done;
-         cd->refs = 2;
-         cd->endpoint = ep;
-         cd->handle = clientHandle;
-         cd->addr_name = addr;
-         cd->channel_args = grpc_channel_args_copy(channel_args);
-         printf("\n 124 np_connect n_c_w Endpoint ptr : %p %p \n ", ep, &ep);
-         on_connect(cd, GRPC_ERROR_NONE);
-         return;
-       }
+        cd = (connection_details*)gpr_malloc(sizeof(connection_details));
+        cd->refs = 2;
+        //cd->on_done = on_done;
+        cd->endpoint = ep;
+        cd->handle = clientHandle;
+        cd->addr_name = addr;
+        cd->channel_args = grpc_channel_args_copy(channel_args);
+        cd->clientsidedetails = condetail;
+        cd->done = d;
+        printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
+               cd->endpoint, cd->handle);
+        on_connect(done, cd, error);
+        return;
+      }
+    }
 
 failure:
     GPR_ASSERT(error != GRPC_ERROR_NONE);
