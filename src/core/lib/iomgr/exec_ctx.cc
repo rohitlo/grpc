@@ -31,11 +31,11 @@ static void exec_ctx_run(grpc_closure* closure, grpc_error* error) {
 #ifndef NDEBUG
   closure->scheduled = false;
   if (grpc_trace_closure.enabled()) {
-    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-    printf("running closure %p: created [%s:%d]: %s [%s:%d]", closure,
-           closure->file_created, closure->line_created,
-           closure->run ? "run" : "scheduled", closure->file_initiated,
-           closure->line_initiated);
+    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    //printf("running closure %p: created [%s:%d]: %s [%s:%d]", closure,
+    //       closure->file_created, closure->line_created,
+    //       closure->run ? "run" : "scheduled", closure->file_initiated,
+    //       closure->line_initiated);
     gpr_log(GPR_DEBUG, "running closure %p: created [%s:%d]: %s [%s:%d]",
             closure, closure->file_created, closure->line_created,
             closure->run ? "run" : "scheduled", closure->file_initiated,
@@ -45,8 +45,8 @@ static void exec_ctx_run(grpc_closure* closure, grpc_error* error) {
   closure->cb(closure->cb_arg, error);
 #ifndef NDEBUG
   if (grpc_trace_closure.enabled()) {
-    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-    printf("closure %p finished", closure);
+    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    //printf("closure %p finished", closure);
     gpr_log(GPR_DEBUG, "closure %p finished", closure);
   }
 #endif

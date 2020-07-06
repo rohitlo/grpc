@@ -35,6 +35,7 @@
 #include "src/core/ext/transport/diffproc/diffproc_transport.h"
 #include <src\core\ext\transport\chttp2\transport\chttp2_transport.h>
 #include <src\core\ext\transport\diffproc\namedpipe\namedpipe_client.h>
+#include <src/core/ext/transport/diffproc/client_utils.h>
 
 namespace grpc_core {
 
@@ -50,15 +51,18 @@ class Chttp2InsecureClientChannelFactory : public ClientChannelFactory {
   }
 };
 
-namespace {
-struct conndetails {
-  grpc_endpoint* endpoint;
-  HANDLE hd;
-};
 
-static void done(void* arg, grpc_error* error) { 
+namespace {
+
+
+static void done(conndetails* condetail, grpc_error* error) { 
   //conndetails* cd = (cob*) arg;
   puts("DONE CONNECTING");
+  conndetails* cd = static_cast<conndetails*>(condetail);
+  grpc_transport* transport =
+      grpc_create_diffproc_transport(cd->args, cd->endpoint, 1, nullptr);
+  cd->transport = transport;
+  GPR_ASSERT(transport);
 
 }
 grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
@@ -73,9 +77,6 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   // Named pipe support
   if (target[0] == '\\' && target[1] == '\\' && target[2] == '.' &&
       target[3] == '\\') {
-    grpc_closure conn;
-    conndetails* cd = (conndetails*)gpr_malloc(sizeof(conndetails));
-    GRPC_CLOSURE_INIT(&conn, done, cd, grpc_schedule_on_exec_ctx);
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_arg arg = grpc_channel_arg_string_create(const_cast<char*>(GRPC_ARG_SERVER_URI),
                                        const_cast<char*>(target+9));
@@ -86,23 +87,18 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
     grpc_channel_args* client_args =
         grpc_channel_args_copy_and_add(args, &arg, 1);
     client_args= grpc_channel_args_copy_and_add(args, &default_authority_arg, 1);
-    Mutex mu_;
-    bool shutdown_ = false;
-    grpc_endpoint* endpoint_ = nullptr;
+    grpc_closure conn;
+    grpc_endpoint* endpoint = NULL;
     grpc_endpoint** ep;
-    {
+    ep = &endpoint;
+    conndetails condetail;
+    condetail.args = client_args;
+    void (*ptr)(conndetails * condetail, grpc_error* error) = &done;
 
-      MutexLock lock(&mu_);
-      GPR_ASSERT(endpoint_ == nullptr);
-      ep = &endpoint_;
-    }
-    printf("\n 89 channel create Endpoint ptr : %p %p \n ", ep, endpoint_);
-    np_connect(&conn, ep, client_args, target);
-    printf("\n 91 channel create Endpoint ptr : %p %p \n ", ep, endpoint_);
-    grpc_transport* transport =
-        grpc_create_diffproc_transport(client_args, endpoint_, 1, nullptr);
-    GPR_ASSERT(transport);
-    grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, transport);
+    //GRPC_CLOSURE_INIT(&conn, done, &condetail, nullptr);
+    np_connect(&conn, ep, client_args, target, &condetail, done);
+    printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__, ep, endpoint);
+    grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, condetail.transport);
     grpc_channel_args_destroy(client_args);
     return channel;
   } else {

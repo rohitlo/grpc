@@ -354,9 +354,9 @@ static void on_accept(void* arg, grpc_error* error) {
                 DisconnectAndReconnect(server, i);
                 continue;
               }
-              _tprintf(TEXT("[%d] %s\n"), server->pipes[i]->handle,
-                       server->pipes[i]->chRequest);
-              printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
+              //_tprintf(TEXT("[%d] %s\n"), server->pipes[i]->handle,
+              //         server->pipes[i]->chRequest);
+              //printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
               server->pipes[i]->cbRead = cbRet;
               server->pipes[i]->dwState = WRITING_STATE;
               break;
@@ -370,9 +370,10 @@ static void on_accept(void* arg, grpc_error* error) {
               }
               server->pipes[i]->dwState = READING_STATE;
               /*break*/;
-
+            
             default: {
               printf("Invalid pipe state.\n");
+              return;
             }
           }
         }
@@ -385,34 +386,36 @@ static void on_accept(void* arg, grpc_error* error) {
 
         case READING_STATE:
             puts("current read state");
-            fSuccess = ReadFile(
-                server->pipes[i]->handle, server->pipes[i]->chRequest,
-                         4096, &server->pipes[i]->cbRead,
-                         &server->pipes[i]->op);
 
-            // The read operation completed successfully.
+            /* Endpoint Creation */
 
-            if (fSuccess && server->pipes[i]->cbRead != 0) {
-              puts("Read ops completed successfully...");
-              printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
+            ep = grpc_namedpipe_create(server->pipes[i]->handle,
+                                       server->channel_args, "server", 0);
+
+            if (ep) {
+              // Create acceptor.
+              grpc_np_server_acceptor* acceptor =
+                  (grpc_np_server_acceptor*)gpr_malloc(sizeof(*acceptor));
+              acceptor->from_server = server;
+              acceptor->external_connection = false;
+              server->on_accept_cb(server->on_accept_cb_arg, ep, NULL, acceptor);
+              puts("Success creating endpoint **********************");
               server->pipes[i]->fPendingIO = FALSE;
               server->pipes[i]->dwState = WRITING_STATE;
               continue;
             }
-
-            // The read operation is still pending.
-
-            dwErr = GetLastError();
-            if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
+            /* Endpoint Creation end */
+            else {
+              puts("Error Creating endpoint");
               puts("ERROR ops still pending...");
               server->pipes[i]->fPendingIO = TRUE;
               continue;
             }
-            DisconnectAndReconnect(server,i);
+            DisconnectAndReconnect(server, i);
             break;
-            /*gpr_mu_unlock(&server->pipes[i]->server->mu);*/
-          default: {
+        default: {
             printf("Invalid pipe state.\n");
+            return ;
           }
         }
   }

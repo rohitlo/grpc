@@ -127,15 +127,12 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
 
         cd = (connection_details*)gpr_malloc(sizeof(connection_details));
         cd->refs = 2;
-        //cd->on_done = on_done;
         cd->endpoint = ep;
         cd->handle = clientHandle;
         cd->addr_name = addr;
         cd->channel_args = grpc_channel_args_copy(channel_args);
         cd->clientsidedetails = condetail;
         cd->done = d;
-        printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
-               cd->endpoint, cd->handle);
         on_connect(done, cd, error);
         return;
       }
