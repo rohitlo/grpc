@@ -96,7 +96,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
     *ep = NULL;
     puts("Starting Client....."); 
     printf("\n Address of pipe is %s\n", addr);
-    clientHandle = CreateFile("\\\\.\\pipe\\namedpipe",
+    clientHandle = CreateFile(TEXT(addr),
         GENERIC_READ | GENERIC_WRITE, // Read and Write Access
         0, //No sharing of file
         NULL, // Security

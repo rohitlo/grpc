@@ -41,7 +41,7 @@
 #include <src\core\ext\transport\diffproc\namedpipe\namedpipe_windows.h>
 #include <tchar.h>
 #include <strsafe.h>
-#define INSTANCES 4
+#define INSTANCES 1
 #define BUFSIZE 4096
 //#define BUFSIZE 1023;
 typedef struct grpc_pipeInstance {
@@ -62,6 +62,8 @@ typedef struct grpc_pipeInstance {
   int outstanding_calls;
   HANDLE new_handle;
   TCHAR chRequest[BUFSIZE] = {};
+
+  grpc_winsocket* socket;
 
   struct grpc_pipeInstance* next;
 } grpc_pipeInstance, *LPgrpc_piepInstance;
@@ -219,6 +221,21 @@ static void decrement_active_ports_and_notify_locked(grpc_pipeInstance* sp) {
   }
 }
 
+static HANDLE CreateInstance(HANDLE hd, const char* addr) {
+  hd = CreateNamedPipe(TEXT(addr),                  // pipe name
+                       PIPE_ACCESS_DUPLEX |         // read/write access
+                           FILE_FLAG_OVERLAPPED,    // overlapped mode
+                       PIPE_TYPE_MESSAGE |          // message-type pipe
+                           PIPE_READMODE_MESSAGE |  // message-read mode
+                           PIPE_WAIT,               // blocking mode
+                       INSTANCES,                   // number of instances
+                       BUFSIZE * sizeof(BYTE),      // output buffer size
+                       BUFSIZE * sizeof(BYTE),      // input buffer size
+                       0,                           // client time-out
+                       NULL);  // default security attributes
+
+  return hd;
+}
 
 BOOL ConnectToNewClient(HANDLE hPipe, LPOVERLAPPED lpo) {
   BOOL fConnected, fPendingIO = FALSE;
@@ -268,15 +285,15 @@ static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
   if (pipeInstance->shutting_down) {
     return GRPC_ERROR_NONE;
   }
-
-  pipeInstance->fPendingIO =
-      ConnectToNewClient(pipeInstance->handle, &pipeInstance->op);
+  HANDLE hd = CreateInstance(&hd, pipeInstance->addr);
+  pipeInstance->fPendingIO = ConnectToNewClient(pipeInstance->handle, &pipeInstance->op);
   printf("\n start_accept_locked :: Pendiong IO ? : %d\n",
          pipeInstance->fPendingIO);
   pipeInstance->dwState = pipeInstance->fPendingIO ? CONNECTING_STATE :  // still connecting
                  READING_STATE; // Ready to read
-  printf("\n start_accept_locked :: Pendiong IO ? : %d\n",
-         pipeInstance->dwState);
+  printf("\n start_accept_locked :: Pendiong IO ? : %d\n",pipeInstance->dwState);
+  pipeInstance->new_handle = hd;
+  grpc_socket_notify_on_read(pipeInstance->socket, &pipeInstance->on_accept);
   return GRPC_ERROR_NONE;
 }
 
@@ -304,121 +321,178 @@ VOID DisconnectAndReconnect(grpc_np_server* server, DWORD i) {
 
 /* Event manager callback when reads are ready. */
 static void on_accept(void* arg, grpc_error* error) {
+  grpc_pipeInstance* sp = (grpc_pipeInstance*)arg;
   grpc_np_server* server = (grpc_np_server*)arg;
   grpc_endpoint* ep = NULL;
+  HANDLE hd = sp->new_handle;
   DWORD i, dwWait, cbRet, dwErr;
   BOOL fSuccess; 
-  
-  while (1) {
-    // Wait for the event object to be signaled, indicating
-    // completion of an overlapped read, write, or
-    // connect operation. 
-     
-      DWORD dwWait = WaitForMultipleObjects(4,  // number of event objects
-                                    server->hEvents,    // array of event objects
-                                    FALSE,      // does not wait for all
-                                    INFINITE);  // waits indefinitely 
+  grpc_winsocket_callback_info* info = &sp->socket->read_info;
+  DWORD transfered_bytes;
+  DWORD flags;
+  BOOL wsa_success;
+  int err;
 
-    // dwWait shows which pipe completed the operation.
+  gpr_mu_lock(&sp->server->mu);
 
-        i = dwWait - WAIT_OBJECT_0;  // determines which pipe
-        if (i < 0 || i > (4 - 1)) {
-          printf("Index out of range.\n");
-          break;
-        }
-        
+    if (error != GRPC_ERROR_NONE) {
+    const char* msg = grpc_error_string(error);
+    gpr_log(GPR_INFO, "Skipping on_accept due to error: %s", msg);
 
-        // Get the result if the operation was pending.
-        
-        if (server->pipes[i]->fPendingIO) {
-          fSuccess =
-              GetOverlappedResult(server->pipes[i]->handle,  // handle to pipe
-                                  &server->pipes[i]->op,  // OVERLAPPED structure
-                                  &cbRet,             // bytes transferred
-                                  FALSE);             // do not wait
-
-          switch (server->pipes[i]->dwState) {
-              // Pending connect operation
-            case CONNECTING_STATE:
-              puts("pending Connecting state");
-              if (!fSuccess) {
-                printf("Error %d.\n", GetLastError());
-              }
-              server->pipes[i]->dwState = READING_STATE;
-              break;
-
-              // Pending read operation
-            case READING_STATE:
-              puts("pending Read state");
-              if (!fSuccess || cbRet == 0) {
-                DisconnectAndReconnect(server, i);
-                continue;
-              }
-              //_tprintf(TEXT("[%d] %s\n"), server->pipes[i]->handle,
-              //         server->pipes[i]->chRequest);
-              //printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
-              server->pipes[i]->cbRead = cbRet;
-              server->pipes[i]->dwState = WRITING_STATE;
-              break;
-
-              // Pending write operation
-            case WRITING_STATE:
-              puts("Pending write state");
-              if (!fSuccess || cbRet != server->pipes[i]->cbToWrite) {
-                DisconnectAndReconnect(server, i);
-                continue;
-              }
-              server->pipes[i]->dwState = READING_STATE;
-              /*break*/;
-            
-            default: {
-              printf("Invalid pipe state.\n");
-              return;
-            }
-          }
-        }
-
-        // The pipe state determines which operation to do next.
-        switch (server->pipes[i]->dwState) {
-            // READING_STATE:
-            // The pipe instance is connected to the client
-            // and is ready to read a request from the client.
-
-        case READING_STATE:
-            puts("current read state");
-
-            /* Endpoint Creation */
-
-            ep = grpc_namedpipe_create(server->pipes[i]->handle,
-                                       server->channel_args, "server", 0);
-
-            if (ep) {
-              // Create acceptor.
-              grpc_np_server_acceptor* acceptor =
-                  (grpc_np_server_acceptor*)gpr_malloc(sizeof(*acceptor));
-              acceptor->from_server = server;
-              acceptor->external_connection = false;
-              server->on_accept_cb(server->on_accept_cb_arg, ep, NULL, acceptor);
-              puts("Success creating endpoint **********************");
-              server->pipes[i]->fPendingIO = FALSE;
-              server->pipes[i]->dwState = WRITING_STATE;
-              continue;
-            }
-            /* Endpoint Creation end */
-            else {
-              puts("Error Creating endpoint");
-              puts("ERROR ops still pending...");
-              server->pipes[i]->fPendingIO = TRUE;
-              continue;
-            }
-            DisconnectAndReconnect(server, i);
-            break;
-        default: {
-            printf("Invalid pipe state.\n");
-            return ;
-          }
-        }
+    gpr_mu_unlock(&sp->server->mu);
+    return;
   }
+
+    /* The IOCP notified us of a completed operation. Let's grab the results,
+       and act accordingly. */
+    transfered_bytes = 0;
+    wsa_success = WSAGetOverlappedResult((SOCKET)hd, &info->overlapped,
+                                       &transfered_bytes, FALSE, &flags);
+
+    if (!wsa_success) {
+      if (!sp->shutting_down) {
+        char* utf8_message = gpr_format_message(WSAGetLastError());
+        gpr_log(GPR_ERROR, "on_accept error: %s", utf8_message);
+        gpr_free(utf8_message);
+      }
+      CloseHandle(hd);
+    } 
+
+    ep = grpc_namedpipe_create(grpc_winsocket_create((SOCKET)hd, "new_listener"), sp->server->channel_args, "server",0);
+    if (ep) {
+      // Create acceptor.
+      grpc_np_server_acceptor* acceptor =
+          (grpc_np_server_acceptor*)gpr_malloc(sizeof(*acceptor));
+      acceptor->from_server = sp->server;
+
+      sp->server->on_accept_cb(sp->server->on_accept_cb_arg, ep, NULL,
+                               acceptor);
+    }
+    /* As we were notified from the IOCP of one and exactly one accept,
+       the former socked we created has now either been destroy or assigned
+       to the new connection. We need to create a new one for the next
+       connection. */
+    GPR_ASSERT(GRPC_LOG_IF_ERROR("start_accept", start_accept_locked(sp)));
+    if (0 == --sp->outstanding_calls) {
+      decrement_active_ports_and_notify_locked(sp);
+    }
+    gpr_mu_unlock(&sp->server->mu);
+
+
+
+
+
+  //while (1) {
+  //  // Wait for the event object to be signaled, indicating
+  //  // completion of an overlapped read, write, or
+  //  // connect operation. 
+  //   
+  //    DWORD dwWait =
+  //      WaitForMultipleObjects(INSTANCES,        // number of event objects
+  //                                  server->hEvents,    // array of event objects
+  //                                  FALSE,      // does not wait for all
+  //                                  INFINITE);  // waits indefinitely 
+
+  //  // dwWait shows which pipe completed the operation.
+
+  //      i = dwWait - WAIT_OBJECT_0;  // determines which pipe
+  //    if (i < 0 || i > (INSTANCES - 1)) {
+  //        printf("Index out of range.\n");
+  //        break;
+  //      }
+  //      
+
+  //      // Get the result if the operation was pending.
+  //      
+  //      if (server->pipes[i]->fPendingIO) {
+  //        fSuccess =
+  //            GetOverlappedResult(server->pipes[i]->handle,  // handle to pipe
+  //                                &server->pipes[i]->op,  // OVERLAPPED structure
+  //                                &cbRet,             // bytes transferred
+  //                                FALSE);             // do not wait
+
+  //        switch (server->pipes[i]->dwState) {
+  //            // Pending connect operation
+  //          case CONNECTING_STATE:
+  //            puts("pending Connecting state");
+  //            if (!fSuccess) {
+  //              printf("Error %d.\n", GetLastError());
+  //            }
+  //            server->pipes[i]->dwState = READING_STATE;
+  //            break;
+
+  //            // Pending read operation
+  //          case READING_STATE:
+  //            puts("pending Read state");
+  //            if (!fSuccess || cbRet == 0) {
+  //              DisconnectAndReconnect(server, i);
+  //              continue;
+  //            }
+  //            //_tprintf(TEXT("[%d] %s\n"), server->pipes[i]->handle,
+  //            //         server->pipes[i]->chRequest);
+  //            //printf("\n Read message  :%s\n", server->pipes[i]->chRequest);
+  //            server->pipes[i]->cbRead = cbRet;
+  //            server->pipes[i]->dwState = WRITING_STATE;
+  //            break;
+
+  //            // Pending write operation
+  //          case WRITING_STATE:
+  //            puts("Pending write state");
+  //            if (!fSuccess || cbRet != server->pipes[i]->cbToWrite) {
+  //              DisconnectAndReconnect(server, i);
+  //              continue;
+  //            }
+  //            server->pipes[i]->dwState = READING_STATE;
+  //            /*break*/;
+  //          
+  //          default: {
+  //            printf("Invalid pipe state.\n");
+  //            return;
+  //          }
+  //        }
+  //      }
+
+  //      // The pipe state determines which operation to do next.
+  //      switch (server->pipes[i]->dwState) {
+  //          // READING_STATE:
+  //          // The pipe instance is connected to the client
+  //          // and is ready to read a request from the client.
+
+  //      case READING_STATE:
+  //          puts("current read state");
+
+  //          /* Endpoint Creation */
+
+  //          ep = grpc_namedpipe_create(server->pipes[i]->handle,
+  //                                     server->channel_args, "server", 0);
+
+  //          if (ep) {
+  //            // Create acceptor.
+  //            grpc_np_server_acceptor* acceptor =
+  //                (grpc_np_server_acceptor*)gpr_malloc(sizeof(*acceptor));
+  //            acceptor->from_server = server;
+  //            acceptor->external_connection = false;
+  //            server->on_accept_cb(server->on_accept_cb_arg, ep, NULL, acceptor);
+  //            puts("Success creating endpoint **********************");
+  //            server->pipes[i]->fPendingIO = FALSE;
+  //            server->pipes[i]->dwState = WRITING_STATE;
+  //            continue;
+  //          }
+  //          /* Endpoint Creation end */
+  //          else {
+  //            puts("Error Creating endpoint");
+  //            puts("ERROR ops still pending...");
+  //            server->pipes[i]->fPendingIO = TRUE;
+  //            continue;
+  //          }
+  //          DisconnectAndReconnect(server, i);
+  //          break;
+  //      default: {
+  //          printf("Invalid pipe state.\n");
+  //          return ;
+  //        }
+  //      }
+  //}
 
 
 }
@@ -446,9 +520,10 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   sp->handle = hd;
   sp->shutting_down = 0;
   sp->outstanding_calls = 0;
+  sp->socket = grpc_winsocket_create((SOCKET)hd, "listener");
   //DWORD FileSize = ftell(myfile); 
   sp->new_handle = INVALID_HANDLE_VALUE;
-  //GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, s, grpc_schedule_on_exec_ctx);
+  GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, s, grpc_schedule_on_exec_ctx);
   GPR_ASSERT(sp->handle);
   gpr_mu_unlock(&s->mu);
   pipeInstance = sp;
@@ -463,7 +538,6 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
    grpc_pipeInstance* pipeInstance = (grpc_pipeInstance*)gpr_malloc(sizeof(grpc_pipeInstance));
   HANDLE namedPipe;
   grpc_error* error;
-  //int BUFSIZE = 1023;
   s->hEvents[s->count] = CreateEvent(NULL,   // default security attribute
                                   TRUE,   // manual-reset event
                                   TRUE,   // initial state = signaled
@@ -475,22 +549,12 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   }
 
    pipeInstance->op.hEvent = s->hEvents[s->count];
-  pipeInstance->op.Offset = 2048;
+   pipeInstance->op.Offset = 2048;
    pipeInstance->op.OffsetHigh = 2048;
 
-  namedPipe =
-       CreateNamedPipe(TEXT(addr),                  // pipe name
-                              PIPE_ACCESS_DUPLEX |         // read/write access
-                              FILE_FLAG_OVERLAPPED,    // overlapped mode
-                              PIPE_TYPE_MESSAGE |          // message-type pipe
-                              PIPE_READMODE_MESSAGE |  // message-read mode
-                              PIPE_WAIT,               // blocking mode
-                              4,                // number of instances
-                              BUFSIZE * sizeof(BYTE),  // output buffer size
-                              BUFSIZE * sizeof(BYTE),  // input buffer size
-                              0,             // client time-out
-                              NULL);  // default security attributes 
 
+ 
+   namedPipe = CreateInstance(&namedPipe, addr);
     s->count++;
     if (namedPipe == INVALID_HANDLE_VALUE) {
         puts("Error");

@@ -42,6 +42,7 @@
 #include "src/core/lib/slice/slice_string_helpers.h"
 #include <tchar.h>
 #include <process.h>
+#include <src\core\lib\iomgr\iocp_windows.h>
 
 
 typedef struct grpc_namedpipe{
@@ -95,7 +96,6 @@ static void on_write(void* npp, grpc_error* error) {
   FlushFileBuffers(np->handle);
   DisconnectNamedPipe(np->handle);
   CloseHandle(np->handle);
-  // HeapFree(hHeap, 0, pchRequest);
   namedpipe_unref(np);
   grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
 }
@@ -123,7 +123,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   np->read_cb = cb;
   namedpipe_ref(np);
 /* First let's try a synchronous, non-blocking read. */
-  fSuccess = ReadFile(handle, chRequest, 4096, &bytes_read, NULL);
+  fSuccess = ReadFile(handle, chRequest, BUFSIZE * sizeof(TCHAR), &bytes_read, NULL);
 
   // The read operation completed successfully.
 
@@ -147,22 +147,20 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->handle;
-  //printf("\n%d :: %s :: %s :: %p :: %p :: %p\n", __LINE__, __func__, __FILE__,
-  //       np, ep, handle);
   int status;
   grpc_error* error = GRPC_ERROR_NONE;
-  //if (np->shutting_down) {
-  //  grpc_core::ExecCtx::Run(
-  //      DEBUG_LOCATION, cb,
-  //      GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-  //          "Named Pipe is shutting down", &np->shutdown_error, 1));
-  //  return;
-  //}
+  if (np->shutting_down) {
+    grpc_core::ExecCtx::Run(
+        DEBUG_LOCATION, cb,
+        GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
+            "Named Pipe is shutting down", &np->shutdown_error, 1));
+    return;
+  }
 
   np->write_cb = cb;
 
- LPCTSTR lpvMessage = TEXT("Hey this is the first time I am trying to use pipe");
-  DWORD cbToWrite = 4096;
+  LPCTSTR lpvMessage = TEXT("Hey this is the first time I am trying to use pipe \n");
+  DWORD cbToWrite = (lstrlen(lpvMessage) + 1) * sizeof(TCHAR);
   DWORD cbWritten;
   _tprintf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite, lpvMessage);
   status = WriteFile(handle,  // pipe handle
@@ -175,7 +173,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
     error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
   }
 
-  printf("\nMessage sent to server, receiving reply as follows:\n");
+  //printf("\nMessage sent to server, receiving reply as follows:\n");
 
   grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_WSA_ERROR(WSAGetLastError(), "NPSEND"));
 }
@@ -185,6 +183,7 @@ static void win_add_to_pollset(grpc_endpoint* ep, grpc_pollset* ps) {
   grpc_namedpipe* np;
   (void)ps;
   np = (grpc_namedpipe*)ep;
+  grpc_iocp_add_socket((grpc_winsocket*)np->handle);
 
 }
 
@@ -192,6 +191,7 @@ static void win_add_to_pollset_set(grpc_endpoint* ep, grpc_pollset_set* pss) {
   grpc_namedpipe* np;
   (void)pss;
   np = (grpc_namedpipe*)ep;
+  grpc_iocp_add_socket((grpc_winsocket*)np->handle);
 }
 
 static void win_delete_from_pollset_set(grpc_endpoint* ep,

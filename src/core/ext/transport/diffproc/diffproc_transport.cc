@@ -43,8 +43,6 @@
 
 
 
-static int writeState = 1;
-
 static const grpc_transport_vtable* get_vtable(void);
 //COTR
 grpc_diffproc_transport::grpc_diffproc_transport(
@@ -128,12 +126,13 @@ void grpc_diffproc_stream::ref(const char* reason) {
    void destroy_stream(grpc_transport* /*gt*/, grpc_stream * gs,
                        grpc_closure * then_schedule_closure) {
      grpc_diffproc_stream* s = reinterpret_cast<grpc_diffproc_stream*>(gs);
+
      puts("In destroy stream");
    }
 
    void destroy_transport(grpc_transport * gt) {
-     grpc_diffproc_transport* t =
-         reinterpret_cast<grpc_diffproc_transport*>(gt);
+     grpc_diffproc_transport* t = reinterpret_cast<grpc_diffproc_transport*>(gt);
+
      puts("In destroy transport");
      t->unref();
    }
@@ -146,6 +145,8 @@ void grpc_diffproc_stream::ref(const char* reason) {
 
    void read_action_end(void* tp, grpc_error* error) {
      grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
+     fpending = 0;
+
      puts("Nice ok");
    }
 
@@ -178,7 +179,8 @@ void grpc_diffproc_stream::ref(const char* reason) {
                                                 perform_transport_op,
                                                 destroy_stream,
                                                 destroy_transport,
-                                                get_endpoint};
+                                                get_endpoint
+                                                };
 
    static const grpc_transport_vtable* get_vtable(void) {
      return &diffproc_vtable;
@@ -203,6 +205,7 @@ void grpc_diffproc_stream::ref(const char* reason) {
 
    void grpc_diffproc_transport_start_reading(
        grpc_transport* transport, grpc_slice_buffer* read_buffer) {
+     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      grpc_diffproc_transport* t =
          reinterpret_cast<grpc_diffproc_transport*>(transport);
          grpc_endpoint_read(
@@ -210,15 +213,38 @@ void grpc_diffproc_stream::ref(const char* reason) {
              GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end, t,
                                grpc_schedule_on_exec_ctx),
              GRPC_ERROR_NONE);
-     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+
      
 
    }
 
 
- void grpc_diffproc_transport_init(void) {}
+ void grpc_diffproc_transport_init(void) {
+     grpc_core::ExecCtx exec_ctx;
+     g_empty_slice = grpc_core::ExternallyManagedSlice();
 
- void grpc_diffproc_transport_shutdown(void) {}
+     grpc_slice key_tmp = grpc_slice_from_static_string(":path");
+     g_fake_path_key = grpc_slice_intern(key_tmp);
+     grpc_slice_unref_internal(key_tmp);
+
+     g_fake_path_value = grpc_slice_from_static_string("/");
+
+     grpc_slice auth_tmp = grpc_slice_from_static_string(":authority");
+     g_fake_auth_key = grpc_slice_intern(auth_tmp);
+     grpc_slice_unref_internal(auth_tmp);
+
+     g_fake_auth_value = grpc_slice_from_static_string("inproc-fail");
+ }
+
+ void grpc_diffproc_transport_shutdown(void) {
+   grpc_core::ExecCtx exec_ctx;
+   grpc_slice_unref_internal(g_empty_slice);
+   grpc_slice_unref_internal(g_fake_path_key);
+   grpc_slice_unref_internal(g_fake_path_value);
+   grpc_slice_unref_internal(g_fake_auth_key);
+   grpc_slice_unref_internal(g_fake_auth_value);
+ 
+ }
 
 
 

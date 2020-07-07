@@ -95,14 +95,14 @@ int main(int argc, char** argv) {
       return 0;
     }
   } else {
-    target_str = "\\\\.\\pipe\\namedpipe";
+    target_str = "localhost:50051";
   }
   GreeterClient greeter(grpc::CreateChannel(
       target_str, grpc::InsecureChannelCredentials()));
   std::string user("world");
   std::cout << "At 103 greeter_client.cc"<<std::endl;
-  //std::string reply = greeter.SayHello(user);
-  //std::cout << "Greeter received: " << reply << std::endl;
+  std::string reply = greeter.SayHello(user);
+  std::cout << "Greeter received: " << reply << std::endl;
 
 
  /* HANDLE cFile;
