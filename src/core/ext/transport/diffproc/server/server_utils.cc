@@ -86,7 +86,7 @@ static void on_accept(void* arg, grpc_endpoint* np,
     return;
   }  
   grpc_np_server_ref(state->np_server);
-  gpr_mu_unlock(&state->mu);
+  //gpr_mu_unlock(&state->mu);
   //grpc_core::ExecCtx::Get()->Now();      
   if (np != nullptr) {
       puts("Endpoint is not null...  server_utils.cc");
@@ -106,6 +106,10 @@ static void on_accept(void* arg, grpc_endpoint* np,
       grpc_diffproc_transport_start_reading(transport, read_buffer);
     //}
     grpc_channel_args_destroy(server_args);
+
+    gpr_mu_unlock(&state->mu);
+    gpr_free(acceptor);
+    grpc_np_server_unref(state->np_server);
     }   
 }
 
@@ -143,7 +147,7 @@ static void server_destroy_listener(grpc_server* /*server*/, void* arg,
 }
 
 
-//Adds a pipe to server at np_server_windows
+// Adds a pipe to server at np_server_windows
 grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
                                     grpc_channel_args* args, int* port) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
@@ -162,7 +166,8 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
   GRPC_CLOSURE_INIT(&state->grpc_np_server_shutdown_complete,
                     grpc_np_server_shutdown_complete, state,
                     grpc_schedule_on_exec_ctx);
-  err = grpc_namedpipe_create(&state->grpc_np_server_shutdown_complete, args, &np_server);
+  err = grpc_namedpipe_create(&state->grpc_np_server_shutdown_complete, args,
+                              &np_server);
   if (err != GRPC_ERROR_NONE) {
     goto error;
   }
@@ -181,7 +186,8 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
     }
   }
   /* Register with the server only upon success */
-  grpc_server_add_listener(server, state, server_start_listener,server_destroy_listener,nullptr);
+  grpc_server_add_listener(server, state, server_start_listener,
+                           server_destroy_listener, nullptr);
   goto done;
 
 /* Error path: cleanup and return */
