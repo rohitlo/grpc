@@ -24,12 +24,6 @@
 #include "src/core/lib/transport/transport_impl.h"
 #include  <stdio.h>
 
-grpc_slice g_empty_slice;
-grpc_slice g_fake_path_key;
-grpc_slice g_fake_path_value;
-grpc_slice g_fake_auth_key;
-grpc_slice g_fake_auth_value;
-
 //grpc_channel* grpc_diffproc_channel_create(grpc_server* server,grpc_channel_args* args, void* reserved);
 
 //grpc_transport* diffproc_transport_create(const grpc_channel_args* args,bool is_client);

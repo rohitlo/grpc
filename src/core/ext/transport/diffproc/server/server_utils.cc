@@ -40,6 +40,7 @@
 #include "src/core/lib/surface/api_trace.h"
 #include "src/core/lib/surface/server.h"
 #include <src\core\ext\transport\diffproc\namedpipe\namedpipe_server.h>
+#include <iostream>
 
 
 //Server-State
@@ -95,14 +96,9 @@ static void on_accept(void* arg, grpc_endpoint* np,
     const grpc_channel_args* server_args = grpc_channel_args_copy_and_remove(grpc_server_get_channel_args(state->server),
                                       args_to_remove,
                                       GPR_ARRAY_SIZE(args_to_remove));
-    grpc_transport* transport =
-        grpc_create_diffproc_transport(server_args, np, false, nullptr);
+    grpc_transport* transport =  grpc_create_diffproc_transport(server_args, np, false, nullptr);
     grpc_server_setup_transport(state->server, transport, nullptr, server_args,
                                 nullptr, nullptr);
-    //grpc_get_transport_state
-      // Use notify_on_receive_settings callback to enforce the
-      // handshake deadline.
-    //if (state->pendingOp == 1) {
       grpc_diffproc_transport_start_reading(transport, read_buffer);
     //}
     grpc_channel_args_destroy(server_args);
@@ -150,6 +146,7 @@ static void server_destroy_listener(grpc_server* /*server*/, void* arg,
 // Adds a pipe to server at np_server_windows
 grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
                                     grpc_channel_args* args, int* port) {
+ 
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_np_server* np_server = nullptr;
   size_t i;
@@ -158,6 +155,7 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
   grpc_error* err = GRPC_ERROR_NONE;
   server_state* state = nullptr;
   grpc_error** errors = nullptr;
+  grpc_error* error = nullptr;
   const grpc_arg* arg = nullptr;
 
   *port = -1;
@@ -179,13 +177,11 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
   gpr_mu_init(&state->mu);
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   errors = static_cast<grpc_error**>(gpr_malloc(sizeof(*errors) * 4));
-  for (i = 0; i < 4; i++) {
-    errors[i] = grpc_server_np_add_port(np_server, addr);
-    if (errors[i] == GRPC_ERROR_NONE) {
-      count++;
-    }
+
+  error = grpc_server_np_add_port(np_server, addr);
+  if (error == GRPC_ERROR_NONE) {
+    count++;
   }
-  /* Register with the server only upon success */
   grpc_server_add_listener(server, state, server_start_listener,
                            server_destroy_listener, nullptr);
   goto done;
@@ -201,11 +197,9 @@ error:
   }
 
 done:
-  if (errors != nullptr) {
-    for (i = 0; i < 4; i++) {
-      GRPC_ERROR_UNREF(errors[i]);
-    }
-    gpr_free(errors);
+  if (error != nullptr) {
+      GRPC_ERROR_UNREF(error);
+      gpr_free(error);
   }
   return err;
 }

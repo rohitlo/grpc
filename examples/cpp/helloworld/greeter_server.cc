@@ -49,14 +49,14 @@ class GreeterServiceImpl final : public Greeter::Service {
 };
 
 void RunServer() {
-  std::string server_address("0.0.0.0:50051");
+  std::string server_address("\\\\.\\pipe\\namedpipe");
   GreeterServiceImpl service;
 
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  builder.AddListeningPort(server_address, grpc::NamedPipeServerCredentials());
   // Register "service" as the instance through which we'll communicate with
   // clients. In this case it corresponds to an *synchronous* service.
   builder.RegisterService(&service);

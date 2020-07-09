@@ -145,8 +145,6 @@ void grpc_diffproc_stream::ref(const char* reason) {
 
    void read_action_end(void* tp, grpc_error* error) {
      grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
-     fpending = 0;
-
      puts("Nice ok");
    }
 
@@ -221,7 +219,8 @@ void grpc_diffproc_stream::ref(const char* reason) {
 
  void grpc_diffproc_transport_init(void) {
      grpc_core::ExecCtx exec_ctx;
-     g_empty_slice = grpc_core::ExternallyManagedSlice();
+   /*  g_empty_slice = grpc_core::ExternallyManagedSlice();
+
 
      grpc_slice key_tmp = grpc_slice_from_static_string(":path");
      g_fake_path_key = grpc_slice_intern(key_tmp);
@@ -233,16 +232,12 @@ void grpc_diffproc_stream::ref(const char* reason) {
      g_fake_auth_key = grpc_slice_intern(auth_tmp);
      grpc_slice_unref_internal(auth_tmp);
 
-     g_fake_auth_value = grpc_slice_from_static_string("inproc-fail");
+     g_fake_auth_value = grpc_slice_from_static_string("inproc-fail");*/
  }
 
  void grpc_diffproc_transport_shutdown(void) {
    grpc_core::ExecCtx exec_ctx;
-   grpc_slice_unref_internal(g_empty_slice);
-   grpc_slice_unref_internal(g_fake_path_key);
-   grpc_slice_unref_internal(g_fake_path_value);
-   grpc_slice_unref_internal(g_fake_auth_key);
-   grpc_slice_unref_internal(g_fake_auth_value);
+
  
  }
 

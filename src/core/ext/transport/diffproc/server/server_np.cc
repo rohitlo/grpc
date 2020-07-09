@@ -32,6 +32,7 @@
 int grpc_server_add_np_addr(grpc_server* server, const char* addr) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_core::ExecCtx exec_ctx;
+  printf("grpc_core::ExecCtx::Get() : %p \n", grpc_core::ExecCtx::Get());
   int port_num = 0;
   grpc_error* err = grpc_np_server_add_pipe(server, addr,grpc_channel_args_copy(grpc_server_get_channel_args(server)), &port_num);
   if (err != GRPC_ERROR_NONE) {

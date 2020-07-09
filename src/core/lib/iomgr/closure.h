@@ -92,6 +92,7 @@ struct grpc_closure {
 inline grpc_closure* grpc_closure_init(const char* file, int line,
                                        grpc_closure* closure,
                                        grpc_iomgr_cb_func cb, void* cb_arg) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
 #else
 inline grpc_closure* grpc_closure_init(grpc_closure* closure,
                                        grpc_iomgr_cb_func cb, void* cb_arg) {
