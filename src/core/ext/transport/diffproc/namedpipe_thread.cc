@@ -22,6 +22,7 @@
 #include <grpc/support/string_util.h>
 
 
+
 grpc_thread_handle* grpc_createHandle(HANDLE hd, const char* name) {
   char* final_name;
   grpc_thread_handle* tHandle = (grpc_thread_handle*)gpr_malloc(sizeof(grpc_thread_handle));
@@ -34,36 +35,59 @@ grpc_thread_handle* grpc_createHandle(HANDLE hd, const char* name) {
 }
 
 
+/* Schedule a shutdown of the namedpipe handle operations. Will call the pending
+   operations to abort them. We need to do that this way because of the
+   various callsites of that function, which happens to be in various
+   mutex hold states, and that'd be unsafe to call them directly. */
+void grpc_nphandle_shutdown(grpc_thread_handle* thread) {
+  int status;
+  gpr_mu_lock(&thread->state_mu);
+  if (thread->shutdown_called) {
+    gpr_mu_unlock(&thread->state_mu);
+    return;
+  }
+  thread->shutdown_called = true;
+  gpr_mu_unlock(&thread->state_mu);
+
+  CloseHandle(thread->pipeHandle);
+}
+
+
+
 DWORD WINAPI InstanceThread(LPVOID lparam) { 
   grpc_thread_handle* thread = (grpc_thread_handle*)lparam;
+  puts("In instance thread");
   int connectSuccess = ConnectNamedPipe(thread->pipeHandle, NULL);
   if (connectSuccess == 1) {
     puts("Connection Successful; Now Creating a new Thread Instance");
-    //grpc_core::ExecCtx::Run(DEBUG_LOCATION, thread->complete_closure, GRPC_ERROR_NONE);
-    thread->complete_closure->cb(thread->complete_closure->cb_arg, GRPC_ERROR_NONE);
+    thread->grpc_on_accept(thread->arg, GRPC_ERROR_NONE);
     return 1;
   } else {
     puts("Error connecting to pipe..");
     CloseHandle(thread->pipeHandle);
-    return (DWORD)-1;
+    return (DWORD) - 1;
+  }
+  
+ // grpc_core::ExecCtx::Run(DEBUG_LOCATION, thread->complete_closure,
+                          //GRPC_ERROR_NONE);
+    return 1;
   }
  
 
-}
-
-
 grpc_error* CreateThreadProcess(grpc_thread_handle* thread) {
+    //grpc_core::ExecCtx exec_ctx;
   DWORD dwThreadId = 0;
   grpc_error* error = NULL;
   HANDLE t;
 
-    t = CreateThread(NULL,                // no security attribute
-                            0,                   // default stack size
-                            InstanceThread,      // thread proc
-                            (LPVOID)thread,  // thread parameter
-                            0,                   // not suspended
-                            &dwThreadId);   
+    t = CreateThread(NULL,            // no security attribute
+                     0,               // default stack size
+                     InstanceThread,  // thread proc
+                     (LPVOID)thread,  // thread parameter
+                     0,               // not suspended
+                     &dwThreadId);
     if (t != NULL) {
+      puts("Thread Successfully created and running.....");
       CloseHandle(t);
     } else {
       puts("Error, creating thread");

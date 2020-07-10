@@ -83,6 +83,7 @@ static void on_read(void* npp, grpc_error* error) {
     DisconnectNamedPipe(np->handle);
     CloseHandle(np->handle);
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
+    cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
 }
 
 static void on_write(void* npp, grpc_error* error) {
@@ -100,6 +101,7 @@ static void on_write(void* npp, grpc_error* error) {
   CloseHandle(np->handle);
   namedpipe_unref(np);
   grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
+  cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
 }
 
 
@@ -132,7 +134,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   if (fSuccess && bytes_read != 0) {
     puts("Read ops completed successfully...");
     printf("\n Read message  :%s\n", chRequest);
-    on_write(np, GRPC_ERROR_NONE);
+    on_read(np, GRPC_ERROR_NONE);
   } else {
     dwErr = GetLastError();
     if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
@@ -173,6 +175,9 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   if (!status) {
     _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
     error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
+  } else {
+    puts("Successfully wrote to server end pipe handle....");
+    on_write(np, GRPC_ERROR_NONE);
   }
 
   //printf("\nMessage sent to server, receiving reply as follows:\n");

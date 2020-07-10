@@ -234,7 +234,7 @@ static HANDLE CreateInstance(const char* addr) {
                        BUFSIZE * sizeof(BYTE),      // input buffer size
                        0,                           // client time-out
                        NULL);  // default security attributes
-  printf("Named pipe Instance HANDLE :%p \n", hd);
+  printf("Named pipe Instance created HANDLE :%p \n", hd);
   return hd;
 }
 
@@ -276,33 +276,39 @@ BOOL ConnectToNewClient(HANDLE hPipe, LPOVERLAPPED lpo) {
   return fPendingIO;
 }
 
+DWORD WINAPI Ins(LPVOID lpvaram) {
+  puts("In instance thread");
+  return 1;
+}
+
+static void on_accept(void* arg, grpc_error* error);
 
 #define CONNECTING_STATE 0
 #define READING_STATE 1
 #define WRITING_STATE 2
 // 5. START ACCEPT LOCKED FOR ASYNC INCOMING CONNECTIONS
 static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
+  grpc_core::ExecCtx exec_ctx;
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   int connectSuccess = 0;
   grpc_error* error = GRPC_ERROR_NONE;
+  DWORD dwThreadId = 0;
   HANDLE newPipeHandle = CreateInstance(pipeInstance->addr);
   if (newPipeHandle == INVALID_HANDLE_VALUE) {
     puts("Error creating new pipe Instance for upcoming connects");
     goto failure;
   }
-  printf("Handle in thread :m %p \n", pipeInstance->np_handle->pipeHandle);
-  printf("grpc_core::ExecCtx::Get() in startacceptlocked: %p \n", grpc_core::ExecCtx::Get());
-  //pipeInstance->np_handle->pipeHandle = pipeInstance->handle;
-  pipeInstance->np_handle->complete_closure = &pipeInstance->on_accept;
+  printf("Handle to listen to : %p \n", pipeInstance->np_handle->pipeHandle);
+  //pipeInstance->np_handle->complete_closure = &pipeInstance->on_accept;
+  pipeInstance->np_handle->grpc_on_accept = on_accept;
+  pipeInstance->np_handle->arg = pipeInstance;
   error = CreateThreadProcess(pipeInstance->np_handle);
-
   if (error != GRPC_ERROR_NONE) {
     puts("Some failure in creating thread");
     goto failure;
   }
-
   pipeInstance->new_handle = newPipeHandle;
-
+  
   return error;
 
   failure:
@@ -339,7 +345,9 @@ static void on_accept(void* arg, grpc_error* error) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_pipeInstance* pipe = static_cast<grpc_pipeInstance*>(arg);
   HANDLE currHandle = pipe->handle;
+  printf("Named pipe CURR ACCEPT HANDLE :%p \n", currHandle);
   grpc_endpoint* ep = NULL;
+  gpr_mu_unlock(&pipe->server->mu);
   gpr_mu_lock(&pipe->server->mu);
 
   if (error != GRPC_ERROR_NONE) {
@@ -351,7 +359,9 @@ static void on_accept(void* arg, grpc_error* error) {
   }
 
   if (!pipe->shutting_down) {
-    ep = grpc_namedpipe_create(currHandle, pipe->server->channel_args, "server", 0);
+    ep = grpc_namedpipe_create(currHandle,
+                               pipe->server->channel_args,
+                               "server", 0);
   } else {
     CloseHandle(currHandle);
   }
@@ -362,14 +372,15 @@ static void on_accept(void* arg, grpc_error* error) {
     acceptor->from_server = pipe->server;
 
     pipe->server->on_accept_cb(pipe->server->on_accept_cb_arg, ep, NULL, acceptor);
+    pipe->handle = NULL;
   }
+
+  pipe->handle = pipe->new_handle;
+  pipe->np_handle = grpc_createHandle(pipe->new_handle, "Listener");
+  printf("Named pipe NEXT ACCEPT HANDLE :%p \n", pipe->handle);
   GPR_ASSERT(GRPC_LOG_IF_ERROR("start_accept", start_accept_locked(pipe)));
 
   gpr_mu_unlock(&pipe->server->mu);
-
-
-
-
 }
 
 
@@ -395,11 +406,11 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   sp->server = s;
   sp->addr = target_addr;
   sp->np_handle = grpc_createHandle(hd, "listener");
+  sp->handle = hd;
   sp->shutting_down = 0;
   sp->outstanding_calls = 0;
   sp->new_handle = INVALID_HANDLE_VALUE;
-  printf("grpc_core::ExecCtx::Get() : %p \n", grpc_core::ExecCtx::Get());
-  GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, sp, grpc_schedule_on_exec_ctx);
+  //GRPC_CLOSURE_INIT(&sp->on_accept, on_accept, sp, grpc_schedule_on_exec_ctx);
   GPR_ASSERT(sp->np_handle);
   gpr_mu_unlock(&s->mu);
   *pipeInstance = sp;
@@ -458,9 +469,10 @@ void grpc_np_server_start(grpc_np_server* s, grpc_pollset** pollset,size_t polls
    for (sp = s->head; sp; sp = sp->next) {
      GPR_ASSERT(GRPC_LOG_IF_ERROR("start_accept", start_accept_locked(sp)));
      //s->hEvents[i++] = sp->hEvent;
+     //on_accept(sp, GRPC_ERROR_NONE);
      s->active_ports++;
    }
-   //on_accept(s, GRPC_ERROR_NONE);
+   
    gpr_mu_unlock(&s->mu);
  }
 

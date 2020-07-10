@@ -23,6 +23,8 @@
 #include  <stdio.h>
 #include <src\core\lib\iomgr\closure.h>
 
+//typedef 
+
 typedef struct grpc_np_callback_info {
 
   OVERLAPPED overlap;
@@ -48,17 +50,22 @@ typedef struct grpc_thread_handle {
   grpc_np_callback_info write_info;
   grpc_np_callback_info read_info;
 
-  grpc_closure* complete_closure;
 
   bool shutdown_called;
 
   gpr_mu state_mu;
 
-  grpc_closure shutdown_closure;
+  //grpc_closure shutdown_closure;
+
+  //on_accept callback function
+  void (*grpc_on_accept)(void* arg, grpc_error* error);
+
+  void* arg;
 
 } grpc_thread_handle;
 
 
+void grpc_nphandle_shutdown(grpc_thread_handle* thread);
 
 
 /* Creates a thread for namedpipe to run operations after succesfull connection*/

@@ -57,7 +57,7 @@ grpc_diffproc_transport::grpc_diffproc_transport(
   grpc_slice_buffer_init(&outbuf);
   if (is_client) {
     grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
-    grpc_diffproc_initiate_write(this);
+    //grpc_diffproc_initiate_write(this);
   }
   
 }
@@ -187,7 +187,7 @@ void grpc_diffproc_stream::ref(const char* reason) {
        const grpc_channel_args* channel_args, grpc_endpoint* ep, bool is_client,
        grpc_resource_user* resource_user) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-     printf("\n Endpoint ptr : %p and handle : %p \n ", ep);
+     //printf("\n Endpoint ptr : %p and handle : %p \n ", ep);
      auto t = new grpc_diffproc_transport(channel_args, ep, is_client,
                                           resource_user);
      return &t->base;

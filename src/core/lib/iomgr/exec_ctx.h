@@ -132,7 +132,10 @@ class ExecCtx {
   ExecCtx(const ExecCtx&) = delete;
   ExecCtx& operator=(const ExecCtx&) = delete;
 
-  unsigned starting_cpu() const { return starting_cpu_; }
+
+  unsigned starting_cpu() const { 
+    return starting_cpu_; 
+  }
 
   struct CombinerData {
     /* currently active combiner: updated only via combiner.c */

@@ -88,7 +88,7 @@ static void on_accept(void* arg, grpc_endpoint* np,
   }  
   grpc_np_server_ref(state->np_server);
   //gpr_mu_unlock(&state->mu);
-  //grpc_core::ExecCtx::Get()->Now();      
+  grpc_core::ExecCtx execctx;  
   if (np != nullptr) {
       puts("Endpoint is not null...  server_utils.cc");
     const char* args_to_remove[] = {GRPC_ARG_MAX_CONNECTION_IDLE_MS,
