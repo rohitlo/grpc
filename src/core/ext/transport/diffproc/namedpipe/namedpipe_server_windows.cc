@@ -359,7 +359,7 @@ static void on_accept(void* arg, grpc_error* error) {
   }
 
   if (!pipe->shutting_down) {
-    ep = grpc_namedpipe_create(currHandle,
+    ep = grpc_namedpipe_create(pipe->np_handle,
                                pipe->server->channel_args,
                                "server", 0);
   } else {

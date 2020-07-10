@@ -25,7 +25,7 @@
 #include <grpc/support/port_platform.h>
 
 #include "src/core/lib/iomgr/port.h"
-
+#include "src/core/ext/transport/diffproc/namedpipe_thread.h"
 #ifdef GRPC_WINSOCK_SOCKET
 #include "src/core/lib/iomgr/endpoint.h"
 #include "src/core/lib/iomgr/socket_windows.h"
@@ -33,7 +33,7 @@
 /* Create a HANDLE given a handle.
  * Takes ownership of the handle.
  */
-grpc_endpoint* grpc_namedpipe_create(HANDLE handle, grpc_channel_args* channel_args,
+grpc_endpoint* grpc_namedpipe_create(grpc_thread_handle* thread, grpc_channel_args* channel_args,
                                const char* peer_string, BOOL isClient);
 
 

@@ -44,17 +44,17 @@
 #include <src\core\lib\transport\transport.h>
 
 
-static void async_connect_unlock_and_cleanup(connection_details* ac,
-                                             HANDLE socket) {
-  int done = (--ac->refs == 0);
-  gpr_mu_unlock(&ac->mu);
-  if (done) {
-    grpc_channel_args_destroy(ac->channel_args);
-    gpr_mu_destroy(&ac->mu);
-    gpr_free(ac);
-  }
-  if (socket != NULL) CloseHandle(socket);
-}
+//static void async_connect_unlock_and_cleanup(connection_details* ac,
+//                                             HANDLE socket) {
+//  int done = (--ac->refs == 0);
+//  gpr_mu_unlock(&ac->mu);
+//  if (done) {
+//    grpc_channel_args_destroy(ac->channel_args);
+//    gpr_mu_destroy(&ac->mu);
+//    gpr_free(ac);
+//  }
+//  if (socket != NULL) grpc_nphan(socket);
+//}
 
 static void on_connect(void* arg, void* cdc, grpc_error* error){
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
@@ -62,22 +62,22 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
     grpc_endpoint** ep = cd->endpoint;
     gpr_mu_unlock(&cd->mu);
     gpr_mu_lock(&cd->mu);
-    HANDLE hd = cd->handle;
+    grpc_thread_handle* thread = cd->threadHandle;
     cd->handle = NULL;
     gpr_mu_unlock(&cd->mu);
     gpr_mu_lock(&cd->mu);
     /*grpc_closure* on_done = cd->on_done;*/
     if(error == GRPC_ERROR_NONE){
-        *ep = grpc_namedpipe_create(hd, cd->channel_args, cd->addr_name, 1);
+        *ep = grpc_namedpipe_create(thread, cd->channel_args, cd->addr_name, 1);
         cd->clientsidedetails->endpoint = *ep;
-        cd->clientsidedetails->hd = hd;
+        cd->clientsidedetails->hd = thread->pipeHandle;
         printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
-               *ep, hd);
-        hd = NULL;
+               *ep, thread->pipeHandle);
+        thread = NULL;
     }else{
         puts("Fail");
     }
-    async_connect_unlock_and_cleanup(cd, hd);
+    //async_connect_unlock_and_cleanup(cd, hd);
     cd->done(cd->clientsidedetails,error);
 }
 
@@ -128,7 +128,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
         cd = (connection_details*)gpr_malloc(sizeof(connection_details));
         cd->refs = 2;
         cd->endpoint = ep;
-        cd->handle = clientHandle;
+        cd->threadHandle = grpc_createHandle(clientHandle,"client");
         cd->addr_name = addr;
         cd->channel_args = grpc_channel_args_copy(channel_args);
         cd->clientsidedetails = condetail;

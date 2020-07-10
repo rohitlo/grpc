@@ -43,6 +43,7 @@
 #include <tchar.h>
 #include <process.h>
 #include <src\core\lib\iomgr\iocp_windows.h>
+#include <src\core\ext\transport\diffproc\namedpipe_thread.h>
 
 
 typedef struct grpc_namedpipe{
@@ -58,6 +59,8 @@ typedef struct grpc_namedpipe{
     grpc_slice_buffer* write_slices;
     grpc_slice_buffer* read_slices;
 
+
+    grpc_thread_handle* threadHandle;
     gpr_mu mu;
     int shutting_down  = 0;
     grpc_error* shutdown_error;
@@ -79,9 +82,9 @@ static void on_read(void* npp, grpc_error* error) {
     np->read_cb = NULL;
     gpr_mu_unlock(&np->mu);
     namedpipe_unref(np);
-    FlushFileBuffers(np->handle);
-    DisconnectNamedPipe(np->handle);
-    CloseHandle(np->handle);
+    FlushFileBuffers(np->threadHandle->pipeHandle);
+    DisconnectNamedPipe(np->threadHandle->pipeHandle);
+    //CloseHandle(np->handle);
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
     cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
 }
@@ -91,14 +94,14 @@ static void on_write(void* npp, grpc_error* error) {
   grpc_namedpipe* np = (grpc_namedpipe*)npp;
   grpc_closure* cb;
   printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
-         np->base, np->handle);
+         np->base, np->threadHandle->pipeHandle);
   gpr_mu_lock(&np->mu);
   cb = np->write_cb;
   np->write_cb = NULL;
   gpr_mu_unlock(&np->mu);
-  FlushFileBuffers(np->handle);
-  DisconnectNamedPipe(np->handle);
-  CloseHandle(np->handle);
+  FlushFileBuffers(np->threadHandle->pipeHandle);
+  DisconnectNamedPipe(np->threadHandle->pipeHandle);
+ // CloseHandle(np->handle);
   namedpipe_unref(np);
   grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
   cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
@@ -110,7 +113,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                      grpc_closure* cb, bool urgent) {
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
-  HANDLE handle = np->handle;
+  HANDLE handle = np->threadHandle->pipeHandle;
   int status;
   DWORD bytes_read = 0;
   DWORD dwErr;
@@ -150,7 +153,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
                      grpc_closure* cb, void* arg) {
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
-  HANDLE handle = np->handle;
+  HANDLE handle = np->threadHandle->pipeHandle;
   int status;
   grpc_error* error = GRPC_ERROR_NONE;
   if (np->shutting_down) {
@@ -198,7 +201,6 @@ static void win_add_to_pollset_set(grpc_endpoint* ep, grpc_pollset_set* pss) {
   grpc_namedpipe* np;
   (void)pss;
   np = (grpc_namedpipe*)ep;
-  grpc_iocp_add_socket((grpc_winsocket*)np->handle);
 }
 
 static void win_delete_from_pollset_set(grpc_endpoint* ep,
@@ -215,6 +217,7 @@ static void win_shutdown(grpc_endpoint* ep, grpc_error* why) {
   } else {
     GRPC_ERROR_UNREF(why);
   }
+  grpc_nphandle_shutdown(np->threadHandle);
   gpr_mu_unlock(&np->mu);
 }
 
@@ -251,17 +254,18 @@ static grpc_endpoint_vtable vtable = {win_read,
                                       win_can_track_err};
 
 
-grpc_endpoint* grpc_namedpipe_create(HANDLE hd,grpc_channel_args* channel_args,
+grpc_endpoint* grpc_namedpipe_create(grpc_thread_handle* thread,
+                                     grpc_channel_args* channel_args,
                                      const char* peer_string, BOOL isClient) {
   printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__); 
-  HANDLE handle = hd;
+  HANDLE handle = thread->pipeHandle;
   grpc_namedpipe* np = (grpc_namedpipe*)gpr_malloc(sizeof(grpc_namedpipe));
   memset(np, 0, sizeof(grpc_namedpipe));
  // printf("Size of vtable %d %p %p \n", sizeof(grpc_namedpipe), np, &np->base);
   np->base.vtable = &vtable;
   //printf("Size of vtable %d \n", sizeof(&vtable));
  // printf("Size of vtable %d %p %p\n", sizeof(grpc_namedpipe), np, &np->base);
-  np->handle = hd;
+  np->threadHandle = thread;
   gpr_mu_init(&np->mu);
   gpr_ref_init(&np->refcount, 1);
   GRPC_CLOSURE_INIT(&np->on_read, on_read, np, grpc_schedule_on_exec_ctx);

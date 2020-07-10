@@ -28,7 +28,7 @@
 #include "src/core/lib/iomgr/resolve_address.h"
 #include <grpcpp\channel.h>
 #include <src/core/ext/transport/diffproc/client_utils.h>
-
+#include "src/core/ext/transport/diffproc/namedpipe_thread.h"
 
 typedef void (*grpc_on_done)(void* arg, grpc_error* error);
 
@@ -36,6 +36,7 @@ typedef struct {
   grpc_closure* on_done;
   grpc_closure on_connect;
   HANDLE handle;
+  grpc_thread_handle* threadHandle;
   int refs;
   gpr_mu mu;
   const char* addr_name;
@@ -43,6 +44,8 @@ typedef struct {
   grpc_channel_args* channel_args;
   conndetails* clientsidedetails;
   grpc_on_done done;
+
+
 } connection_details;
 /*  */
 void np_connect(grpc_closure* on_done, grpc_endpoint** ep,
