@@ -77,7 +77,8 @@ static void on_accept(void* arg, grpc_endpoint* np,
                       grpc_np_server_acceptor* acceptor) {
   printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
   server_state* state = static_cast<server_state*>(arg);
-  grpc_slice_buffer* read_buffer = nullptr;
+  grpc_slice_buffer read_buffer;
+  grpc_slice_buffer_init(&read_buffer);
   gpr_mu_lock(&state->mu);    
    if (state->shutdown) {
     gpr_mu_unlock(&state->mu);
@@ -99,7 +100,7 @@ static void on_accept(void* arg, grpc_endpoint* np,
     grpc_transport* transport =  grpc_create_diffproc_transport(server_args, np, false, nullptr);
     grpc_server_setup_transport(state->server, transport, nullptr, server_args,
                                 nullptr, nullptr);
-      grpc_diffproc_transport_start_reading(transport, read_buffer);
+      grpc_diffproc_transport_start_reading(transport, &read_buffer);
     //}
     grpc_channel_args_destroy(server_args);
 
