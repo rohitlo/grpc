@@ -64,6 +64,7 @@ DWORD WINAPI InstanceThread(LPVOID lparam) {
     return 1;
   } else {
     puts("Error connecting to pipe..");
+    thread->grpc_on_error(thread->arg, GRPC_ERROR_NONE);
     CloseHandle(thread->pipeHandle);
     return (DWORD) - 1;
   }

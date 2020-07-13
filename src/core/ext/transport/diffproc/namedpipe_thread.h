@@ -62,6 +62,9 @@ typedef struct grpc_thread_handle {
 
   void* arg;
 
+
+  // on_accept callback function
+  void (*grpc_on_error)(void* arg, grpc_error* error);
 } grpc_thread_handle;
 
 

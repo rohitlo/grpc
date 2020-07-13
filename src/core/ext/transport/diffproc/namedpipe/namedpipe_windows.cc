@@ -185,7 +185,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
 
   //printf("\nMessage sent to server, receiving reply as follows:\n");
 
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_WSA_ERROR(WSAGetLastError(), "NPSEND"));
+  //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_WSA_ERROR(WSAGetLastError(), "NPSEND"));
 }
 
 
@@ -193,7 +193,6 @@ static void win_add_to_pollset(grpc_endpoint* ep, grpc_pollset* ps) {
   grpc_namedpipe* np;
   (void)ps;
   np = (grpc_namedpipe*)ep;
-  grpc_iocp_add_socket((grpc_winsocket*)np->handle);
 
 }
 
@@ -208,6 +207,7 @@ static void win_delete_from_pollset_set(grpc_endpoint* ep,
 
 /*  */
 static void win_shutdown(grpc_endpoint* ep, grpc_error* why) {
+  printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   gpr_mu_lock(&np->mu);
   /* At that point, what may happen is that we're already inside the IOCP

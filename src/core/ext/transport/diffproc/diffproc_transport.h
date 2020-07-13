@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-
+#pragma once
 #ifndef GRPC_CORE_EXT_TRANSPORT_diffproc_diffproc_TRANSPORT_H
 #define GRPC_CORE_EXT_TRANSPORT_diffproc_diffproc_TRANSPORT_H
 
@@ -52,6 +52,7 @@ struct grpc_diffproc_transport {
                            const void* server_data);
   grpc_endpoint* ep;
   void* accept_stream_data;
+  gpr_mu mu;
   bool is_closed = false;
   struct grpc_diffproc_stream* stream_list = nullptr;
   grpc_closure write_action_begin_locked;
@@ -121,6 +122,35 @@ struct grpc_diffproc_stream {
      grpc_error* cancel_other_error = GRPC_ERROR_NONE;
 
      grpc_millis deadline = GRPC_MILLIS_INF_FUTURE;
+
+       /** Is this stream closed for writing. */
+     bool write_closed = false;
+     /** Is this stream reading half-closed. */
+     bool read_closed = false;
+     /** Are all published incoming byte streams closed. */
+     bool all_incoming_byte_streams_finished = false;
+     /** Has this stream seen an error.
+         If true, then pending incoming frames can be thrown away. */
+     bool seen_error = false;
+     /** Are we buffering writes on this stream? If yes, we won't become
+        writable until there's enough queued up in the flow_controlled_buffer */
+     bool write_buffering = false;
+
+     /* have we sent or received the EOS bit? */
+     bool eos_received = false;
+     bool eos_sent = false;
+
+     /** the error that resulted in this stream being read-closed */
+     grpc_error* read_closed_error = GRPC_ERROR_NONE;
+     /** the error that resulted in this stream being write-closed */
+     grpc_error* write_closed_error = GRPC_ERROR_NONE;
+
+
+       /** things the upper layers would like to send */
+     grpc_metadata_batch* send_initial_metadata = nullptr;
+     grpc_closure* send_initial_metadata_finished = nullptr;
+     grpc_metadata_batch* send_trailing_metadata = nullptr;
+     grpc_closure* send_trailing_metadata_finished = nullptr;
 
      bool listed = true;
      struct grpc_diffproc_stream* stream_list_prev;

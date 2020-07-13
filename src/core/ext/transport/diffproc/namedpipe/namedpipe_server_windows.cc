@@ -281,6 +281,11 @@ DWORD WINAPI Ins(LPVOID lpvaram) {
   return 1;
 }
 
+/*Error callback at namedpipe connection*/
+static void on_error(void* arg, grpc_error* error) {
+  puts("error connectin got namepipe");
+}
+
 static void on_accept(void* arg, grpc_error* error);
 
 #define CONNECTING_STATE 0
@@ -301,6 +306,7 @@ static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
   printf("Handle to listen to : %p \n", pipeInstance->np_handle->pipeHandle);
   //pipeInstance->np_handle->complete_closure = &pipeInstance->on_accept;
   pipeInstance->np_handle->grpc_on_accept = on_accept;
+  pipeInstance->np_handle->grpc_on_error = on_error;
   pipeInstance->np_handle->arg = pipeInstance;
   error = CreateThreadProcess(pipeInstance->np_handle);
   if (error != GRPC_ERROR_NONE) {
@@ -339,6 +345,8 @@ VOID DisconnectAndReconnect(grpc_np_server* server, DWORD i) {
          server->pipes[i]->dwState);
   
 } 
+
+
 
 /* Event manager callback when reads are ready. */
 static void on_accept(void* arg, grpc_error* error) {

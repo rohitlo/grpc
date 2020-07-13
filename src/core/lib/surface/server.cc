@@ -486,6 +486,7 @@ static void done_request_event(void* req, grpc_cq_completion* /*c*/) {
 
 static void publish_call(grpc_server* server, call_data* calld, size_t cq_idx,
                          requested_call* rc) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_set_completion_queue(calld->call, rc->cq_bound_to_call);
   grpc_call* call = calld->call;
   *rc->call = call;
@@ -518,6 +519,7 @@ static void publish_call(grpc_server* server, call_data* calld, size_t cq_idx,
 }
 
 static void publish_new_rpc(void* arg, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_element* call_elem = static_cast<grpc_call_element*>(arg);
   call_data* calld = static_cast<call_data*>(call_elem->call_data);
   channel_data* chand = static_cast<channel_data*>(call_elem->channel_data);
@@ -586,6 +588,7 @@ static void publish_new_rpc(void* arg, grpc_error* error) {
 static void finish_start_new_rpc(
     grpc_server* server, grpc_call_element* elem, request_matcher* rm,
     grpc_server_register_method_payload_handling payload_handling) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   call_data* calld = static_cast<call_data*>(elem->call_data);
 
   if (gpr_atm_acq_load(&server->shutdown_flag)) {
@@ -618,6 +621,7 @@ static void finish_start_new_rpc(
 }
 
 static void start_new_rpc(grpc_call_element* elem) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
   call_data* calld = static_cast<call_data*>(elem->call_data);
   grpc_server* server = chand->server;
@@ -841,6 +845,7 @@ static void server_start_transport_stream_op_batch(
 }
 
 static void got_initial_metadata(void* ptr, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_element* elem = static_cast<grpc_call_element*>(ptr);
   call_data* calld = static_cast<call_data*>(elem->call_data);
   if (error == GRPC_ERROR_NONE) {
@@ -860,6 +865,7 @@ static void got_initial_metadata(void* ptr, grpc_error* error) {
 
 static void accept_stream(void* cd, grpc_transport* /*transport*/,
                           const void* transport_server_data) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   channel_data* chand = static_cast<channel_data*>(cd);
   /* create a call */
   grpc_call_create_args args;

@@ -1533,6 +1533,7 @@ static void receiving_trailing_metadata_ready(void* bctlp, grpc_error* error) {
 }
 
 static void finish_batch(void* bctlp, grpc_error* error) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   batch_control* bctl = static_cast<batch_control*>(bctlp);
   grpc_call* call = bctl->call;
   GRPC_CALL_COMBINER_STOP(&call->call_combiner, "on_complete");

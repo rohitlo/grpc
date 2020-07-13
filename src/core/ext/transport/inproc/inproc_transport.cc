@@ -325,6 +325,7 @@ int init_stream(grpc_transport* gt, grpc_stream* gs,
                 grpc_stream_refcount* refcount, const void* server_data,
                 grpc_core::Arena* arena) {
   INPROC_LOG(GPR_INFO, "init_stream %p %p %p", gt, gs, server_data);
+  printf("init_stream %p %p %p", gt, gs, server_data);
   inproc_transport* t = reinterpret_cast<inproc_transport*>(gt);
   new (gs) inproc_stream(t, refcount, server_data, arena);
   return 0;  // return value is not important
@@ -960,8 +961,7 @@ void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
   }
 
   inproc_stream* other = s->other_side;
-  if (error == GRPC_ERROR_NONE &&
-      (op->send_initial_metadata || op->send_trailing_metadata)) {
+  if (error == GRPC_ERROR_NONE && (op->send_initial_metadata || op->send_trailing_metadata)) {
     if (s->t->is_closed) {
       error = GRPC_ERROR_CREATE_FROM_STATIC_STRING("Endpoint already shutdown");
     }
@@ -1109,6 +1109,7 @@ void close_transport_locked(inproc_transport* t) {
 }
 
 void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   inproc_transport* t = reinterpret_cast<inproc_transport*>(gt);
   INPROC_LOG(GPR_INFO, "perform_transport_op %p %p", t, op);
   gpr_mu_lock(&t->mu->mu);
@@ -1120,6 +1121,7 @@ void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
     t->state_tracker.RemoveWatcher(op->stop_connectivity_watch);
   }
   if (op->set_accept_stream) {
+    printf("setting accept stream \n");
     t->accept_stream_cb = op->set_accept_stream_fn;
     t->accept_stream_data = op->set_accept_stream_user_data;
   }
