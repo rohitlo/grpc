@@ -55,7 +55,7 @@ grpc_error* grpc_chttp2_perform_read(grpc_chttp2_transport* t,
   const uint8_t* end = GRPC_SLICE_END_PTR(slice);
   const uint8_t* cur = beg;
   grpc_error* err;
-
+  printf("perform_transport_op [t=%p] \n", t);
   if (cur == end) return GRPC_ERROR_NONE;
 
   switch (t->deframe_state) {
@@ -253,6 +253,7 @@ grpc_error* grpc_chttp2_perform_read(grpc_chttp2_transport* t,
 }
 
 static grpc_error* init_frame_parser(grpc_chttp2_transport* t) {
+  printf("perform_transport_op [t=%p] \n", t);
   if (t->is_first_frame &&
       t->incoming_frame_type != GRPC_CHTTP2_FRAME_SETTINGS) {
     char* msg;
@@ -581,6 +582,7 @@ static grpc_error* on_trailing_header(void* tp, grpc_mdelem md) {
 
 static grpc_error* init_header_frame_parser(grpc_chttp2_transport* t,
                                             int is_continuation) {
+  printf("perform_transport_op [t=%p] \n", t);
   uint8_t is_eoh =
       (t->incoming_frame_flags & GRPC_CHTTP2_DATA_FLAG_END_HEADERS) != 0;
   grpc_chttp2_stream* s;

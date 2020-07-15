@@ -97,7 +97,8 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
 
     //GRPC_CLOSURE_INIT(&conn, done, &condetail, nullptr);
     np_connect(&conn, ep, client_args, target, &condetail, done);
-    printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__, ep, endpoint);
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    printf("Channel side created transport :%p \n", condetail.transport);
     grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, condetail.transport);
     grpc_channel_args_destroy(client_args);
     return channel;

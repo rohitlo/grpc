@@ -866,6 +866,8 @@ static void got_initial_metadata(void* ptr, grpc_error* error) {
 static void accept_stream(void* cd, grpc_transport* /*transport*/,
                           const void* transport_server_data) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  printf("Stream in accept_stream :%p \n",
+         transport_server_data);
   channel_data* chand = static_cast<channel_data*>(cd);
   /* create a call */
   grpc_call_create_args args;
@@ -875,7 +877,7 @@ static void accept_stream(void* cd, grpc_transport* /*transport*/,
   args.propagation_mask = 0;
   args.cq = nullptr;
   args.pollset_set_alternative = nullptr;
-  args.server_transport_data = transport_server_data;
+  args.server_transport_data = transport_server_data; 
   args.add_initial_metadata = nullptr;
   args.add_initial_metadata_count = 0;
   args.send_deadline = GRPC_MILLIS_INF_FUTURE;
@@ -1260,6 +1262,8 @@ void grpc_server_setup_transport(
   op->set_accept_stream = true;
   op->set_accept_stream_fn = accept_stream;
   op->set_accept_stream_user_data = chand;
+  printf(" Transport : %p calling accept stream cb %p %p \n", transport,
+         op->set_accept_stream_fn, op->set_accept_stream_user_data);
   op->start_connectivity_watch.reset(new ConnectivityWatcher(chand));
   if (gpr_atm_acq_load(&s->shutdown_flag) != 0) {
     op->disconnect_with_error =

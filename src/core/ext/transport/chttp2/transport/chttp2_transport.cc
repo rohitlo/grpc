@@ -750,6 +750,7 @@ static void destroy_stream(grpc_transport* gt, grpc_stream* gs,
 
 grpc_chttp2_stream* grpc_chttp2_parsing_accept_stream(grpc_chttp2_transport* t,
                                                       uint32_t id) {
+  printf(" grpc_chttp2_parsing_accept_stream perform_transport_op [t=%p] \n", t);
   if (t->accept_stream_cb == nullptr) {
     return nullptr;
   }
@@ -766,8 +767,11 @@ grpc_chttp2_stream* grpc_chttp2_parsing_accept_stream(grpc_chttp2_transport* t,
     return nullptr;
   }
   grpc_chttp2_stream* accepting = nullptr;
+  printf(" Transport : %p calling accept stream cb %p %p \n", t,
+         t->accept_stream_cb, t->accept_stream_cb_user_data);
   GPR_ASSERT(t->accepting_stream == nullptr);
   t->accepting_stream = &accepting;
+  printf("Stream in grpc_chttp2_parsing_accept_stream :%p \n", id);
   t->accept_stream_cb(t->accept_stream_cb_user_data, &t->base,
                       (void*)static_cast<uintptr_t>(id));
   t->accepting_stream = nullptr;
@@ -1346,6 +1350,7 @@ static void perform_stream_op_locked(void* stream_op,
       static_cast<grpc_transport_stream_op_batch*>(stream_op);
   grpc_chttp2_stream* s =
       static_cast<grpc_chttp2_stream*>(op->handler_private.extra_arg);
+  printf("Stream in perform_stream_op_locked :%p && Stream op batch : %p\n", s, op);
   grpc_transport_stream_op_batch_payload* op_payload = op->payload;
   grpc_chttp2_transport* t = s->t;
 
@@ -1637,7 +1642,7 @@ static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
   GPR_TIMER_SCOPE("perform_stream_op", 0);
   grpc_chttp2_transport* t = reinterpret_cast<grpc_chttp2_transport*>(gt);
   grpc_chttp2_stream* s = reinterpret_cast<grpc_chttp2_stream*>(gs);
-
+  printf("Stream in perform_stream_op_locked :%p && Stream op batch : %p\n", s, op);
   if (!t->is_client) {
     if (op->send_initial_metadata) {
       grpc_millis deadline =
@@ -1800,7 +1805,8 @@ static void perform_transport_op_locked(void* stream_op,
   grpc_transport_op* op = static_cast<grpc_transport_op*>(stream_op);
   grpc_chttp2_transport* t =
       static_cast<grpc_chttp2_transport*>(op->handler_private.extra_arg);
-
+  printf("OPS in perform_transport_op_locked :%p \n", op);
+  printf("perform_transport_op [t=%p] \n", t);
   if (op->goaway_error) {
     send_goaway(t, op->goaway_error);
   }
@@ -3330,6 +3336,7 @@ grpc_transport* grpc_create_chttp2_transport(
 void grpc_chttp2_transport_start_reading(
     grpc_transport* transport, grpc_slice_buffer* read_buffer,
     grpc_closure* notify_on_receive_settings) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_chttp2_transport* t =
       reinterpret_cast<grpc_chttp2_transport*>(transport);
   GRPC_CHTTP2_REF_TRANSPORT(
