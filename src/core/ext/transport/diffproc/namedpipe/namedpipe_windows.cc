@@ -82,10 +82,11 @@ static void on_read(void* npp, grpc_error* error) {
     np->read_cb = NULL;
     gpr_mu_unlock(&np->mu);
     namedpipe_unref(np);
-    FlushFileBuffers(np->threadHandle->pipeHandle);
-    DisconnectNamedPipe(np->threadHandle->pipeHandle);
+    //FlushFileBuffers(np->threadHandle->pipeHandle);
+    printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
+    //DisconnectNamedPipe(np->threadHandle->pipeHandle);
     //CloseHandle(np->handle);
-    grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
+    //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
     cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
 }
 
@@ -93,17 +94,17 @@ static void on_write(void* npp, grpc_error* error) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)npp;
   grpc_closure* cb;
-  printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
-         np->base, np->threadHandle->pipeHandle);
+  printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
   gpr_mu_lock(&np->mu);
   cb = np->write_cb;
   np->write_cb = NULL;
   gpr_mu_unlock(&np->mu);
-  FlushFileBuffers(np->threadHandle->pipeHandle);
-  DisconnectNamedPipe(np->threadHandle->pipeHandle);
+  //FlushFileBuffers(np->threadHandle->pipeHandle);
+  printf( " ***************  DIsconnectiong hanlde write complete : %p *******************", np->threadHandle->pipeHandle);
+ // DisconnectNamedPipe(np->threadHandle->pipeHandle);
  // CloseHandle(np->handle);
   namedpipe_unref(np);
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
+  //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
   cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
 }
 
@@ -114,19 +115,20 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
+  printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
   int status;
   DWORD bytes_read = 0;
   DWORD dwErr;
   size_t i;
   TCHAR chRequest[BUFSIZE];
   int fSuccess;
- /* if (np->shutting_down) {
+  if (np->shutting_down) {
     grpc_core::ExecCtx::Run(
         DEBUG_LOCATION, cb,
         GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-            "TCP socket is shutting down", &np->shutdown_error, 1));
+            "Np HANDLE is shutting down", &np->shutdown_error, 1));
     return;
-  }*/
+  }
   np->read_cb = cb;
   namedpipe_ref(np);
 /* First let's try a synchronous, non-blocking read. */
@@ -154,6 +156,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
+  printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
   int status;
   grpc_error* error = GRPC_ERROR_NONE;
   if (np->shutting_down) {
@@ -165,7 +168,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   }
 
   np->write_cb = cb;
-
+  namedpipe_ref(np);
   LPCTSTR lpvMessage = TEXT("Hey this is the first time I am trying to use pipe \n");
   DWORD cbToWrite = (lstrlen(lpvMessage) + 1) * sizeof(TCHAR);
   DWORD cbWritten;

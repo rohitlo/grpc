@@ -293,7 +293,7 @@ static void on_accept(void* arg, grpc_error* error);
 #define WRITING_STATE 2
 // 5. START ACCEPT LOCKED FOR ASYNC INCOMING CONNECTIONS
 static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
-  grpc_core::ExecCtx exec_ctx;
+  //grpc_core::ExecCtx exec_ctx;
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   int connectSuccess = 0;
   grpc_error* error = GRPC_ERROR_NONE;
