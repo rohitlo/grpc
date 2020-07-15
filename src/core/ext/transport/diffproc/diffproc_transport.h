@@ -46,7 +46,10 @@ struct grpc_diffproc_transport {
   gpr_refcount refs;
   bool is_client;
   char* peer_string;
-
+  /** address to place a newly accepted stream - set and unset by
+    grpc_diffproc_stream used by init_stream to
+    publish the accepted server stream */
+  struct grpc_diffproc_stream** accepting_stream = nullptr;
   grpc_core::ConnectivityStateTracker state_tracker;
   void (*accept_stream_cb)(void* user_data, grpc_transport* transport,
                            const void* server_data);
@@ -62,7 +65,7 @@ struct grpc_diffproc_transport {
   grpc_closure read_action_locked;
   /** incoming read bytes */
   grpc_slice_buffer read_buffer;
-
+  grpc_error* closed_with_error = GRPC_ERROR_NONE;
   /** data to write now */
   grpc_slice_buffer outbuf;
    };
@@ -107,9 +110,11 @@ struct grpc_diffproc_stream {
      grpc_transport_stream_op_batch* recv_message_op = nullptr;
      grpc_transport_stream_op_batch* recv_trailing_md_op = nullptr;
 
-     grpc_slice_buffer recv_message;
+     grpc_core::OrphanablePtr<grpc_core::ByteStream>* recv_message;
      grpc_core::ManualConstructor<grpc_core::SliceBufferByteStream> recv_stream;
      bool recv_inited = false;
+     bool read_intited = false;
+
 
      bool initial_md_sent = false;
      bool trailing_md_sent = false;
@@ -151,6 +156,22 @@ struct grpc_diffproc_stream {
      grpc_closure* send_initial_metadata_finished = nullptr;
      grpc_metadata_batch* send_trailing_metadata = nullptr;
      grpc_closure* send_trailing_metadata_finished = nullptr;
+
+
+     //Closures
+     grpc_closure* recv_initial_metadata_ready = nullptr;
+     grpc_closure* recv_message_ready = nullptr;
+     grpc_closure* recv_trailing_metadata_finished = nullptr;
+
+     //Metadata
+     grpc_metadata_batch* recv_initial_metadata;
+     grpc_metadata_batch* recv_trailing_metadata;
+
+     //bool variables
+     bool trailing_metadata_available;
+     bool final_metadata_requested;
+
+     grpc_closure* send_message_finished = nullptr;
 
      bool listed = true;
      struct grpc_diffproc_stream* stream_list_prev;
