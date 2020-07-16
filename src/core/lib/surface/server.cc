@@ -632,6 +632,7 @@ static void start_new_rpc(grpc_call_element* elem) {
   if (chand->registered_methods && calld->path_set && calld->host_set) {
     /* TODO(ctiller): unify these two searches */
     /* check for an exact match with host */
+    printf("Called path : %p \n", grpc_slice_to_c_string(calld->path));
     hash = GRPC_MDSTR_KV_HASH(grpc_slice_hash_internal(calld->host),
                               grpc_slice_hash_internal(calld->path));
     for (i = 0; i <= chand->registered_method_max_probes; i++) {
@@ -651,6 +652,7 @@ static void start_new_rpc(grpc_call_element* elem) {
       return;
     }
     /* check for a wildcard method definition (no host set) */
+    printf("Called path : %p and ptr : %p \n", grpc_slice_to_c_string(calld->path), calld->path);
     hash = GRPC_MDSTR_KV_HASH(0, grpc_slice_hash_internal(calld->path));
     for (i = 0; i <= chand->registered_method_max_probes; i++) {
       rm = &chand->registered_methods[(hash + i) %
@@ -848,6 +850,7 @@ static void got_initial_metadata(void* ptr, grpc_error* error) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_element* elem = static_cast<grpc_call_element*>(ptr);
   call_data* calld = static_cast<call_data*>(elem->call_data);
+  printf("Called element in got_init_md : %p", elem->filter);
   if (error == GRPC_ERROR_NONE) {
     start_new_rpc(elem);
   } else {
@@ -895,8 +898,7 @@ static void accept_stream(void* cd, grpc_transport* /*transport*/,
   op.op = GRPC_OP_RECV_INITIAL_METADATA;
   op.flags = 0;
   op.reserved = nullptr;
-  op.data.recv_initial_metadata.recv_initial_metadata =
-      &calld->initial_metadata;
+  op.data.recv_initial_metadata.recv_initial_metadata = &calld->initial_metadata;
   GRPC_CLOSURE_INIT(&calld->got_initial_metadata, got_initial_metadata, elem,
                     grpc_schedule_on_exec_ctx);
   grpc_call_start_batch_and_execute(call, &op, 1, &calld->got_initial_metadata);
@@ -1074,6 +1076,9 @@ void* grpc_server_register_method(
   registered_method* m;
   GRPC_API_TRACE(
       "grpc_server_register_method(server=%p, method=%s, host=%s, "
+      "flags=0x%08x)",
+      4, (server, method, host, flags));
+  printf("grpc_server_register_method(server=%p, method=%s, host=%s, "
       "flags=0x%08x)",
       4, (server, method, host, flags));
   if (!method) {

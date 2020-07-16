@@ -522,7 +522,7 @@ static void destroy_channel(void* arg, grpc_error* /*error*/) {
 }
 
 void grpc_channel_destroy_internal(grpc_channel* channel) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_transport_op* op = grpc_make_transport_op(nullptr);
   grpc_channel_element* elem;
   GRPC_API_TRACE("grpc_channel_destroy(channel=%p)", 1, (channel));

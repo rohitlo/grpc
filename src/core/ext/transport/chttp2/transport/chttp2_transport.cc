@@ -635,6 +635,11 @@ grpc_chttp2_stream::grpc_chttp2_stream(grpc_chttp2_transport* t,
   if (server_data) {
     id = static_cast<uint32_t>((uintptr_t)server_data);
     *t->accepting_stream = this;
+    printf(
+        "***************************** Stream in "
+        "grpc_chttp2_stream "
+        "***************************************** :%p :%d \n",
+        id, id);
     grpc_chttp2_stream_map_add(&t->stream_map, id, this);
     post_destructive_reclaimer(t);
   }
@@ -771,7 +776,7 @@ grpc_chttp2_stream* grpc_chttp2_parsing_accept_stream(grpc_chttp2_transport* t,
          t->accept_stream_cb, t->accept_stream_cb_user_data);
   GPR_ASSERT(t->accepting_stream == nullptr);
   t->accepting_stream = &accepting;
-  printf("Stream in grpc_chttp2_parsing_accept_stream :%p \n", id);
+  printf("***************************** Stream in grpc_chttp2_parsing_accept_stream ***************************************** :%p %d \n", id, id);
   t->accept_stream_cb(t->accept_stream_cb_user_data, &t->base,
                       (void*)static_cast<uintptr_t>(id));
   t->accepting_stream = nullptr;
@@ -1337,6 +1342,8 @@ static void log_metadata(const grpc_metadata_batch* md_batch, uint32_t id,
     char* value = grpc_slice_to_c_string(GRPC_MDVALUE(md->md));
     gpr_log(GPR_INFO, "HTTP:%d:%s:%s: %s: %s", id, is_initial ? "HDR" : "TRL",
             is_client ? "CLI" : "SVR", key, value);
+    printf("HTTP:%d:%s:%s: %s: %s \n", id, is_initial ? "HDR" : "TRL",
+           is_client ? "CLI" : "SVR", key, value);
     gpr_free(key);
     gpr_free(value);
   }
@@ -1344,6 +1351,7 @@ static void log_metadata(const grpc_metadata_batch* md_batch, uint32_t id,
 
 static void perform_stream_op_locked(void* stream_op,
                                      grpc_error* /*error_ignored*/) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("perform_stream_op_locked", 0);
 
   grpc_transport_stream_op_batch* op =
@@ -1358,6 +1366,26 @@ static void perform_stream_op_locked(void* stream_op,
 
   s->context = op->payload->context;
   s->traced = op->is_traced;
+
+  
+   if (op->send_initial_metadata) {
+    log_metadata(op->payload->send_initial_metadata.send_initial_metadata,
+                 s->id,s->t->is_client, true);
+  }
+  if (op->send_trailing_metadata) {
+    log_metadata(op->payload->send_trailing_metadata.send_trailing_metadata,
+                 s->id,s->t->is_client, false);
+  }
+
+  //  if (op->recv_initial_metadata) {
+  //  log_metadata(op->payload->recv_initial_metadata.recv_initial_metadata,
+  //               s->id, s->t->is_client, true);
+  //}
+  //if (op->recv_initial_metadata) {
+  //  log_metadata(op->payload->recv_trailing_metadata.recv_trailing_metadata,
+  //               s->id, s->t->is_client, false);
+  //}
+
   if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
     char* str = grpc_transport_stream_op_batch_string(op);
     gpr_log(GPR_INFO, "perform_stream_op_locked: %s; on_complete = %p", str,
@@ -1383,11 +1411,13 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->cancel_stream) {
+    puts("*************  CANCEL *******************");
     GRPC_STATS_INC_HTTP2_OP_CANCEL();
     grpc_chttp2_cancel_stream(t, s, op_payload->cancel_stream.cancel_error);
   }
 
   if (op->send_initial_metadata) {
+    puts("*************  SEND INIT MD *******************");
     if (t->is_client && t->channelz_socket != nullptr) {
       t->channelz_socket->RecordStreamStartedFromLocal();
     }
@@ -1480,6 +1510,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->send_message) {
+    puts("*************  SEND MSG *******************");
     GRPC_STATS_INC_HTTP2_OP_SEND_MESSAGE();
     t->num_messages_in_next_write++;
     GRPC_STATS_INC_HTTP2_SEND_MESSAGE_SIZE(
@@ -1525,6 +1556,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->send_trailing_metadata) {
+    puts("*************  SNED TRAIL MD *******************");
     GRPC_STATS_INC_HTTP2_OP_SEND_TRAILING_METADATA();
     GPR_ASSERT(s->send_trailing_metadata_finished == nullptr);
     on_complete->next_data.scratch |= CLOSURE_BARRIER_MAY_COVER_WRITE;
@@ -1576,6 +1608,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->recv_initial_metadata) {
+    puts("*************  RECV INIT MD *******************");
     GRPC_STATS_INC_HTTP2_OP_RECV_INITIAL_METADATA();
     GPR_ASSERT(s->recv_initial_metadata_ready == nullptr);
     s->recv_initial_metadata_ready =
@@ -1592,6 +1625,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->recv_message) {
+    puts("*************  RECV MSG******************");
     GRPC_STATS_INC_HTTP2_OP_RECV_MESSAGE();
     size_t before = 0;
     GPR_ASSERT(s->recv_message_ready == nullptr);
@@ -1617,6 +1651,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->recv_trailing_metadata) {
+    puts("*************  RECV TRAIL MD *******************");
     GRPC_STATS_INC_HTTP2_OP_RECV_TRAILING_METADATA();
     GPR_ASSERT(s->collecting_stats == nullptr);
     s->collecting_stats = op_payload->recv_trailing_metadata.collect_stats;
@@ -1812,6 +1847,7 @@ static void perform_transport_op_locked(void* stream_op,
   }
 
   if (op->set_accept_stream) {
+    puts("Set accept stream ************************");
     t->accept_stream_cb = op->set_accept_stream_fn;
     t->accept_stream_cb_user_data = op->set_accept_stream_user_data;
   }

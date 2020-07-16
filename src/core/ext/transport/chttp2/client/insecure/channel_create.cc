@@ -100,6 +100,10 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     printf("Channel side created transport :%p \n", condetail.transport);
     grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, condetail.transport);
+    grpc_channel_stack* stk = grpc_channel_get_channel_stack(channel);
+    grpc_transport_op* op = grpc_make_transport_op(nullptr);
+    grpc_channel_element* elem = grpc_channel_stack_element(stk, 0);
+    elem->filter->start_transport_op(elem, op);
     grpc_channel_args_destroy(client_args);
     return channel;
   } else {

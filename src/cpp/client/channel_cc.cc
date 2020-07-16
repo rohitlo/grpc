@@ -102,6 +102,8 @@ grpc::string Channel::GetServiceConfigJSON() const {
 namespace experimental {
 
 void ChannelResetConnectionBackoff(Channel* channel) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+
   grpc_channel_reset_connect_backoff(channel->c_channel_);
 }
 

@@ -71,6 +71,10 @@ struct grpc_diffproc_transport {
   grpc_error* closed_with_error = GRPC_ERROR_NONE;
   /** data to write now */
   grpc_slice_buffer outbuf;
+
+  //Map to maintain streams
+  std::map<int, grpc_diffproc_stream*> stream_map;
+
    };
 
 struct grpc_diffproc_stream {
@@ -82,6 +86,11 @@ struct grpc_diffproc_stream {
      void ref(const char* reason);
 
      void unref(const char* reason);
+
+
+     //Streama ID to store streams
+     uint32_t id = 0;
+
 
      grpc_diffproc_transport* t;
      grpc_metadata_batch to_read_initial_md;

@@ -1112,6 +1112,7 @@ void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   inproc_transport* t = reinterpret_cast<inproc_transport*>(gt);
   INPROC_LOG(GPR_INFO, "perform_transport_op %p %p", t, op);
+  printf("PERFORM TRANSPORT OP:  :%s \n", t->is_client ? "CLT" : "SRV");
   gpr_mu_lock(&t->mu->mu);
   if (op->start_connectivity_watch != nullptr) {
     t->state_tracker.AddWatcher(op->start_connectivity_watch_state,
@@ -1214,6 +1215,7 @@ void grpc_inproc_transport_init(void) {
   g_empty_slice = grpc_core::ExternallyManagedSlice();
 
   grpc_slice key_tmp = grpc_slice_from_static_string(":path");
+  printf("Called path inproc : %p and ptr :%p \n", grpc_slice_to_c_string(key_tmp), key_tmp);
   g_fake_path_key = grpc_slice_intern(key_tmp);
   grpc_slice_unref_internal(key_tmp);
 

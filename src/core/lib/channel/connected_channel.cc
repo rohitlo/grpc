@@ -140,6 +140,7 @@ static void connected_channel_start_transport_stream_op_batch(
 
 static void connected_channel_start_transport_op(grpc_channel_element* elem,
                                                  grpc_transport_op* op) {
+  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
   grpc_transport_perform_op(chand->transport, op);
 }
