@@ -71,7 +71,7 @@ struct grpc_diffproc_transport {
   grpc_error* closed_with_error = GRPC_ERROR_NONE;
   /** data to write now */
   grpc_slice_buffer outbuf;
-
+  bool processed = 0;
   //Map to maintain streams
   std::map<int, grpc_diffproc_stream*> stream_map;
 

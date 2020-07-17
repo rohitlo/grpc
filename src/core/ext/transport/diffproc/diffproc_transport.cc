@@ -76,8 +76,8 @@ grpc_diffproc_transport::grpc_diffproc_transport(
   grpc_slice_buffer_init(&read_buffer);
   grpc_slice_buffer_init(&outbuf);
   if (is_client) {
-    grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
-    grpc_diffproc_initiate_write(this);
+    //grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
+   // grpc_diffproc_initiate_write(this);
   }
   
 }
@@ -101,6 +101,30 @@ void grpc_diffproc_transport::unref() {
   DIFFPROC_LOG(GPR_INFO, "really_destroy_transport %p", this);
   this->~grpc_diffproc_transport();
   gpr_free(this);
+}
+
+
+
+void mdToBuffer(grpc_diffproc_stream* s,const grpc_metadata_batch* metadata, bool* markfilled, grpc_slice_buffer* outbuf) {
+  grpc_slice_buffer_reset_and_unref(outbuf);
+  if (markfilled != nullptr) {
+    *markfilled = true;
+  }
+  for (grpc_linked_mdelem* elem = metadata->list.head; (elem != nullptr); elem = elem->next) {
+    grpc_slice_buffer_add(outbuf,grpc_slice_intern(GRPC_MDKEY(elem->md)));
+    grpc_slice_buffer_add(outbuf,grpc_slice_intern(GRPC_MDVALUE(elem->md)));
+  }
+}
+
+
+void bufferToMd(grpc_diffproc_stream* s, const grpc_metadata_batch* metadata,
+                uint32_t flags, grpc_metadata_batch* out_md, uint32_t* outflags,
+                bool* markfilled, grpc_slice_buffer* outbuf) {
+  for (grpc_linked_mdelem* elem = metadata->list.head; (elem != nullptr);
+       elem = elem->next) {
+    grpc_slice_buffer_add(outbuf, grpc_slice_intern(GRPC_MDKEY(elem->md)));
+    grpc_slice_buffer_add(outbuf, grpc_slice_intern(GRPC_MDVALUE(elem->md)));
+  }
 }
 
 
@@ -457,9 +481,6 @@ void message_transfer_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s
 //Read Buffer
 void message_read_locked(grpc_diffproc_transport* t,
                              grpc_diffproc_stream* sender) {
-  size_t remaining =
-      sender->recv_message_op->payload->recv_message.recv_message->get()
-           ->length();
   grpc_slice_buffer_init(&t->read_buffer);
   sender->read_intited = true;
   do {
@@ -477,9 +498,9 @@ void message_read_locked(grpc_diffproc_transport* t,
       break;
     }
     GPR_ASSERT(error == GRPC_ERROR_NONE);
-    remaining -= GRPC_SLICE_LENGTH(message_slice);
     grpc_slice_buffer_add(&t->read_buffer, message_slice);
-  } while (remaining > 0);
+    *sender->recv_message++;
+  } while (*sender->recv_message);
 
   *sender->recv_message = nullptr;
   printf("message_transfer_locked %p scheduling message-ready", sender);
@@ -534,7 +555,7 @@ static void perform_stream_op_locked(void* stream_op,
 
   //Send INITITAL MD
   if (op->send_initial_metadata) {
-    puts("*************  SEND INIT MD *******************");
+    printf("*************  SEND INIT MD ******************* :      %s",s->t->is_client?"CLT":"SRV");
     grpc_closure* send_initial_metadata_finished = op->on_complete;
     GPR_ASSERT(s->send_initial_metadata_finished == nullptr);
     // grpc_slice_buffer_init(&s->compressed_data_buffer);
@@ -551,10 +572,9 @@ static void perform_stream_op_locked(void* stream_op,
     //}
     if (!s->write_closed) {
       if (t->is_client) {
+        bool markFilled = false;
         if (t->closed_with_error == GRPC_ERROR_NONE) {
-          // grpc_diffproc_list_add_streams(t, s);
-          //             startStreams(t);
-          puts("No error");
+          mdToBuffer(s, s->send_initial_metadata, &markFilled, &s->t->outbuf);
         } else {
           grpc_diffproc_cancel_stream(
               t, s,
@@ -584,7 +604,8 @@ static void perform_stream_op_locked(void* stream_op,
 
   // SEND MESSAGE ****************
   if (op->send_message) {
-    puts("*************  SEND MSG *******************");
+    printf("*************  SEND MSG *******************:    %s",
+         s->t->is_client ? "CLT" : "SRV");
     s->send_message_finished = op->on_complete;
     if (s->write_closed) {
       op->payload->send_message.stream_write_closed = true;
@@ -632,7 +653,8 @@ static void perform_stream_op_locked(void* stream_op,
 
   // RECV INITIAL METADATA
   if (op->recv_initial_metadata) {
-    puts("*************  RECV INIT MD *******************");
+    printf("*************  RECV INIT MD *******************     :%s",
+         s->t->is_client ? "CLT" : "SRV");
     GPR_ASSERT(s->recv_initial_metadata_ready == nullptr);
     s->recv_initial_metadata_ready = op->payload->recv_initial_metadata.recv_initial_metadata_ready; //closure
     s->recv_initial_metadata = op->payload->recv_initial_metadata.recv_initial_metadata;   //metadata
@@ -680,9 +702,11 @@ static void perform_stream_op_locked(void* stream_op,
     GPR_ASSERT(s->recv_message_ready == nullptr);
     s->recv_message_ready = op->payload->recv_message.recv_message_ready;
     s->recv_message = op->payload->recv_message.recv_message;
+    printf("RECV MSG : %p", s->recv_message);
     s->recv_message_op = op;
+   // message_read_locked(t, s);
     continue_read_action_locked(t);
-    message_read_locked(t, s);
+
   }
 
   // RECV TRAILING MD
@@ -828,7 +852,7 @@ static void perform_stream_op_locked(void* stream_op,
      if (err != GRPC_ERROR_NONE) {
        close_transport_locked(t, GRPC_ERROR_REF(error));
      } else {
-       if (t->accept_stream_cb != nullptr && !t->is_client) {
+       if (t->accept_stream_cb != nullptr && !t->is_client && !t->processed) {
          grpc_diffproc_stream* accepting = nullptr;
          printf("Stream :%p int this Transport : %p calling accept stream cb %p %p \n",accepting, t,
                 t->accept_stream_cb, t->accept_stream_data);
@@ -839,6 +863,7 @@ static void perform_stream_op_locked(void* stream_op,
          t->accept_stream_cb(t->accept_stream_data, &t->base,
                              (void*)(&t->accepting_stream));
          t->accepting_stream = nullptr;
+         t->processed = 1;
        }
        grpc_slice_buffer_reset_and_unref_internal(&t->read_buffer);
      }
