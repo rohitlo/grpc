@@ -110,6 +110,8 @@ static void on_write(void* npp, grpc_error* error) {
 
 
 #define BUFSIZE 4096
+#define DEFAULT_TARGET_READ_SIZE 8192
+#define MAX_WSABUF_COUNT 16
 static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                      grpc_closure* cb, bool urgent) {
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
@@ -130,23 +132,67 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
     return;
   }
   np->read_cb = cb;
-  namedpipe_ref(np);
-/* First let's try a synchronous, non-blocking read. */
-  fSuccess = ReadFile(handle, chRequest, BUFSIZE * sizeof(TCHAR), &bytes_read, NULL);
 
-  // The read operation completed successfully.
+  /*  ---------- Buffer Read Try ---------- */
 
-  if (fSuccess && bytes_read != 0) {
-    puts("Read ops completed successfully...");
-    printf("\n Read message  :%s\n", chRequest);
-    on_read(np, GRPC_ERROR_NONE);
-  } else {
-    dwErr = GetLastError();
-    if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
-      puts("ERROR ops still pending...");
-      return;
+  WSABUF buffers[MAX_WSABUF_COUNT];
+  np->read_cb = cb;
+  np->read_slices = read_slices;
+  grpc_slice_buffer_reset_and_unref_internal(read_slices);
+  grpc_slice_buffer_swap(read_slices, &np->last_read_buffer);
+
+  if (np->read_slices->length < DEFAULT_TARGET_READ_SIZE / 2 &&
+      np->read_slices->count < MAX_WSABUF_COUNT) {
+    // TODO(jtattermusch): slice should be allocated using resource quota
+    grpc_slice_buffer_add(np->read_slices,
+                          GRPC_SLICE_MALLOC(DEFAULT_TARGET_READ_SIZE));
+  }
+
+  GPR_ASSERT(np->read_slices->count <= MAX_WSABUF_COUNT);
+  for (i = 0; i < np->read_slices->count; i++) {
+    buffers[i].len = (ULONG)GRPC_SLICE_LENGTH(
+        np->read_slices->slices[i]);  // we know slice size fits in 32bit.
+    buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->read_slices->slices[i]);
+  }
+  for (int i = 0; i < np->read_slices->count; i++) {
+    fSuccess = ReadFile(handle, buffers[i].buf, (DWORD)buffers[i].len,
+                        &bytes_read, NULL);
+    if (fSuccess && bytes_read != 0) {
+      puts("Read ops completed successfully...");
+      printf("\n Read message  :%s :%d\n", buffers[i].buf, bytes_read);
+    } else {
+      dwErr = GetLastError();
+      if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
+        puts("ERROR ops still pending...");
+        return;
+      }
     }
   }
+  namedpipe_ref(np);
+
+
+
+
+
+
+
+
+///* First let's try a synchronous, non-blocking read. */
+//  fSuccess = ReadFile(handle, chRequest, BUFSIZE * sizeof(TCHAR), &bytes_read, NULL);
+//
+//  // The read operation completed successfully.
+//
+//  if (fSuccess && bytes_read != 0) {
+//    puts("Read ops completed successfully...");
+//    printf("\n Read message  :%s\n", chRequest);
+//    on_read(np, GRPC_ERROR_NONE);
+//  } else {
+//    dwErr = GetLastError();
+//    if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
+//      puts("ERROR ops still pending...");
+//      return;
+//    }
+//  }
 
 }
 
@@ -169,22 +215,71 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
 
   np->write_cb = cb;
   namedpipe_ref(np);
-  LPCTSTR lpvMessage = TEXT("Hey this is the first time I am trying to use pipe \n");
-  DWORD cbToWrite = (lstrlen(lpvMessage) + 1) * sizeof(TCHAR);
+
+
+    /* ------ BUFFER WRITE TRY ------ */
+  WSABUF local_buffers[16];
+  WSABUF* allocated = NULL;
+  WSABUF* buffers = local_buffers;
+  size_t len;
   DWORD cbWritten;
-  _tprintf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite, lpvMessage);
-  status = WriteFile(handle,  // pipe handle
-                       lpvMessage,    // message
-                       cbToWrite,     // message length
-                       &cbWritten,    // bytes written
-                       NULL);
-  if (!status) {
-    _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
-    error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
-  } else {
-    puts("Successfully wrote to server end pipe handle....");
-    on_write(np, GRPC_ERROR_NONE);
+  size_t i;
+  for (i = 0; i < slices->count; i++) {
+    char* data =
+        grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
+    printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);
+    gpr_free(data);
   }
+
+  np->write_cb = cb;
+  np->write_slices = slices;
+  GPR_ASSERT(np->write_slices->count <= UINT_MAX);
+  if (np->write_slices->count > GPR_ARRAY_SIZE(local_buffers)) {
+    buffers = (WSABUF*)gpr_malloc(sizeof(WSABUF) * np->write_slices->count);
+    allocated = buffers;
+  }
+  for (i = 0; i < np->write_slices->count; i++) {
+    len = GRPC_SLICE_LENGTH(np->write_slices->slices[i]);
+    GPR_ASSERT(len <= ULONG_MAX);
+    buffers[i].len = (ULONG)len;
+    buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->write_slices->slices[i]);
+  }
+
+  for (int i = 0; i < np->write_slices->count; i++) {
+    status = WriteFile(handle,                 // pipe handle
+                       buffers[i].buf,         // message
+                       (DWORD)buffers[i].len,  // message length
+                       &cbWritten,             // bytes written
+                       NULL);
+    if (status == 1)
+      puts("Successfully wrote to server end pipe handle....");
+    else {
+      _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+      error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
+      return;
+    }
+  }
+
+   on_write(np, GRPC_ERROR_NONE);
+
+
+
+  //LPCTSTR lpvMessage = TEXT("Hey this is the first time I am trying to use pipe \n");
+  //DWORD cbToWrite = (lstrlen(lpvMessage) + 1) * sizeof(TCHAR);
+  //DWORD cbWritten;
+  //_tprintf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite, lpvMessage);
+  //status = WriteFile(handle,  // pipe handle
+  //                     lpvMessage,    // message
+  //                     cbToWrite,     // message length
+  //                     &cbWritten,    // bytes written
+  //                     NULL);
+  //if (!status) {
+  //  _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+  //  error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
+  //} else {
+  //  puts("Successfully wrote to server end pipe handle....");
+  //  on_write(np, GRPC_ERROR_NONE);
+  //}
 
   //printf("\nMessage sent to server, receiving reply as follows:\n");
 

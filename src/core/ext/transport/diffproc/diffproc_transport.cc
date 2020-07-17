@@ -76,8 +76,8 @@ grpc_diffproc_transport::grpc_diffproc_transport(
   grpc_slice_buffer_init(&read_buffer);
   grpc_slice_buffer_init(&outbuf);
   if (is_client) {
-    //grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
-   // grpc_diffproc_initiate_write(this);
+    grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
+   grpc_diffproc_initiate_write(this);
   }
   
 }
