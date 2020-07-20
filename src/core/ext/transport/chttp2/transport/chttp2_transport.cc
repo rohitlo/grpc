@@ -1556,7 +1556,8 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->send_trailing_metadata) {
-    puts("*************  SNED TRAIL MD *******************");
+    printf("*************  SEND TRAIL MD *******************:    %s \n",
+           s->t->is_client ? "CLT" : "SRV");
     GRPC_STATS_INC_HTTP2_OP_SEND_TRAILING_METADATA();
     GPR_ASSERT(s->send_trailing_metadata_finished == nullptr);
     on_complete->next_data.scratch |= CLOSURE_BARRIER_MAY_COVER_WRITE;
@@ -1651,7 +1652,8 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (op->recv_trailing_metadata) {
-    puts("*************  RECV TRAIL MD *******************");
+    printf("*************  RECV TRAIL MD *******************:    %s \n",
+           s->t->is_client ? "CLT" : "SRV");
     GRPC_STATS_INC_HTTP2_OP_RECV_TRAILING_METADATA();
     GPR_ASSERT(s->collecting_stats == nullptr);
     s->collecting_stats = op_payload->recv_trailing_metadata.collect_stats;
