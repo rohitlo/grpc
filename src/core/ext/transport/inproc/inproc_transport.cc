@@ -282,11 +282,22 @@ struct inproc_stream {
 
 void log_metadata(const grpc_metadata_batch* md_batch, bool is_client,
                   bool is_initial) {
-  for (grpc_linked_mdelem* md = md_batch->list.head; md != nullptr;
-       md = md->next) {
-    char* key = grpc_slice_to_c_string(GRPC_MDKEY(md->md));
-    char* value = grpc_slice_to_c_string(GRPC_MDVALUE(md->md));
-    gpr_log(GPR_INFO, "INPROC:%s:%s: %s: %s", is_initial ? "HDR" : "TRL",
+  for (grpc_linked_mdelem* mdlist = md_batch->list.head; mdlist != nullptr;
+       mdlist = mdlist->next) {
+    printf("Md VALUES : [md: %p] [md payload :%p] [md->key: %p] [md slice: %p] \n",mdlist->md, mdlist->md.payload,
+           GRPC_MDKEY(mdlist->md), grpc_slice_intern(GRPC_MDKEY(mdlist->md)));
+    printf("MD VALUE I GENERATED: %p\n", mdlist->md.payload & ~(uintptr_t)3);
+    printf("KEY FROM MD VALUE I GENERATED: %p\n", (mdlist->md.payload & ~(uintptr_t)3) ^ (~(uintptr_t)3));
+    char* key = grpc_slice_to_c_string(GRPC_MDKEY(mdlist->md));
+    char* value = grpc_slice_to_c_string(GRPC_MDVALUE(mdlist->md));
+    printf("Slice KEY from CSTring : %p \n", grpc_slice_from_static_string(key));
+    printf("Slice VALUE from CSTring : %p \n", grpc_slice_from_static_string(value));
+    printf("MDELEM from SLICES : [MDELEM: %p] [Payload: %p] \n",
+           grpc_mdelem_from_slices(grpc_slice_from_static_string(key),
+                                   grpc_slice_from_static_string(value)),
+           grpc_mdelem_from_slices(grpc_slice_from_static_string(key),
+                                   grpc_slice_from_static_string(value)).payload);
+   printf("INPROC:%s:%s: %s: %s \n", is_initial ? "HDR" : "TRL",
             is_client ? "CLI" : "SVR", key, value);
     gpr_free(key);
     gpr_free(value);
@@ -300,7 +311,7 @@ grpc_error* fill_in_metadata(inproc_stream* s,
   if (GRPC_TRACE_FLAG_ENABLED(grpc_inproc_trace)) {
     log_metadata(metadata, s->t->is_client, outflags != nullptr);
   }
-
+  log_metadata(metadata, s->t->is_client, outflags != nullptr);
   if (outflags != nullptr) {
     *outflags = flags;
   }

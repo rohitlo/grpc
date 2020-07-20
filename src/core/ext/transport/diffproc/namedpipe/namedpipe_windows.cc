@@ -60,6 +60,8 @@ typedef struct grpc_namedpipe{
     grpc_slice_buffer* read_slices;
 
 
+    int bytes_read;
+
     grpc_thread_handle* threadHandle;
     gpr_mu mu;
     int shutting_down  = 0;
@@ -81,6 +83,16 @@ static void on_read(void* npp, grpc_error* error) {
     cb = np->read_cb;
     np->read_cb = NULL;
     gpr_mu_unlock(&np->mu);
+
+     if (np->bytes_read != 0 && !np->shutting_down) {
+      GPR_ASSERT((size_t)np->bytes_read <= np->read_slices->length);
+      if (static_cast<size_t>(np->bytes_read) != np->read_slices->length) {
+        grpc_slice_buffer_trim_end(
+            np->read_slices,
+            np->read_slices->length - static_cast<size_t>(np->bytes_read),
+            &np->last_read_buffer);
+      }
+    }
     namedpipe_unref(np);
     //FlushFileBuffers(np->threadHandle->pipeHandle);
     printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
@@ -117,7 +129,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
-  printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
+  printf(" ****************************  WIN READ HANDLE : %p ", handle);
   int status;
   DWORD bytes_read = 0;
   DWORD dwErr;
@@ -154,21 +166,37 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
         np->read_slices->slices[i]);  // we know slice size fits in 32bit.
     buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->read_slices->slices[i]);
   }
-  for (int i = 0; i < np->read_slices->count; i++) {
-    fSuccess = ReadFile(handle, buffers[i].buf, (DWORD)buffers[i].len,
-                        &bytes_read, NULL);
-    if (fSuccess && bytes_read != 0) {
-      puts("Read ops completed successfully...");
-      printf("\n Read message  :%s :%d\n", buffers[i].buf, bytes_read);
-    } else {
-      dwErr = GetLastError();
-      if (!fSuccess && (dwErr == ERROR_IO_PENDING)) {
-        puts("ERROR ops still pending...");
-        return;
+  namedpipe_ref(np);
+
+  printf(" Count in read :%d \n", np->read_slices->count);
+  i = 0;
+  for (i = 0; i < np->read_slices->count; i++) {
+    // Read client requests from the pipe. This simplistic code only allows
+    // messages up to BUFSIZE characters in length.
+    buffers[i].len = (ULONG)GRPC_SLICE_LENGTH(
+        np->read_slices->slices[i]);  // we know slice size fits in 32bit.
+    buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->read_slices->slices[i]);
+    fSuccess = ReadFile(handle,                 // handle to pipe
+                        buffers[i].buf,         // buffer to receive data
+                        (DWORD)buffers[i].len,  // size of buffer
+                        &bytes_read,            // number of bytes read
+                        NULL);                  // not overlapped I/O
+
+    if (!fSuccess || bytes_read == 0) {
+      if (GetLastError() == ERROR_BROKEN_PIPE) {
+        _tprintf(TEXT("InstanceThread: client disconnected.\n"));
+      } else {
+        _tprintf(TEXT("InstanceThread ReadFile failed, GLE=%d.\n"),
+                 GetLastError());
       }
+      break;
+    } else {
+      buffers[i].buf[bytes_read] = '\0';
+      printf("Read message :%s and bytes read: %d \n", buffers[i].buf, bytes_read);
+      np->bytes_read = bytes_read;
     }
   }
-  namedpipe_ref(np);
+  on_read(np, GRPC_ERROR_NONE);
 
 
 
@@ -239,6 +267,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
     allocated = buffers;
   }
   for (i = 0; i < np->write_slices->count; i++) {
+    puts("Count ++");
     len = GRPC_SLICE_LENGTH(np->write_slices->slices[i]);
     GPR_ASSERT(len <= ULONG_MAX);
     buffers[i].len = (ULONG)len;

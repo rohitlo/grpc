@@ -76,8 +76,8 @@ grpc_diffproc_transport::grpc_diffproc_transport(
   grpc_slice_buffer_init(&read_buffer);
   grpc_slice_buffer_init(&outbuf);
   if (is_client) {
-    grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
-   grpc_diffproc_initiate_write(this);
+    //grpc_slice_buffer_add(&outbuf,grpc_slice_from_copied_string("Diff proc Transport"));
+   //grpc_diffproc_initiate_write(this);
   }
   
 }
@@ -110,21 +110,20 @@ void mdToBuffer(grpc_diffproc_stream* s,const grpc_metadata_batch* metadata, boo
   if (markfilled != nullptr) {
     *markfilled = true;
   }
-  for (grpc_linked_mdelem* elem = metadata->list.head; (elem != nullptr); elem = elem->next) {
-    grpc_slice_buffer_add(outbuf,grpc_slice_intern(GRPC_MDKEY(elem->md)));
-    grpc_slice_buffer_add(outbuf,grpc_slice_intern(GRPC_MDVALUE(elem->md)));
-  }
+  grpc_slice_buffer_reset_and_unref_internal(outbuf);
+  grpc_slice path_slice = GRPC_MDVALUE(metadata->idx.named.path->md);
+  grpc_slice_buffer_add(outbuf, path_slice);
+  grpc_slice auth_slice = GRPC_MDVALUE(metadata->idx.named.authority->md);
+  grpc_slice_buffer_add(outbuf, auth_slice);
 }
 
 
-void bufferToMd(grpc_diffproc_stream* s, const grpc_metadata_batch* metadata,
-                uint32_t flags, grpc_metadata_batch* out_md, uint32_t* outflags,
-                bool* markfilled, grpc_slice_buffer* outbuf) {
-  for (grpc_linked_mdelem* elem = metadata->list.head; (elem != nullptr);
-       elem = elem->next) {
-    grpc_slice_buffer_add(outbuf, grpc_slice_intern(GRPC_MDKEY(elem->md)));
-    grpc_slice_buffer_add(outbuf, grpc_slice_intern(GRPC_MDVALUE(elem->md)));
-  }
+grpc_slice bufferToMd( grpc_slice_buffer* read_buffer) {
+  for (size_t i = 0; i <  read_buffer->count; i++) {
+   printf(" %s \n", grpc_slice_to_c_string(read_buffer->slices[i]));
+    return read_buffer->slices[i];
+  } 
+
 }
 
 
@@ -575,6 +574,7 @@ static void perform_stream_op_locked(void* stream_op,
         bool markFilled = false;
         if (t->closed_with_error == GRPC_ERROR_NONE) {
           mdToBuffer(s, s->send_initial_metadata, &markFilled, &s->t->outbuf);
+          grpc_diffproc_initiate_write(t);
         } else {
           grpc_diffproc_cancel_stream(
               t, s,
@@ -603,53 +603,53 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   // SEND MESSAGE ****************
-  if (op->send_message) {
-    printf("*************  SEND MSG *******************:    %s",
-         s->t->is_client ? "CLT" : "SRV");
-    s->send_message_finished = op->on_complete;
-    if (s->write_closed) {
-      op->payload->send_message.stream_write_closed = true;
-      // We should NOT return an error here, so as to avoid a cancel OP being
-      // started. The surface layer will notice that the stream has been
-      // closed for writes and fail the send message op.
-      op->payload->send_message.send_message.reset();
-      grpc_core::ExecCtx::Run(
-          DEBUG_LOCATION, s->send_message_finished,
-          GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-              "Attempt to send initial metadata after stream was closed",
-              &s->write_closed_error, 1));
+  //if (op->send_message) {
+  //  printf("*************  SEND MSG *******************:    %s",
+  //       s->t->is_client ? "CLT" : "SRV");
+  //  s->send_message_finished = op->on_complete;
+  //  if (s->write_closed) {
+  //    op->payload->send_message.stream_write_closed = true;
+  //    // We should NOT return an error here, so as to avoid a cancel OP being
+  //    // started. The surface layer will notice that the stream has been
+  //    // closed for writes and fail the send message op.
+  //    op->payload->send_message.send_message.reset();
+  //    grpc_core::ExecCtx::Run(
+  //        DEBUG_LOCATION, s->send_message_finished,
+  //        GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
+  //            "Attempt to send initial metadata after stream was closed",
+  //            &s->write_closed_error, 1));
 
-    } else {
-      s->send_message_op = op;
-      message_transfer_locked(t, s);
-      grpc_diffproc_initiate_write(t);
-    }
-  }
+  //  } else {
+  //    s->send_message_op = op;
+  //    message_transfer_locked(t, s);
+  //    grpc_diffproc_initiate_write(t);
+  //  }
+  //}
 
-  // TRAILING METADATA
-  if (op->send_trailing_metadata) {
-    puts("*************  SEND TRAIL MD *******************");
-    GPR_ASSERT(s->send_trailing_metadata_finished == nullptr);
-    s->send_trailing_metadata_finished = on_complete;
-    s->send_trailing_metadata =
-        op->payload->send_trailing_metadata.send_trailing_metadata;
-    s->write_buffering = false;
-    const size_t metadata_size =
-        grpc_metadata_batch_size(s->send_trailing_metadata);
-    if (s->write_closed) {
-      s->send_trailing_metadata = nullptr;
-      grpc_core::ExecCtx::Run(
-          DEBUG_LOCATION, s->send_trailing_metadata_finished,
-          grpc_metadata_batch_is_empty(
-              op->payload->send_trailing_metadata.send_trailing_metadata)
-              ? GRPC_ERROR_NONE
-              : GRPC_ERROR_CREATE_FROM_STATIC_STRING(
-                    "Attempt to send trailing metadata after "
-                    "stream was closed"));
-    } else {
-      grpc_diffproc_initiate_write(t);
-    }
-  }
+  //// TRAILING METADATA
+  //if (op->send_trailing_metadata) {
+  //  puts("*************  SEND TRAIL MD *******************");
+  //  GPR_ASSERT(s->send_trailing_metadata_finished == nullptr);
+  //  s->send_trailing_metadata_finished = on_complete;
+  //  s->send_trailing_metadata =
+  //      op->payload->send_trailing_metadata.send_trailing_metadata;
+  //  s->write_buffering = false;
+  //  const size_t metadata_size =
+  //      grpc_metadata_batch_size(s->send_trailing_metadata);
+  //  if (s->write_closed) {
+  //    s->send_trailing_metadata = nullptr;
+  //    grpc_core::ExecCtx::Run(
+  //        DEBUG_LOCATION, s->send_trailing_metadata_finished,
+  //        grpc_metadata_batch_is_empty(
+  //            op->payload->send_trailing_metadata.send_trailing_metadata)
+  //            ? GRPC_ERROR_NONE
+  //            : GRPC_ERROR_CREATE_FROM_STATIC_STRING(
+  //                  "Attempt to send trailing metadata after "
+  //                  "stream was closed"));
+  //  } else {
+  //    grpc_diffproc_initiate_write(t);
+  //  }
+  //}
 
   // RECV INITIAL METADATA
   if (op->recv_initial_metadata) {
@@ -660,18 +660,16 @@ static void perform_stream_op_locked(void* stream_op,
     s->recv_initial_metadata = op->payload->recv_initial_metadata.recv_initial_metadata;   //metadata
     /* IF SERVER INITIALIZE path and authority*/
     if(!s->t->is_client) {
+      continue_read_action_locked(s->t);
+      printf("The read buffer length : %d \n", s->t->read_buffer.length);
       grpc_metadata_batch fake_md;
       grpc_metadata_batch_init(&fake_md);
-      grpc_linked_mdelem* path_md =
-          static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*path_md)));
-      path_md->md = grpc_mdelem_from_slices(g_fake_path_key, g_fake_path_value);
-      GPR_ASSERT(grpc_metadata_batch_link_tail(&fake_md, path_md) ==
-                 GRPC_ERROR_NONE);
-      grpc_linked_mdelem* auth_md =
-          static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*auth_md)));
+      grpc_linked_mdelem* path_md = static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*path_md)));
+      path_md->md = grpc_mdelem_from_slices(g_fake_path_key,bufferToMd(&s->t->read_buffer));
+      GPR_ASSERT(grpc_metadata_batch_link_tail(&fake_md, path_md) == GRPC_ERROR_NONE);
+      grpc_linked_mdelem* auth_md = static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*auth_md)));
       auth_md->md = grpc_mdelem_from_slices(g_fake_auth_key, g_fake_auth_value);
-      GPR_ASSERT(grpc_metadata_batch_link_tail(&fake_md, auth_md) ==
-                 GRPC_ERROR_NONE);
+      GPR_ASSERT(grpc_metadata_batch_link_tail(&fake_md, auth_md) == GRPC_ERROR_NONE);
       //Initialize Metadata with fake path
       fill_in_metadata(
           s, &fake_md, 0, s->recv_initial_metadata,
@@ -695,40 +693,40 @@ static void perform_stream_op_locked(void* stream_op,
     }
   }
 
-  // Receive Message
-  if (op->recv_message) {
-    puts("*************  RECV MSG *******************");
-    size_t before = 0;
-    GPR_ASSERT(s->recv_message_ready == nullptr);
-    s->recv_message_ready = op->payload->recv_message.recv_message_ready;
-    s->recv_message = op->payload->recv_message.recv_message;
-    printf("RECV MSG : %p", s->recv_message);
-    s->recv_message_op = op;
-   // message_read_locked(t, s);
-    continue_read_action_locked(t);
+  //// Receive Message
+  //if (op->recv_message) {
+  //  puts("*************  RECV MSG *******************");
+  //  size_t before = 0;
+  //  GPR_ASSERT(s->recv_message_ready == nullptr);
+  //  s->recv_message_ready = op->payload->recv_message.recv_message_ready;
+  //  s->recv_message = op->payload->recv_message.recv_message;
+  //  printf("RECV MSG : %p", s->recv_message);
+  //  s->recv_message_op = op;
+  // // message_read_locked(t, s);
+  //  continue_read_action_locked(t);
 
-  }
+  //}
 
-  // RECV TRAILING MD
-  if (op->recv_trailing_metadata) {
-    puts("*************  RECV TRAIL MD *******************");
-    //s->collecting_stats = op->payload->recv_trailing_metadata.collect_stats;
-    GPR_ASSERT(s->recv_trailing_metadata_finished == nullptr);
-    s->recv_trailing_metadata_finished =
-        op->payload->recv_trailing_metadata.recv_trailing_metadata_ready;
-    s->recv_trailing_metadata =
-        op->payload->recv_trailing_metadata.recv_trailing_metadata;
-    s->final_metadata_requested = true;
-    if (s->recv_trailing_metadata_finished != nullptr) {
-      grpc_closure* c = s->recv_trailing_metadata_finished;
-      s->recv_trailing_metadata_finished = nullptr;
-      grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
-    }
-  }
+  //// RECV TRAILING MD
+  //if (op->recv_trailing_metadata) {
+  //  puts("*************  RECV TRAIL MD *******************");
+  //  //s->collecting_stats = op->payload->recv_trailing_metadata.collect_stats;
+  //  GPR_ASSERT(s->recv_trailing_metadata_finished == nullptr);
+  //  s->recv_trailing_metadata_finished =
+  //      op->payload->recv_trailing_metadata.recv_trailing_metadata_ready;
+  //  s->recv_trailing_metadata =
+  //      op->payload->recv_trailing_metadata.recv_trailing_metadata;
+  //  s->final_metadata_requested = true;
+  //  if (s->recv_trailing_metadata_finished != nullptr) {
+  //    grpc_closure* c = s->recv_trailing_metadata_finished;
+  //    s->recv_trailing_metadata_finished = nullptr;
+  //    grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
+  //  }
+  //}
 
-  if (on_complete != nullptr) {
-    grpc_core::ExecCtx::Run(DEBUG_LOCATION, on_complete, GRPC_ERROR_NONE);
-  }
+  //if (on_complete != nullptr) {
+  //  grpc_core::ExecCtx::Run(DEBUG_LOCATION, on_complete, GRPC_ERROR_NONE);
+  //}
 }
 
   static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
@@ -854,22 +852,18 @@ static void perform_stream_op_locked(void* stream_op,
      } else {
        if (t->accept_stream_cb != nullptr && !t->is_client && !t->processed) {
          grpc_diffproc_stream* accepting = nullptr;
-         printf("Stream :%p int this Transport : %p calling accept stream cb %p %p \n",accepting, t,
-                t->accept_stream_cb, t->accept_stream_data);
          GPR_ASSERT(t->accepting_stream == nullptr);
          t->accepting_stream = &accepting;
-         printf(
-             "Stream in perform_stream_op_locked : %p\n", &t->accepting_stream);
-         t->accept_stream_cb(t->accept_stream_data, &t->base,
-                             (void*)(&t->accepting_stream));
+         t->accept_stream_cb(t->accept_stream_data, &t->base,(void*)(&t->accepting_stream));
          t->accepting_stream = nullptr;
          t->processed = 1;
        }
-       grpc_slice_buffer_reset_and_unref_internal(&t->read_buffer);
+       printf("Read buf count after namedpipe read :%d \n",t->read_buffer.count);
      }
    }
 
   void continue_read_action_locked(grpc_diffproc_transport* t) {
+     grpc_slice_buffer_reset_and_unref_internal(&t->read_buffer);
      grpc_endpoint_read(
          t->ep, &t->read_buffer,
          GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
@@ -883,11 +877,21 @@ static void perform_stream_op_locked(void* stream_op,
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      grpc_diffproc_transport* t =
          reinterpret_cast<grpc_diffproc_transport*>(transport);
-         grpc_endpoint_read(
-             t->ep, read_buffer,
-             GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
-                               grpc_schedule_on_exec_ctx),
-             GRPC_ERROR_NONE);
+
+     //if (read_buffer != nullptr) {
+     //  grpc_slice_buffer_move_into(read_buffer, &t->read_buffer);
+     //  gpr_free(read_buffer);
+     //}
+         //grpc_endpoint_read(
+         //    t->ep, &t->read_buffer,
+         //    GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
+         //                      grpc_schedule_on_exec_ctx),
+         //    GRPC_ERROR_NONE);
+     grpc_core::ExecCtx::Run(
+         DEBUG_LOCATION,
+         GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
+                           grpc_schedule_on_exec_ctx),
+         GRPC_ERROR_NONE);
    }
 
 
@@ -901,7 +905,7 @@ static void perform_stream_op_locked(void* stream_op,
      g_fake_path_key = grpc_slice_intern(key_tmp);
      grpc_slice_unref_internal(key_tmp);
 
-     g_fake_path_value = grpc_slice_from_static_string("/helloworld.Greeter/SayHello");
+     //g_fake_path_value = grpc_slice_from_static_string("/helloworld.Greeter/SayHello");
 
      grpc_slice auth_tmp = grpc_slice_from_static_string(":authority");
      g_fake_auth_key = grpc_slice_intern(auth_tmp);
