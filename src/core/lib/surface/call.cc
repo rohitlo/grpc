@@ -361,7 +361,7 @@ grpc_error* grpc_call_create(const grpc_call_create_args* args,
               GRPC_MDKEY(args->add_initial_metadata[i]), GRPC_MDSTR_PATH)) {
         path = grpc_slice_ref_internal(
             GRPC_MDVALUE(args->add_initial_metadata[i]));
-        printf("grpc_call_Create path first created ************************ : %p and ptr : %p\n", grpc_slice_to_c_string(path), path);
+        //printf("grpc_call_Create path first created ************************ : %p and ptr : %p\n", grpc_slice_to_c_string(path), path);
       }
     }
     call->send_extra_metadata_count =
@@ -1599,7 +1599,7 @@ static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
   /* rewrite batch ops into a transport op */
   for (i = 0; i < nops; i++) {
     op = &ops[i];
-    printf(" OPS LOOP in call.cc ****************** %d \n", i);
+    //printf(" OPS LOOP in call.cc ****************** %d \n", i);
     if (op->reserved != nullptr) {
       error = GRPC_CALL_ERROR;
       goto done_with_error;

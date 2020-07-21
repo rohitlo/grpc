@@ -99,7 +99,7 @@ static callback_state* get_state_for_batch(
    into transport stream operations */
 static void connected_channel_start_transport_stream_op_batch(
     grpc_call_element* elem, grpc_transport_stream_op_batch* batch) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   call_data* calld = static_cast<call_data*>(elem->call_data);
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
   if (batch->recv_initial_metadata) {
@@ -140,7 +140,7 @@ static void connected_channel_start_transport_stream_op_batch(
 
 static void connected_channel_start_transport_op(grpc_channel_element* elem,
                                                  grpc_transport_op* op) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
   grpc_transport_perform_op(chand->transport, op);
 }
@@ -233,7 +233,7 @@ static void bind_transport(grpc_channel_stack* channel_stack,
 
 bool grpc_add_connected_filter(grpc_channel_stack_builder* builder,
                                void* arg_must_be_null) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_ASSERT(arg_must_be_null == nullptr);
   grpc_transport* t = grpc_channel_stack_builder_get_transport(builder);
   GPR_ASSERT(t != nullptr);

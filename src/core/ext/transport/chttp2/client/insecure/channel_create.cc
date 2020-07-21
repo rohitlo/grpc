@@ -67,8 +67,8 @@ static void done(conndetails* condetail, grpc_error* error) {
 }
 grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   grpc_core::ExecCtx exec_ctx;
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  printf("Target at 54, :%s", target);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("Target at 54, :%s", target);
   if (target == nullptr) {
     gpr_log(GPR_ERROR, "cannot create channel with NULL target name");
     return nullptr;
@@ -77,7 +77,7 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   // Named pipe support
   if (target[0] == '\\' && target[1] == '\\' && target[2] == '.' &&
       target[3] == '\\') {
-    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_arg arg = grpc_channel_arg_string_create(const_cast<char*>(GRPC_ARG_SERVER_URI),
                                        const_cast<char*>(target+9));
     grpc_arg default_authority_arg;
@@ -97,8 +97,8 @@ grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
 
     //GRPC_CLOSURE_INIT(&conn, done, &condetail, nullptr);
     np_connect(&conn, ep, client_args, target, &condetail, done);
-    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-    printf("Channel side created transport :%p \n", condetail.transport);
+    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    //printf("Channel side created transport :%p \n", condetail.transport);
     grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, condetail.transport);
     grpc_channel_stack* stk = grpc_channel_get_channel_stack(channel);
     grpc_transport_op* op = grpc_make_transport_op(nullptr);
@@ -144,7 +144,7 @@ void FactoryInit() {
 grpc_channel* grpc_insecure_channel_create(const char* target,
                                            const grpc_channel_args* args,
                                            void* reserved) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_core::ExecCtx exec_ctx;
   GRPC_API_TRACE(
       "grpc_insecure_channel_create(target=%s, args=%p, reserved=%p)", 3,

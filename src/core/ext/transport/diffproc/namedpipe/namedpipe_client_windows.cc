@@ -57,7 +57,7 @@
 //}
 
 static void on_connect(void* arg, void* cdc, grpc_error* error){
-    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     connection_details* cd = (connection_details*) cdc;
     grpc_endpoint** ep = cd->endpoint;
     gpr_mu_unlock(&cd->mu);
@@ -71,8 +71,8 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
         *ep = grpc_namedpipe_create(thread, cd->channel_args, cd->addr_name, 1);
         cd->clientsidedetails->endpoint = *ep;
         cd->clientsidedetails->hd = thread->pipeHandle;
-        printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
-               *ep, thread->pipeHandle);
+        //printf("\n%d :: %s :: %s :: %p :: %p\n", __LINE__, __func__, __FILE__,
+              // *ep, thread->pipeHandle);
         thread = NULL;
     }else{
         puts("Fail");
@@ -87,7 +87,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
                 const grpc_channel_args* channel_args, const char* addr,
                 conndetails* condetail, void* done) {
   grpc_on_done d = (grpc_on_done)done;
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     HANDLE clientHandle;
     BOOL fSuccess;
     connection_details* cd;
@@ -95,7 +95,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
     grpc_error* error = GRPC_ERROR_NONE;
     *ep = NULL;
     puts("Starting Client....."); 
-    printf("\n Address of pipe is %s\n", addr);
+    //printf("\n Address of pipe is %s\n", addr);
     clientHandle = CreateFile(TEXT(addr),
         GENERIC_READ | GENERIC_WRITE, // Read and Write Access
         0, //No sharing of file
@@ -106,7 +106,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
         );
     
     if (clientHandle == INVALID_HANDLE_VALUE) {
-        printf("Cannot create and connnect to named pipe at server end..");
+        //printf("Cannot create and connnect to named pipe at server end..");
         error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
         goto failure;
     } else {

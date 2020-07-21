@@ -76,7 +76,7 @@ static void namedpipe_unref(grpc_namedpipe* np) { gpr_unref(&np->refcount); }
 
 
 static void on_read(void* npp, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_namedpipe* np = (grpc_namedpipe*)npp;
     grpc_closure* cb = np->read_cb;
     gpr_mu_lock(&np->mu);
@@ -95,7 +95,7 @@ static void on_read(void* npp, grpc_error* error) {
     }
     namedpipe_unref(np);
     //FlushFileBuffers(np->threadHandle->pipeHandle);
-    printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
+    //printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
     //DisconnectNamedPipe(np->threadHandle->pipeHandle);
     //CloseHandle(np->handle);
     //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
@@ -103,16 +103,16 @@ static void on_read(void* npp, grpc_error* error) {
 }
 
 static void on_write(void* npp, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)npp;
   grpc_closure* cb;
-  printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
   gpr_mu_lock(&np->mu);
   cb = np->write_cb;
   np->write_cb = NULL;
   gpr_mu_unlock(&np->mu);
   //FlushFileBuffers(np->threadHandle->pipeHandle);
-  printf( " ***************  DIsconnectiong hanlde write complete : %p *******************", np->threadHandle->pipeHandle);
+  //printf( " ***************  DIsconnectiong hanlde write complete : %p *******************", np->threadHandle->pipeHandle);
  // DisconnectNamedPipe(np->threadHandle->pipeHandle);
  // CloseHandle(np->handle);
   namedpipe_unref(np);
@@ -126,10 +126,10 @@ static void on_write(void* npp, grpc_error* error) {
 #define MAX_WSABUF_COUNT 16
 static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                      grpc_closure* cb, bool urgent) {
-  printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
+  //printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
-  printf(" ****************************  WIN READ HANDLE : %p ", handle);
+  //printf(" ****************************  WIN READ HANDLE : %p ", handle);
   int status;
   DWORD bytes_read = 0;
   DWORD dwErr;
@@ -168,7 +168,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   }
   namedpipe_ref(np);
 
-  printf(" Count in read :%d \n", np->read_slices->count);
+  //printf(" Count in read :%d \n", np->read_slices->count);
   i = 0;
   for (i = 0; i < np->read_slices->count; i++) {
     // Read client requests from the pipe. This simplistic code only allows
@@ -192,7 +192,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
       break;
     } else {
       buffers[i].buf[bytes_read] = '\0';
-      printf("Read message :%s and bytes read: %d \n", buffers[i].buf, bytes_read);
+      //printf("Read message :%s and bytes read: %d \n", buffers[i].buf, bytes_read);
       np->bytes_read = bytes_read;
     }
   }
@@ -212,7 +212,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
 //
 //  if (fSuccess && bytes_read != 0) {
 //    puts("Read ops completed successfully...");
-//    printf("\n Read message  :%s\n", chRequest);
+//    //printf("\n Read message  :%s\n", chRequest);
 //    on_read(np, GRPC_ERROR_NONE);
 //  } else {
 //    dwErr = GetLastError();
@@ -227,10 +227,10 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
 
 static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
                      grpc_closure* cb, void* arg) {
-  printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
+  //printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
-  printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
+  //printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
   int status;
   grpc_error* error = GRPC_ERROR_NONE;
   if (np->shutting_down) {
@@ -255,7 +255,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   for (i = 0; i < slices->count; i++) {
     char* data =
         grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
-    printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);
+    //printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);
     gpr_free(data);
   }
 
@@ -296,21 +296,21 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   //LPCTSTR lpvMessage = TEXT("Hey this is the first time I am trying to use pipe \n");
   //DWORD cbToWrite = (lstrlen(lpvMessage) + 1) * sizeof(TCHAR);
   //DWORD cbWritten;
-  //_tprintf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite, lpvMessage);
+  //_t//printf(TEXT("Sending %d byte message: \"%s\"\n"), cbToWrite, lpvMessage);
   //status = WriteFile(handle,  // pipe handle
   //                     lpvMessage,    // message
   //                     cbToWrite,     // message length
   //                     &cbWritten,    // bytes written
   //                     NULL);
   //if (!status) {
-  //  _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+  //  _t//printf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
   //  error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
   //} else {
   //  puts("Successfully wrote to server end pipe handle....");
   //  on_write(np, GRPC_ERROR_NONE);
   //}
 
-  //printf("\nMessage sent to server, receiving reply as follows:\n");
+  ////printf("\nMessage sent to server, receiving reply as follows:\n");
 
   //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_WSA_ERROR(WSAGetLastError(), "NPSEND"));
 }
@@ -334,7 +334,7 @@ static void win_delete_from_pollset_set(grpc_endpoint* ep,
 
 /*  */
 static void win_shutdown(grpc_endpoint* ep, grpc_error* why) {
-  printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   gpr_mu_lock(&np->mu);
   /* At that point, what may happen is that we're already inside the IOCP
@@ -384,14 +384,14 @@ static grpc_endpoint_vtable vtable = {win_read,
 grpc_endpoint* grpc_namedpipe_create(grpc_thread_handle* thread,
                                      grpc_channel_args* channel_args,
                                      const char* peer_string, BOOL isClient) {
-  printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__); 
+  //printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__); 
   HANDLE handle = thread->pipeHandle;
   grpc_namedpipe* np = (grpc_namedpipe*)gpr_malloc(sizeof(grpc_namedpipe));
   memset(np, 0, sizeof(grpc_namedpipe));
- // printf("Size of vtable %d %p %p \n", sizeof(grpc_namedpipe), np, &np->base);
+ // //printf("Size of vtable %d %p %p \n", sizeof(grpc_namedpipe), np, &np->base);
   np->base.vtable = &vtable;
-  //printf("Size of vtable %d \n", sizeof(&vtable));
- // printf("Size of vtable %d %p %p\n", sizeof(grpc_namedpipe), np, &np->base);
+  ////printf("Size of vtable %d \n", sizeof(&vtable));
+ // //printf("Size of vtable %d %p %p\n", sizeof(grpc_namedpipe), np, &np->base);
   np->threadHandle = thread;
   gpr_mu_init(&np->mu);
   gpr_ref_init(&np->refcount, 1);
@@ -400,7 +400,7 @@ grpc_endpoint* grpc_namedpipe_create(grpc_thread_handle* thread,
   GRPC_CLOSURE_INIT(&np->on_write, on_write, np, grpc_schedule_on_exec_ctx);
   np->peer_string = gpr_strdup("peer");
   grpc_slice_buffer_init(&np->last_read_buffer);
-  //printf("\n%d :: %s :: %s :: %p :: %p :: %p\n", __LINE__, __func__, __FILE__, np, np->handle, &np->base);
+  ////printf("\n%d :: %s :: %s :: %p :: %p :: %p\n", __LINE__, __func__, __FILE__, np, np->handle, &np->base);
   return &np->base;
 }
 #endif // GRPC_WINSOCK_SOCKET

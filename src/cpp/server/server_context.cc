@@ -158,7 +158,7 @@ void ServerContextBase::CompletionOp::Unref() {
 }
 
 void ServerContextBase::CompletionOp::FillOps(::grpc::internal::Call* call) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_op ops;
   ops.op = GRPC_OP_RECV_CLOSE_ON_SERVER;
   ops.data.recv_close_on_server.cancelled = &cancelled_;

@@ -108,7 +108,7 @@ static VOID GetAnswerToRequest(LPgrpc_piepInstance);
 
 
 VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
-  _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->chRequest);
+ // _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->chRequest);
   StringCchCopy(pipe->chReply, BUFSIZE, TEXT("Default answer from server"));
   pipe->cbToWrite = (lstrlen(pipe->chReply) + 1) * sizeof(TCHAR);
 }
@@ -121,7 +121,7 @@ VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
 grpc_error* grpc_namedpipe_create(grpc_closure* shutdown_complete,
                                      const grpc_channel_args* args,
                                      grpc_np_server** server) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_np_server* s = (grpc_np_server*)gpr_malloc(sizeof(grpc_np_server));
   s->channel_args = grpc_channel_args_copy(args);
   gpr_ref_init(&s->refs, 1);
@@ -234,7 +234,7 @@ static HANDLE CreateInstance(const char* addr) {
                        BUFSIZE * sizeof(BYTE),      // input buffer size
                        0,                           // client time-out
                        NULL);  // default security attributes
-  printf("Named pipe Instance created HANDLE :%p \n", hd);
+  //printf("Named pipe Instance created HANDLE :%p \n", hd);
   return hd;
 }
 
@@ -246,7 +246,7 @@ BOOL ConnectToNewClient(HANDLE hPipe, LPOVERLAPPED lpo) {
 
   // Overlapped ConnectNamedPipe should return zero.
   if (fConnected) {
-    printf("ConnectNamedPipe failed with %d.\n", GetLastError());
+    //printf("ConnectNamedPipe failed with %d.\n", GetLastError());
     return 0;
   }
   //else {
@@ -268,7 +268,7 @@ BOOL ConnectToNewClient(HANDLE hPipe, LPOVERLAPPED lpo) {
 
       // If an error occurs during the connect operation...
     default: {
-      printf("ConnectNamedPipe failed with %d.\n", GetLastError());
+      //printf("ConnectNamedPipe failed with %d.\n", GetLastError());
       return 0;
     }
   }
@@ -294,7 +294,7 @@ static void on_accept(void* arg, grpc_error* error);
 // 5. START ACCEPT LOCKED FOR ASYNC INCOMING CONNECTIONS
 static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
   //grpc_core::ExecCtx exec_ctx;
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   int connectSuccess = 0;
   grpc_error* error = GRPC_ERROR_NONE;
   DWORD dwThreadId = 0;
@@ -303,7 +303,7 @@ static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
     puts("Error creating new pipe Instance for upcoming connects");
     goto failure;
   }
-  printf("Handle to listen to : %p \n", pipeInstance->np_handle->pipeHandle);
+  //printf("Handle to listen to : %p \n", pipeInstance->np_handle->pipeHandle);
   //pipeInstance->np_handle->complete_closure = &pipeInstance->on_accept;
   pipeInstance->np_handle->grpc_on_accept = on_accept;
   pipeInstance->np_handle->grpc_on_error = on_error;
@@ -318,7 +318,7 @@ static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
   return error;
 
   failure:
-    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     GPR_ASSERT(error != GRPC_ERROR_NONE);
     if (newPipeHandle != INVALID_HANDLE_VALUE) CloseHandle(newPipeHandle);
     return error;
@@ -329,20 +329,20 @@ VOID DisconnectAndReconnect(grpc_np_server* server, DWORD i) {
   // Disconnect the pipe instance.
 
   if (!DisconnectNamedPipe(server->pipes[i]->handle)) {
-    printf("DisconnectNamedPipe failed with %d.\n", GetLastError());
+    //printf("DisconnectNamedPipe failed with %d.\n", GetLastError());
   }
 
   // Call a subroutine to connect to the new client.
 
   server->pipes[i]->fPendingIO =
       ConnectToNewClient(server->pipes[i]->handle, &server->pipes[i]->op);
-  printf("\n DisconnectAndReconnect :: Pendiong IO ? : %d\n",
-         server->pipes[i]->fPendingIO);
+  //printf("\n DisconnectAndReconnect :: Pendiong IO ? : %d\n",
+        // server->pipes[i]->fPendingIO);
   server->pipes[i]->dwState =
       server->pipes[i]->fPendingIO ? CONNECTING_STATE                  :  // still connecting
                                 READING_STATE;                       // ready to read
-  printf("\n DisconnectAndReconnect :: DW State ? : %d\n",
-         server->pipes[i]->dwState);
+  //printf("\n DisconnectAndReconnect :: DW State ? : %d\n",
+         //server->pipes[i]->dwState);
   
 } 
 
@@ -350,10 +350,10 @@ VOID DisconnectAndReconnect(grpc_np_server* server, DWORD i) {
 
 /* Event manager callback when reads are ready. */
 static void on_accept(void* arg, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_pipeInstance* pipe = static_cast<grpc_pipeInstance*>(arg);
   HANDLE currHandle = pipe->handle;
-  printf("Named pipe CURR ACCEPT HANDLE :%p \n", currHandle);
+  //printf("Named pipe CURR ACCEPT HANDLE :%p \n", currHandle);
   grpc_endpoint* ep = NULL;
   gpr_mu_unlock(&pipe->server->mu);
   gpr_mu_lock(&pipe->server->mu);
@@ -385,7 +385,7 @@ static void on_accept(void* arg, grpc_error* error) {
 
   pipe->handle = pipe->new_handle;
   pipe->np_handle = grpc_createHandle(pipe->new_handle, "Listener");
-  printf("Named pipe NEXT ACCEPT HANDLE :%p \n", pipe->handle);
+  //printf("Named pipe NEXT ACCEPT HANDLE :%p \n", pipe->handle);
   GPR_ASSERT(GRPC_LOG_IF_ERROR("start_accept", start_accept_locked(pipe)));
 
   gpr_mu_unlock(&pipe->server->mu);
@@ -398,7 +398,7 @@ static void on_accept(void* arg, grpc_error* error) {
 static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
                                       const char* target_addr,
                                       grpc_pipeInstance** pipeInstance) {
-  printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
   grpc_pipeInstance* sp = NULL;
   grpc_error* error = GRPC_ERROR_NONE;
   gpr_mu_lock(&s->mu);
@@ -428,7 +428,7 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
 
 //2. Pipe Creation for several Instances.
  grpc_error* grpc_server_np_add_port(grpc_np_server* s, const char* addr) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_pipeInstance* pipeInstance = NULL;
   grpc_thread_handle* tHandle =
       (grpc_thread_handle*)gpr_malloc(sizeof(grpc_thread_handle));
@@ -465,7 +465,7 @@ done:
 void grpc_np_server_start(grpc_np_server* s, grpc_pollset** pollset,size_t pollset_count,
                              grpc_np_server_cb on_accept_cb,
                              void* on_accept_cb_arg) {
-   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+   //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
    grpc_pipeInstance* sp = NULL;
    GPR_ASSERT(on_accept_cb);
    gpr_mu_lock(&s->mu);

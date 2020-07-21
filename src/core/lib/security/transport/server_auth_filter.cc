@@ -208,7 +208,7 @@ static void cancel_call(void* arg, grpc_error* error) {
 }
 
 static void recv_initial_metadata_ready(void* arg, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_element* elem = static_cast<grpc_call_element*>(arg);
   channel_data* chand = static_cast<channel_data*>(elem->channel_data);
   call_data* calld = static_cast<call_data*>(elem->call_data);

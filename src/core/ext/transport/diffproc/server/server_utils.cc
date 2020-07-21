@@ -75,7 +75,7 @@ typedef struct {
 static void on_accept(void* arg, grpc_endpoint* np,
                       grpc_pollset* accepting_pollset,
                       grpc_np_server_acceptor* acceptor) {
-  printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
   server_state* state = static_cast<server_state*>(arg);
   grpc_slice_buffer read_buffer;
   grpc_slice_buffer_init(&read_buffer);
@@ -115,7 +115,7 @@ static void on_accept(void* arg, grpc_endpoint* np,
 static void server_start_listener(grpc_server* /*server*/, void* arg,
                                   grpc_pollset** pollsets,
                                   size_t pollset_count) {
-  printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n",__LINE__,__func__, __FILE__);
   server_state* state = static_cast<server_state*>(arg);
   gpr_mu_lock(&state->mu);
   state->shutdown = false;
@@ -125,7 +125,7 @@ static void server_start_listener(grpc_server* /*server*/, void* arg,
 
 
 static void grpc_np_server_shutdown_complete(void* arg, grpc_error* error) {
-  printf("Shutdown");
+  //printf("Shutdown");
 }
 
 /* Server callback: destroy the tcp listener (so we don't generate further
@@ -148,7 +148,7 @@ static void server_destroy_listener(grpc_server* /*server*/, void* arg,
 grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
                                     grpc_channel_args* args, int* port) {
  
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_np_server* np_server = nullptr;
   size_t i;
   size_t count = 0;
@@ -176,7 +176,7 @@ grpc_error* grpc_np_server_add_pipe(grpc_server* server, const char* addr,
   state->args = args;
   state->shutdown = true;
   gpr_mu_init(&state->mu);
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   errors = static_cast<grpc_error**>(gpr_malloc(sizeof(*errors) * 4));
 
   error = grpc_server_np_add_port(np_server, addr);

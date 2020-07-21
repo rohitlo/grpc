@@ -153,7 +153,7 @@ grpc_error* grpc_call_stack_init(grpc_channel_stack* channel_stack,
                                  int initial_refs, grpc_iomgr_cb_func destroy,
                                  void* destroy_arg,
                                  const grpc_call_element_args* elem_args) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_channel_element* channel_elems = CHANNEL_ELEMS_FROM_STACK(channel_stack);
   size_t count = channel_stack->count;
   grpc_call_element* call_elems;
