@@ -75,6 +75,11 @@ struct grpc_diffproc_transport {
   //Map to maintain streams
   std::map<int, grpc_diffproc_stream*> stream_map;
 
+
+  //Client and Server write states
+  bool client_write_completed = false;
+  bool server_write_completed = false;
+
    };
 
 struct grpc_diffproc_stream {
@@ -83,16 +88,22 @@ struct grpc_diffproc_stream {
                           const void* server_data, grpc_core::Arena* arena);
 
      ~grpc_diffproc_stream();
-     void ref(const char* reason);
 
-     void unref(const char* reason);
+     grpc_diffproc_transport* t;
+     grpc_stream_refcount* refcount;
+     // Reffer is a 0-len structure, simply reffing `t` and `refcount` in its
+     // ctor
+     // before initializing the rest of the stream, to avoid cache misses. This
+     // field MUST be right after `t` and `refcount`.
+     struct Reffer {
+       explicit Reffer(grpc_diffproc_stream* s);
+     } reffer;
 
 
      //Streama ID to store streams
      uint32_t id = 0;
 
-     //grpc_stream_refcount* refcount;
-     grpc_diffproc_transport* t;
+
      grpc_metadata_batch to_read_initial_md;
      uint32_t to_read_initial_md_flags = 0;
      bool to_read_initial_md_filled = false;
@@ -111,7 +122,6 @@ struct grpc_diffproc_stream {
 
      bool other_side_closed = false;               // won't talk anymore
      bool write_buffer_other_side_closed = false;  // on hold
-     grpc_stream_refcount* refs;
      grpc_closure* closure_at_destroy = nullptr;
 
      grpc_core::Arena* arena;

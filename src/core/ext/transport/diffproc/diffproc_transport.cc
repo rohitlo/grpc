@@ -51,6 +51,10 @@ grpc_slice g_fake_status_key;
 static const grpc_transport_vtable* get_vtable(void);
 static void log_metadata(const grpc_metadata_batch* md_batch, bool is_client, bool is_initial);
 bool cancel_stream_locked(grpc_diffproc_stream* s, grpc_error* error);
+void close_stream_locked(grpc_diffproc_stream* stream);
+
+
+
 
 //Writing Functions..
 static void write_action(void* t, grpc_error* error);
@@ -60,8 +64,8 @@ static void write_action_end_locked(void* t, grpc_error* error);
 
 //Reading Functions..
 static void read_action(void* t, grpc_error* error);
-static void read_action_locked(void* t, grpc_error* error);
-static void continue_read_action_locked(grpc_diffproc_transport* t);
+static void read_action_end(void* t, grpc_error* error);
+static void read_action_locked(grpc_diffproc_transport* t);
 
 
 
@@ -71,7 +75,7 @@ grpc_diffproc_transport::grpc_diffproc_transport(
     grpc_resource_user* resource_user)
     : ep(ep),state_tracker(is_client ? "client_transport" : "server_transport",GRPC_CHANNEL_READY),is_client(is_client) 
 {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  printf("\n%d :: %s :: %s :: %p\n", __LINE__, __func__, __FILE__, this);
   base.vtable = get_vtable();
   gpr_ref_init(&refs, 1);
   grpc_slice_buffer_init(&read_buffer);
@@ -85,23 +89,24 @@ grpc_diffproc_transport::grpc_diffproc_transport(
 
 //DOTR
 grpc_diffproc_transport::~grpc_diffproc_transport() {
+  printf(" TRANSPORT DOTR ... \n");
   grpc_endpoint_destroy(ep);
-  grpc_slice_buffer_destroy_internal(&outbuf);
-  grpc_slice_buffer_destroy_internal(&read_buffer);
-  GRPC_ERROR_UNREF(closed_with_error);
+  //grpc_slice_buffer_destroy_internal(&outbuf);
+  //grpc_slice_buffer_destroy_internal(&read_buffer);
+  //GRPC_ERROR_UNREF(closed_with_error);
   //gpr_free(peer_string);
 }
 
 //REF
 void grpc_diffproc_transport::ref() {
-  printf( "ref_transport %p", this);
+  printf( "ref_transport: %p \n", this);
   gpr_ref(&refs);
 }
 
 
 //UNREF
 void grpc_diffproc_transport::unref() {
-  DIFFPROC_LOG(GPR_INFO, "unref_transport %p", this);
+  printf( "unref_transport: %p \n", this);
   if (!gpr_unref(&refs)) {
     return;
   }
@@ -118,7 +123,7 @@ void mdToBuffer(grpc_diffproc_stream* s,const grpc_metadata_batch* metadata, boo
     *markfilled = true;
   }
   grpc_slice path_slice = GRPC_MDVALUE(metadata->idx.named.path->md);
-  grpc_slice_buffer_add(outbuf, path_slice);
+  grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(path_slice));
 }
 
 
@@ -235,15 +240,39 @@ void grpc_diffproc_stream_map_add(grpc_diffproc_transport* t, uint32_t id, void*
   }
 
 
+
+#ifndef NDEBUG
+  void grpc_diffproc_stream_ref(grpc_diffproc_stream* s, const char* reason) {
+    grpc_stream_ref(s->refcount, reason);
+  }
+  void grpc_diffproc_stream_unref(grpc_diffproc_stream* s, const char* reason) {
+    grpc_stream_unref(s->refcount, reason);
+  }
+#else
+  void grpc_chttp2_stream_ref(grpc_chttp2_stream* s) {
+    grpc_stream_ref(s->refcount);
+  }
+  void grpc_chttp2_stream_unref(grpc_chttp2_stream* s) {
+    grpc_stream_unref(s->refcount);
+  }
+#endif
+
+
+
+grpc_diffproc_stream::Reffer::Reffer(grpc_diffproc_stream* s) {
+    /* We reserve one 'active stream' that's dropped when the stream is
+       read-closed. The others are for NP Streams that are
+       actively reading */
+    grpc_diffproc_stream_ref(s, "diffproc");
+    s->t->ref();
+  }
+
 //STREAM COTR
 grpc_diffproc_stream::grpc_diffproc_stream(grpc_diffproc_transport* t, grpc_stream_refcount* refcount,const void* server_data, grpc_core::Arena* arena)
-  : t(t), refs(refcount), arena(arena) {
+      : t(t), refcount(refcount), arena(arena), reffer(this) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  grpc_metadata_batch_init(&to_read_initial_md);
-  grpc_metadata_batch_init(&to_read_trailing_md);
-  grpc_metadata_batch_init(&write_buffer_initial_md);
-  grpc_metadata_batch_init(&write_buffer_trailing_md);
 
+  printf(" STREAM COTR ...  :%p \n", this);
   stream_list_prev = nullptr;
   gpr_mu_unlock(&t->mu);
   gpr_mu_lock(&t->mu);
@@ -265,16 +294,20 @@ grpc_diffproc_stream::grpc_diffproc_stream(grpc_diffproc_transport* t, grpc_stre
     *t->accepting_stream = this;
     printf("init stream ID: [%p] \n", *t->accepting_stream);
     //grpc_diffproc_stream_map_add(t, id, this);
-    gpr_mu_lock(&t->mu);
-
-    gpr_mu_unlock(&t->mu);
   }
 }
 
 //STREAM DOTR
 grpc_diffproc_stream::~grpc_diffproc_stream() { 
-
+  printf(" STREAM DOTR ...  :%p \n", this);
   GRPC_ERROR_UNREF(cancel_self_error);
+
+  GPR_ASSERT(send_initial_metadata_finished == nullptr);
+  GPR_ASSERT(send_trailing_metadata_finished == nullptr);
+  GPR_ASSERT(recv_initial_metadata_ready == nullptr);
+  GPR_ASSERT(recv_message_ready == nullptr);
+  GPR_ASSERT(recv_trailing_metadata_finished == nullptr);
+
   t->unref();
 
 
@@ -284,22 +317,12 @@ grpc_diffproc_stream::~grpc_diffproc_stream() {
 }
 
 
-void grpc_diffproc_stream::ref(const char* reason) {
-  DIFFPROC_LOG(GPR_INFO, "ref_stream %p %s", this, reason);
-  grpc_stream_ref(refs, reason);
-}
-
-void grpc_diffproc_stream::unref(const char* reason) {
-  grpc_stream_unref(refs, reason);
-}
-
   int init_stream(grpc_transport * gt, grpc_stream * gs,
                grpc_stream_refcount * refcount, const void* server_data,
                grpc_core::Arena* arena) {
     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      GPR_TIMER_SCOPE("init_stream", 0);
-     grpc_diffproc_transport* t =
-         reinterpret_cast<grpc_diffproc_transport*>(gt);
+     grpc_diffproc_transport* t = reinterpret_cast<grpc_diffproc_transport*>(gt);
      new (gs) grpc_diffproc_stream(t, refcount, server_data, arena);
      return 0;
    }
@@ -315,24 +338,30 @@ void grpc_diffproc_stream::unref(const char* reason) {
    grpc_endpoint* get_endpoint(grpc_transport * t) {
      return (reinterpret_cast<grpc_diffproc_transport*>(t))->ep;
    }
+
+   //Close Transport -- Shutdown endpoint called
    static void close_transport_locked(grpc_diffproc_transport* t, grpc_error* error) {
-     printf( "close_transport %p %d", t, t->is_closed);
+     printf( "close_transport %p %d \n", t, t->is_closed);
+     t->closed_with_error = GRPC_ERROR_REF(error);
      t->state_tracker.SetState(GRPC_CHANNEL_SHUTDOWN, "close transport");
      if (!t->is_closed) {
        t->is_closed = true;
        /* Also end all streams on this transport */
        while (t->stream_list != nullptr) {
          // cancel_stream_locked also adjusts stream list
-         cancel_stream_locked(t->stream_list,grpc_error_set_int( GRPC_ERROR_CREATE_FROM_STATIC_STRING("Transport closed"), GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_UNAVAILABLE));
-         t->stream_list = t->stream_list->stream_list_next;
+         cancel_stream_locked(
+             t->stream_list,
+             grpc_error_set_int(
+                 GRPC_ERROR_CREATE_FROM_STATIC_STRING("Transport closed"),
+                 GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_UNAVAILABLE));
        }
+       grpc_endpoint_shutdown(t->ep, GRPC_ERROR_REF(error));
      }
-     grpc_endpoint_shutdown(t->ep, GRPC_ERROR_REF(error));
    }
 
    void destroy_stream(grpc_transport* /*gt*/, grpc_stream * gs,
                        grpc_closure * then_schedule_closure) {
-     puts("In destroy stream");
+     printf("In destroy stream ******************** \n");
      grpc_diffproc_stream* s = reinterpret_cast<grpc_diffproc_stream*>(gs);
      s->closure_at_destroy = then_schedule_closure;
      s->~grpc_diffproc_stream();
@@ -341,32 +370,32 @@ void grpc_diffproc_stream::unref(const char* reason) {
 
    void destroy_transport(grpc_transport* gt) {
      grpc_diffproc_transport* t = reinterpret_cast<grpc_diffproc_transport*>(gt);
-     puts("In destroy transport");
-     close_transport_locked(t, GRPC_ERROR_CREATE_FROM_STATIC_STRING("Destory transport called"));
+     printf("In destroy transport **************** \n");
+     close_transport_locked(t, GRPC_ERROR_CREATE_FROM_STATIC_STRING("destroying transport"));
      t->unref();
    }
 
 
    void write_action_end(void* tp, grpc_error* error) {
      grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
-     grpc_error* err;
-     err = GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING("Write action closed",
-                                                            &error, 1);
-     //close_transport_locked(t, GRPC_ERROR_REF(error));
-     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-     GRPC_ERROR_UNREF(error);
+     bool closed = false;
+     if (error != GRPC_ERROR_NONE) {
+       close_transport_locked(t, GRPC_ERROR_REF(error));
+       closed = true;
+     }
+     t->unref();
    }
 
-   void read_action_end(void* tp, grpc_error* error) {
-     grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
-     grpc_error* err;
+   //void read_action_end(void* tp, grpc_error* error) {
+   //  grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
+   //  grpc_error* err;
 
-     err = GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-         "Read action closed", &error, 1);
-     close_transport_locked(t, GRPC_ERROR_REF(error));
-     printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-     GRPC_ERROR_UNREF(error);
-   }
+   //  err = GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
+   //      "Read action closed", &error, 1);
+   //  close_transport_locked(t, GRPC_ERROR_REF(error));
+   //  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+   //  GRPC_ERROR_UNREF(error);
+   //}
 
   static void log_metadata(const grpc_metadata_batch* md_batch,
                             bool is_client, bool is_initial) {
@@ -394,17 +423,10 @@ static bool contains_non_ok_status(grpc_metadata_batch* batch) {
   return false;
 }
 
-static void grpc_diffproc_list_add_streams(grpc_diffproc_transport*,
-                                           grpc_diffproc_stream*) {}
 
-static void startStreams(grpc_diffproc_transport*) {}
-
-static void grpc_diffproc_cancel_stream(grpc_diffproc_transport*,
-                                        grpc_diffproc_stream*, grpc_error*) {}
-
-bool cancel_stream_locked(grpc_diffproc_stream* stream, grpc_error* error) {
+bool cancel_stream_locked( grpc_diffproc_stream* stream, grpc_error* error) {
   bool ret = false;  // was the cancel accepted
-  printf("cancel_stream %p with %s", stream, grpc_error_string(error));
+  printf("cancel_stream %p with %s \n", stream, grpc_error_string(error));
   if (stream->cancel_self_error == GRPC_ERROR_NONE) {
     ret = true;
     stream->cancel_self_error = GRPC_ERROR_REF(error);
@@ -414,22 +436,16 @@ bool cancel_stream_locked(grpc_diffproc_stream* stream, grpc_error* error) {
     grpc_metadata_batch cancel_md;
     grpc_metadata_batch_init(&cancel_md);
 
-    if (!stream->t->is_client && stream->trailing_md_recvd && stream->recv_trailing_md_op) {
+    if (!stream->t->is_client && stream->trailing_md_recvd &&
+        stream->recv_trailing_md_op) {
       grpc_core::ExecCtx::Run(
           DEBUG_LOCATION,
           stream->recv_trailing_md_op->payload->recv_trailing_metadata
               .recv_trailing_metadata_ready,
           GRPC_ERROR_REF(stream->cancel_self_error));
     }
-
-
-    if (!stream->read_closed || !stream->write_closed) {
-      stream->stream_list_next = stream;
-      grpc_diffproc_initiate_write(stream->t);
-    } else {
-    }
   }
-
+  close_stream_locked(stream);
   return ret;
 
 }
@@ -526,10 +542,11 @@ void close_stream_locked(grpc_diffproc_stream* s) {
         n->stream_list_prev = p;
       }
       s->listed = false;
-      s->unref("close_stream:list");
+      //grpc_diffproc_stream_unref(s,"close_stream:list");
     }
+
     s->closed = true;
-    s->unref("close_stream:closing");
+    grpc_diffproc_stream_unref(s, "close_stream:closing");
   }
 }
 
@@ -541,32 +558,27 @@ static void perform_stream_op_locked(void* stream_op,
                                      grpc_error* /*error_ignored*/) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   bool needs_close = false;
-  GPR_TIMER_SCOPE("perform_stream_op", 0);
-  grpc_transport_stream_op_batch* op =
-      static_cast<grpc_transport_stream_op_batch*>(stream_op);
-  grpc_diffproc_stream* s =
-      static_cast<grpc_diffproc_stream*>(op->handler_private.extra_arg);
-  printf(
-      "Stream in perform_stream_op_locked :%p && Stream op batch : %p & "
-      "Trasnport : %p \n",
-      s, op, s->t);
+  grpc_transport_stream_op_batch* op = static_cast<grpc_transport_stream_op_batch*>(stream_op);
+  grpc_diffproc_stream* s = static_cast<grpc_diffproc_stream*>(op->handler_private.extra_arg);
+  printf("Stream in perform_stream_op_locked :%p && Stream op batch : %p & ""Trasnport : %p \n",s, op, s->t);
   grpc_diffproc_transport* t = s->t;
+
   if (GRPC_TRACE_FLAG_ENABLED(grpc_diffproc_trace)) {
     if (op->send_initial_metadata) {
-      log_metadata(op->payload->send_initial_metadata.send_initial_metadata,
-                   t->is_client, true);
+      log_metadata(op->payload->send_initial_metadata.send_initial_metadata, t->is_client, true);
     }
     if (op->send_trailing_metadata) {
-      log_metadata(op->payload->send_trailing_metadata.send_trailing_metadata,
-                   t->is_client, false);
+      log_metadata(op->payload->send_trailing_metadata.send_trailing_metadata, t->is_client, false);
     }
   }
+
+  grpc_diffproc_stream_ref(s, "perform_stream_op");
+
   grpc_closure* on_complete = op->on_complete;
   // on_complete will be null if and only if there are no send ops in the
   // batch.
   if (on_complete == nullptr) {
-    on_complete = GRPC_CLOSURE_INIT(&op->handler_private.closure, do_nothing,
-                                    nullptr, grpc_schedule_on_exec_ctx);
+    on_complete = GRPC_CLOSURE_INIT(&op->handler_private.closure, do_nothing, nullptr, grpc_schedule_on_exec_ctx);
   }
 
   if (op->cancel_stream) {
@@ -597,8 +609,8 @@ static void perform_stream_op_locked(void* stream_op,
           mdToBuffer(s, s->send_initial_metadata, &markFilled, &s->t->outbuf);
           grpc_diffproc_initiate_write(t);
         } else {
-          grpc_diffproc_cancel_stream(
-              t, s,
+          cancel_stream_locked(
+               s,
               grpc_error_set_int(
                   GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
                       "Transport closed", &t->closed_with_error, 1),
@@ -675,7 +687,8 @@ static void perform_stream_op_locked(void* stream_op,
           grpc_slice_buffer_reset_and_unref_internal(&s->t->outbuf);
           grpc_slice grpc_status_slice = GRPC_MDVALUE(
               s->send_trailing_metadata->idx.named.grpc_status->md);
-          grpc_slice_buffer_add(&s->t->outbuf, grpc_status_slice);
+          grpc_slice_buffer_add(&s->t->outbuf,
+                                grpc_slice_ref_internal(grpc_status_slice));
           grpc_diffproc_initiate_write(t);
         }
         s->trailing_md_sent = true;
@@ -698,7 +711,7 @@ static void perform_stream_op_locked(void* stream_op,
     s->recv_initial_metadata = op->payload->recv_initial_metadata.recv_initial_metadata;   //metadata
     /* IF SERVER INITIALIZE path and authority*/
     if(!s->t->is_client) {
-      continue_read_action_locked(s->t);
+      read_action_locked(s->t);
       printf("The read buffer length : %d \n", s->t->read_buffer.length);
       grpc_metadata_batch fake_md;
       grpc_metadata_batch_init(&fake_md);
@@ -736,7 +749,7 @@ static void perform_stream_op_locked(void* stream_op,
     GPR_ASSERT(s->recv_message_ready == nullptr);
     s->recv_message_ready = op->payload->recv_message.recv_message_ready;
     s->recv_message_op = op;
-    continue_read_action_locked(t);
+    read_action_locked(t);
     message_read_locked(t, s);
 
   }
@@ -759,7 +772,7 @@ static void perform_stream_op_locked(void* stream_op,
       s->trailing_md_recvd = true;
       //TODO  : Here to_read_trailing_md .. We need to copy from our read_buffer.. 
       if (s->t->is_client) {
-        continue_read_action_locked(s->t);
+        read_action_locked(s->t);
         printf("The read buffer length : %d \n", s->t->read_buffer.length);
         grpc_metadata_batch fake_md;
         grpc_metadata_batch_init(&fake_md);
@@ -791,12 +804,11 @@ static void perform_stream_op_locked(void* stream_op,
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, on_complete, GRPC_ERROR_NONE);
   }
 
-done:
-  if (needs_close) {
-    close_stream_locked(s);
-  }
+  grpc_diffproc_stream_unref(s, "perform_stream_op");
+
 }
 
+//Perform Stream OP
   static void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
                                  grpc_transport_stream_op_batch* op) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
@@ -815,7 +827,7 @@ done:
     }
 
 
-     if (!t->is_client) {
+    if (!t->is_client) {
        if (op->send_initial_metadata) {
          grpc_millis deadline =
              op->payload->send_initial_metadata.send_initial_metadata->deadline;
@@ -828,26 +840,26 @@ done:
        }
      }
 
-       char* str = grpc_transport_stream_op_batch_string(op);
-       gpr_log(GPR_INFO, "perform_stream_op[s=%p]: %s", s, str);
-       gpr_free(str);
-     op->handler_private.extra_arg = gs;
-     grpc_core::ExecCtx::Run(DEBUG_LOCATION,GRPC_CLOSURE_INIT(&op->handler_private.closure, perform_stream_op_locked, op, nullptr), GRPC_ERROR_NONE);
+    char* str = grpc_transport_stream_op_batch_string(op);
+    gpr_log(GPR_INFO, "perform_stream_op[s=%p]: %s", s, str);
+    gpr_free(str);
+    op->handler_private.extra_arg = gs;
+    grpc_core::ExecCtx::Run(DEBUG_LOCATION,GRPC_CLOSURE_INIT(&op->handler_private.closure, perform_stream_op_locked, op, nullptr), GRPC_ERROR_NONE);
    }
 
-    void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
+
+  //Perform Transport OP
+ void perform_transport_op(grpc_transport* gt, grpc_transport_op* op) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      grpc_diffproc_transport* t = reinterpret_cast<grpc_diffproc_transport*>(gt);
     printf( "perform_transport_op %p %p \n", t, op);
      printf("PERFORM TRANSPORT OP:  :%s \n", t->is_client ? "CLT" : "SRV");
      char* msg = grpc_transport_op_string(op);
-     printf("perform_transport_op %p %p", t, op);
-     printf("perform_transport_op[t=%p]: %s \n", t, msg);
+
      gpr_free(msg);
 
      op->handler_private.extra_arg = gt;
-     gpr_mu_unlock(&t->mu);
-     gpr_mu_lock(&t->mu);
+     t->ref();
      if (op->start_connectivity_watch != nullptr) {
        t->state_tracker.AddWatcher(op->start_connectivity_watch_state,
                                    std::move(op->start_connectivity_watch));
@@ -865,17 +877,12 @@ done:
                                GRPC_ERROR_NONE);
      }
 
-   
-     if (op->goaway_error != GRPC_ERROR_NONE) {
-       close_transport_locked(t, op->goaway_error);
-       GRPC_ERROR_UNREF(op->goaway_error);
-     }
      if (op->disconnect_with_error != GRPC_ERROR_NONE) {
        close_transport_locked(t, op->disconnect_with_error);
        GRPC_ERROR_UNREF(op->disconnect_with_error);
      }
 
-     gpr_mu_unlock(&t->mu);
+     t->unref();
    }
 
 
@@ -903,12 +910,12 @@ done:
 
    void grpc_diffproc_initiate_write(grpc_diffproc_transport* t) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-     //printf("\n Endpoint ptr : %p and handle : %p \n ", t->ep);
-       grpc_endpoint_write(t->ep, &t->outbuf,GRPC_CLOSURE_INIT(&t->write_action_end_locked, write_action_end,t, grpc_schedule_on_exec_ctx),nullptr);
+     t->ref();
+     grpc_endpoint_write(t->ep, &t->outbuf,GRPC_CLOSURE_INIT(&t->write_action_end_locked, write_action_end,t, grpc_schedule_on_exec_ctx),nullptr);
      //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
    }
 
-  void read_action_locked(void* tp, grpc_error* error) {
+  void read_action_end(void* tp, grpc_error* error) {
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
 
@@ -928,14 +935,15 @@ done:
        }
        printf("Read buf count after namedpipe read :%d \n",t->read_buffer.count);
      }
+     t->unref();
    }
 
-  void continue_read_action_locked(grpc_diffproc_transport* t) {
+  void read_action_locked(grpc_diffproc_transport* t) {
      grpc_slice_buffer_reset_and_unref_internal(&t->read_buffer);
+    t->ref();
      grpc_endpoint_read(
          t->ep, &t->read_buffer,
-         GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
-                           grpc_schedule_on_exec_ctx),
+        GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end, t, grpc_schedule_on_exec_ctx),
          GRPC_ERROR_NONE);
   }
 
@@ -945,7 +953,7 @@ done:
      printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
      grpc_diffproc_transport* t =
          reinterpret_cast<grpc_diffproc_transport*>(transport);
-
+     t->ref();
      //if (read_buffer != nullptr) {
      //  grpc_slice_buffer_move_into(read_buffer, &t->read_buffer);
      //  gpr_free(read_buffer);
@@ -957,9 +965,8 @@ done:
          //    GRPC_ERROR_NONE);
      grpc_core::ExecCtx::Run(
          DEBUG_LOCATION,
-         GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
-                           grpc_schedule_on_exec_ctx),
-         GRPC_ERROR_NONE);
+         GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end, t,
+                           grpc_schedule_on_exec_ctx),GRPC_ERROR_NONE);
    }
 
 

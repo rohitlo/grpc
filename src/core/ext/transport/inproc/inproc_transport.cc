@@ -610,6 +610,8 @@ void op_state_machine_locked(inproc_stream* s, grpc_error* error) {
   }
 
   if (s->send_message_op && other) {
+    printf("************** SEND MSG ********************: %s \n",
+         s->t->is_client ? "CLT" : "SRV");
     if (other->recv_message_op) {
       message_transfer_locked(s, other);
       maybe_process_ops_locked(other, GRPC_ERROR_NONE);
@@ -634,6 +636,8 @@ void op_state_machine_locked(inproc_stream* s, grpc_error* error) {
        (!s->t->is_client && other &&
         (other->trailing_md_recvd || other->to_read_trailing_md_filled ||
          other->recv_trailing_md_op)))) {
+    printf("************** SEND TRAIL MD ********************: %s \n",
+         s->t->is_client ? "CLT" : "SRV");
     grpc_metadata_batch* dest = (other == nullptr)
                                     ? &s->write_buffer_trailing_md
                                     : &other->to_read_trailing_md;
@@ -677,6 +681,8 @@ void op_state_machine_locked(inproc_stream* s, grpc_error* error) {
     s->send_trailing_md_op = nullptr;
   }
   if (s->recv_initial_md_op) {
+    printf("************** RECV INIT MD ********************: %s \n",
+         s->t->is_client ? "CLT" : "SRV");
     if (s->initial_md_recvd) {
       new_err =
           GRPC_ERROR_CREATE_FROM_STATIC_STRING("Already recvd initial md");
@@ -730,12 +736,16 @@ void op_state_machine_locked(inproc_stream* s, grpc_error* error) {
     }
   }
   if (s->recv_message_op) {
+    printf("************** RECV MSG ********: %s \n",
+         s->t->is_client ? "CLT" : "SRV");
     if (other && other->send_message_op) {
       message_transfer_locked(other, s);
       maybe_process_ops_locked(other, GRPC_ERROR_NONE);
     }
   }
   if (s->to_read_trailing_md_filled) {
+    printf("************** RECV TRAIL MD ********************: %s \n",
+         s->t->is_client ? "CLT" : "SRV");
     if (s->trailing_md_recvd) {
       new_err =
           GRPC_ERROR_CREATE_FROM_STATIC_STRING("Already recvd trailing md");
@@ -813,6 +823,7 @@ void op_state_machine_locked(inproc_stream* s, grpc_error* error) {
     }
   }
   if (s->trailing_md_recvd && s->recv_message_op) {
+    printf("************** RECVD TRAIL & NO CLOSE RECV MSG ******************** : %s \n",s->t->is_client?"CLT":"SRV");
     // No further message will come on this stream, so finish off the
     // recv_message_op
     INPROC_LOG(GPR_INFO, "op_state_machine %p scheduling message-ready", s);
@@ -828,6 +839,10 @@ void op_state_machine_locked(inproc_stream* s, grpc_error* error) {
   }
   if (s->trailing_md_recvd && (s->trailing_md_sent || s->t->is_client) &&
       s->send_message_op) {
+    printf(
+        "************** RECVD TRAIL & SENT TRAIL & NO CLOSE SEND MSG ******************** : "
+        "%s \n",
+        s->t->is_client ? "CLT" : "SRV");
     // Nothing further will try to receive from this stream, so finish off
     // any outstanding send_message op
     s->send_message_op->payload->send_message.send_message.reset();
@@ -962,6 +977,10 @@ void perform_stream_op(grpc_transport* gt, grpc_stream* gs,
 
   inproc_stream* other = s->other_side;
   if (error == GRPC_ERROR_NONE && (op->send_initial_metadata || op->send_trailing_metadata)) {
+    if (op->send_initial_metadata)
+      printf("************** SEND INIT MD ********************: %s \n",s->t->is_client ? "CLT" : "SRV");
+    if (op->send_trailing_metadata)
+      printf("************** SEND TRAIL MD ********************: %s \n",s->t->is_client ? "CLT" : "SRV");
     if (s->t->is_closed) {
       error = GRPC_ERROR_CREATE_FROM_STATIC_STRING("Endpoint already shutdown");
     }
