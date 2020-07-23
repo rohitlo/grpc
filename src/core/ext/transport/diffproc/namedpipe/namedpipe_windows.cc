@@ -60,8 +60,10 @@ typedef struct grpc_namedpipe{
     grpc_slice_buffer* read_slices;
 
     int readError = 0;
+    int writeError = 0;
 
     int bytes_read;
+    int bytes_written;
 
     grpc_thread_handle* threadHandle;
     gpr_mu mu;
@@ -132,25 +134,32 @@ static void on_read(void* npp, grpc_error* error) {
     //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
     np->read_cb = NULL;
     namedpipe_unref(np);
-    cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
+    cb->cb(cb->cb_arg, error);
 }
 
 static void on_write(void* npp, grpc_error* error) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)npp;
   grpc_closure* cb;
-  printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
+
+  GRPC_ERROR_REF(error);
+
   gpr_mu_lock(&np->mu);
   cb = np->write_cb;
   np->write_cb = NULL;
   gpr_mu_unlock(&np->mu);
-  //FlushFileBuffers(np->threadHandle->pipeHandle);
-  printf( " ***************  DIsconnectiong hanlde write complete : %p *******************", np->threadHandle->pipeHandle);
- // DisconnectNamedPipe(np->threadHandle->pipeHandle);
- // CloseHandle(np->handle);
+
+  if (error == GRPC_ERROR_NONE) {
+    if (np->writeError != 0) {
+      error = GRPC_WSA_ERROR(np->writeError, "NPWrite");
+    } else {
+      GPR_ASSERT(np->bytes_written == np->write_slices->length);
+    }
+  }
+
   namedpipe_unref(np);
   //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
-  cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
+  cb->cb(cb->cb_arg, error);
 }
 
 
@@ -266,27 +275,15 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
 }
 
 
-static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
-                     grpc_closure* cb, void* arg) {
+static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices, grpc_closure* cb, void* arg) {
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
   printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
   int status;
   grpc_error* error = GRPC_ERROR_NONE;
-  if (np->shutting_down) {
-    grpc_core::ExecCtx::Run(
-        DEBUG_LOCATION, cb,
-        GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-            "Named Pipe is shutting down", &np->shutdown_error, 1));
-    return;
-  }
 
-  np->write_cb = cb;
-  namedpipe_ref(np);
-
-
-    /* ------ BUFFER WRITE TRY ------ */
+  /* ------ BUFFER WRITE TRY ------ */
   WSABUF local_buffers[16];
   WSABUF* allocated = NULL;
   WSABUF* buffers = local_buffers;
@@ -294,14 +291,17 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
   DWORD cbWritten;
   size_t i;
   for (i = 0; i < slices->count; i++) {
-    char* data =
-        grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
+    char* data = grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
     printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);
     gpr_free(data);
   }
-
+  if (np->shutting_down) {
+    grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb,GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING("Named Pipe is shutting down", &np->shutdown_error, 1));
+    return;
+  }
   np->write_cb = cb;
   np->write_slices = slices;
+  np->bytes_written = 0;
   GPR_ASSERT(np->write_slices->count <= UINT_MAX);
   if (np->write_slices->count > GPR_ARRAY_SIZE(local_buffers)) {
     buffers = (WSABUF*)gpr_malloc(sizeof(WSABUF) * np->write_slices->count);
@@ -315,22 +315,27 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices,
     buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->write_slices->slices[i]);
   }
 
+  namedpipe_ref(np);
+
   for (int i = 0; i < np->write_slices->count; i++) {
     status = WriteFile(handle,                 // pipe handle
                        buffers[i].buf,         // message
                        (DWORD)buffers[i].len,  // message length
                        &cbWritten,             // bytes written
                        NULL);
-    if (status == 1)
+    int err = GetLastError();
+    if (status == 1) {
       puts("Successfully wrote to server end pipe handle....");
+      np->bytes_written += cbWritten;
+    }
     else {
       _tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
-      error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
-      return;
+      np->writeError = err;
+      break;
     }
   }
-
-   on_write(np, GRPC_ERROR_NONE);
+  if (np->writeError == 0) on_write(np, GRPC_ERROR_NONE);
+  else on_write(np, error);
 
 
 
