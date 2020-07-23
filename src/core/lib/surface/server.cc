@@ -758,6 +758,9 @@ static void server_on_recv_initial_metadata(void* ptr, grpc_error* error) {
     GPR_DEBUG_ASSERT(calld->recv_initial_metadata->idx.named.path != nullptr);
     GPR_DEBUG_ASSERT(calld->recv_initial_metadata->idx.named.authority !=
                      nullptr);
+    printf("***************** CALLD->PATH: %s",
+           grpc_slice_to_c_string(
+               GRPC_MDVALUE(calld->recv_initial_metadata->idx.named.path->md)));
     calld->path = grpc_slice_ref_internal(
         GRPC_MDVALUE(calld->recv_initial_metadata->idx.named.path->md));
     calld->host = grpc_slice_ref_internal(

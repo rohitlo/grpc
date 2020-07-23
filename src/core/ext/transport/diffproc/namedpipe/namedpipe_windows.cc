@@ -59,6 +59,7 @@ typedef struct grpc_namedpipe{
     grpc_slice_buffer* write_slices;
     grpc_slice_buffer* read_slices;
 
+    int readError = 0;
 
     int bytes_read;
 
@@ -77,28 +78,60 @@ static void namedpipe_unref(grpc_namedpipe* np) { gpr_unref(&np->refcount); }
 
 static void on_read(void* npp, grpc_error* error) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-    grpc_namedpipe* np = (grpc_namedpipe*)npp;
-    grpc_closure* cb = np->read_cb;
-    gpr_mu_lock(&np->mu);
-    cb = np->read_cb;
-    np->read_cb = NULL;
-    gpr_mu_unlock(&np->mu);
+  grpc_namedpipe* np = (grpc_namedpipe*)npp;
+  grpc_closure* cb = np->read_cb;
+  cb = np->read_cb;
+  GRPC_ERROR_REF(error);
+  if (error == GRPC_ERROR_NONE) {
+      if (np->readError != 0 && !np->shutting_down) {
+        char* utf8_message = gpr_format_message(np->readError);
+        error = GRPC_ERROR_CREATE_FROM_COPIED_STRING(utf8_message);
+        gpr_free(utf8_message);
+        grpc_slice_buffer_reset_and_unref_internal(np->read_slices);
+      } else {
+        if (np->bytes_read != 0 && !np->shutting_down) {
+          GPR_ASSERT((size_t)np->bytes_read <=
+                     np->read_slices->length);
+          if (static_cast<size_t>(np->bytes_read) !=
+              np->read_slices->length) {
+            grpc_slice_buffer_trim_end(
+                np->read_slices,
+                np->read_slices->length - static_cast<size_t>(np->bytes_read),
+                &np->last_read_buffer);
+          }
+          GPR_ASSERT((size_t)np->bytes_read == np->read_slices->length);
 
-     if (np->bytes_read != 0 && !np->shutting_down) {
-      GPR_ASSERT((size_t)np->bytes_read <= np->read_slices->length);
-      if (static_cast<size_t>(np->bytes_read) != np->read_slices->length) {
-        grpc_slice_buffer_trim_end(
-            np->read_slices,
-            np->read_slices->length - static_cast<size_t>(np->bytes_read),
-            &np->last_read_buffer);
+         // if (grpc_tcp_trace.enabled()) {
+            size_t i;
+            for (i = 0; i < np->read_slices->count; i++) {
+              char* dump = grpc_dump_slice(np->read_slices->slices[i],
+                                           GPR_DUMP_HEX | GPR_DUMP_ASCII);
+              printf("READ %p (peer=%s): %s", np, np->peer_string,
+                      dump);
+              gpr_free(dump);
+            }
+          //}
+        } else {
+          //if (grpc_tcp_trace.enabled()) {
+            gpr_log(GPR_INFO, "TCP:%p unref read_slice", np);
+          //}
+          grpc_slice_buffer_reset_and_unref_internal(np->read_slices);
+          error =
+              np->shutting_down
+                  ? GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
+                        "TCP stream shutting down", &np->shutdown_error, 1)
+                  : GRPC_ERROR_CREATE_FROM_STATIC_STRING("End of TCP stream");
+        }
       }
     }
-    namedpipe_unref(np);
+    
     //FlushFileBuffers(np->threadHandle->pipeHandle);
-    printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
+    //printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
     //DisconnectNamedPipe(np->threadHandle->pipeHandle);
     //CloseHandle(np->handle);
     //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
+    np->read_cb = NULL;
+    namedpipe_unref(np);
     cb->cb(cb->cb_arg, GRPC_ERROR_NONE);
 }
 
@@ -137,14 +170,11 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   TCHAR chRequest[BUFSIZE];
   int fSuccess;
   if (np->shutting_down) {
-    grpc_core::ExecCtx::Run(
-        DEBUG_LOCATION, cb,
-        GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-            "Np HANDLE is shutting down", &np->shutdown_error, 1));
+    grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb,GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING("Np HANDLE is shutting down", &np->shutdown_error, 1));
     return;
   }
   np->read_cb = cb;
-
+  np->bytes_read = 0;
   /*  ---------- Buffer Read Try ---------- */
 
   WSABUF buffers[MAX_WSABUF_COUNT];
@@ -176,27 +206,38 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
     buffers[i].len = (ULONG)GRPC_SLICE_LENGTH(
         np->read_slices->slices[i]);  // we know slice size fits in 32bit.
     buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->read_slices->slices[i]);
-    fSuccess = ReadFile(handle,                 // handle to pipe
-                        buffers[i].buf,         // buffer to receive data
-                        (DWORD)buffers[i].len-1,  // size of buffer
-                        &bytes_read,            // number of bytes read
-                        NULL);                  // not overlapped I/O
-
-    if (!fSuccess || bytes_read == 0) {
-      if (GetLastError() == ERROR_BROKEN_PIPE) {
-        _tprintf(TEXT("InstanceThread: client disconnected.\n"));
-      } else {
-        _tprintf(TEXT("InstanceThread ReadFile failed, GLE=%d.\n"),
-                 GetLastError());
-      }
+    fSuccess = ReadFile(handle,                     // handle to pipe
+                        buffers[i].buf,             // buffer to receive data
+                        (DWORD)buffers[i].len,  // size of buffer
+                        &bytes_read,                // number of bytes read
+                        NULL);                      // not overlapped I/O
+    int lastError = GetLastError();
+    printf("LastError in Read %d & fSuccess: %d \n", lastError, fSuccess);
+    if (fSuccess == 0) {
+      np->readError = lastError;
       break;
     } else {
-      //buffers[i].buf[bytes_read] = '\0';
-      printf("Read message :%s and bytes read: %d \n", buffers[i].buf, bytes_read);
-      np->bytes_read = bytes_read;
+      np->bytes_read += bytes_read;
+      continue;
     }
+
   }
-  on_read(np, GRPC_ERROR_NONE);
+  //  if (!fSuccess || bytes_read == 0) {
+  //    if (GetLastError() == ERROR_BROKEN_PIPE) {
+  //      _tprintf(TEXT("InstanceThread: client disconnected.\n"));
+  //    } else {
+  //      _tprintf(TEXT("InstanceThread ReadFile failed, GLE=%d.\n"),GetLastError());
+  //    }
+  //    break;
+  //  } else {
+  //    //buffers[i].buf[bytes_read] = '\0';
+  //    printf("Read message :%s and bytes read: %d \n", buffers[i].buf, bytes_read);
+  //    np->bytes_read += bytes_read;
+  //  }
+  //}
+  printf("np->readerror :%d \n", np->readError);
+  if (np->readError == 0) on_read(np, GRPC_ERROR_NONE);
+  else on_read(np, GRPC_WSA_ERROR(np->readError, "Read"));
 
 
 
