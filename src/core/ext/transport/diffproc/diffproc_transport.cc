@@ -50,9 +50,10 @@ grpc_slice g_fake_status_key;
 
 static const grpc_transport_vtable* get_vtable(void);
 static void log_metadata(const grpc_metadata_batch* md_batch, bool is_client, bool is_initial);
+
+//Cancel and Close Stream
 bool cancel_stream_locked(grpc_diffproc_stream* s, grpc_error* error);
-void close_stream_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s, int close_reads,
-                         int close_writes, grpc_error* error);
+void close_stream_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s, int close_reads,int close_writes, grpc_error* error);
 
 
 
@@ -92,8 +93,8 @@ grpc_diffproc_transport::grpc_diffproc_transport(
 grpc_diffproc_transport::~grpc_diffproc_transport() {
   printf(" TRANSPORT DOTR ... \n");
   grpc_endpoint_destroy(ep);
-  //grpc_slice_buffer_destroy_internal(&outbuf);
-  //grpc_slice_buffer_destroy_internal(&read_buffer);
+  grpc_slice_buffer_destroy_internal(&outbuf);
+  grpc_slice_buffer_destroy_internal(&read_buffer);
   //GRPC_ERROR_UNREF(closed_with_error);
   //gpr_free(peer_string);
 }
@@ -451,29 +452,6 @@ bool cancel_stream_locked( grpc_diffproc_stream* stream, grpc_error* error) {
 
 }
 
-// Call the on_complete closure associated with this stream_op_batch if
-// this stream_op_batch is only one of the pending operations for this
-// stream. This is called when one of the pending operations for the stream
-// is done and about to be NULLed out
-void complete_if_batch_end_locked(grpc_diffproc_stream* s, grpc_error* error,
-                                  grpc_transport_stream_op_batch* op,
-                                  const char* msg) {
-  int is_sm = static_cast<int>(op == s->send_message_op);
-  int is_stm = static_cast<int>(op == s->send_trailing_md_op);
-  // TODO(vjpai): We should not consider the recv ops here, since they
-  // have their own callbacks.  We should invoke a batch's on_complete
-  // as soon as all of the batch's send ops are complete, even if there
-  // are still recv ops pending.
-  int is_rim = static_cast<int>(op == s->recv_initial_md_op);
-  int is_rm = static_cast<int>(op == s->recv_message_op);
-  int is_rtm = static_cast<int>(op == s->recv_trailing_md_op);
-
-  if ((is_sm + is_stm + is_rim + is_rm + is_rtm) == 1) {
-   printf( "%s %p %p %p", msg, s, op, error);
-    grpc_core::ExecCtx::Run(DEBUG_LOCATION, op->on_complete,
-                            GRPC_ERROR_REF(error));
-  }
-}
 
 //Write Buffer
 void message_transfer_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* sender) {
@@ -500,8 +478,6 @@ void message_transfer_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s
   } while (remaining > 0);
   sender->send_message_op->payload->send_message.send_message.reset();
   grpc_diffproc_initiate_write(t);
-  //printf( "message_transfer_locked %p scheduling message-ready",sender);
-  //complete_if_batch_end_locked(sender, GRPC_ERROR_NONE, sender->send_message_op,"message_transfer scheduling sender on_complete");
   sender->send_message_op = nullptr;
 }
 
@@ -515,13 +491,7 @@ void message_read_locked(grpc_diffproc_transport* t,
       receiver->recv_stream.get());
 
   //printf("message_transfer_locked %p scheduling message-ready", receiver);
-  grpc_core::ExecCtx::Run(
-      DEBUG_LOCATION,
-      receiver->recv_message_op->payload->recv_message.recv_message_ready,
-      GRPC_ERROR_NONE);
-  //complete_if_batch_end_locked(
-  //    receiver, GRPC_ERROR_NONE, receiver->recv_message_op,
-  //    "message_transfer scheduling receiver on_complete");
+  grpc_core::ExecCtx::Run(DEBUG_LOCATION,receiver->recv_message_op->payload->recv_message.recv_message_ready,GRPC_ERROR_NONE);
 
   receiver->recv_message_op = nullptr;
 }
@@ -593,28 +563,6 @@ void grpc_diffproc_maybe_complete_recv_trailing_metadata(grpc_diffproc_transport
 
 //Close Stream
 void close_stream_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s, int close_reads, int close_writes, grpc_error* error) {
-  //if (!s->closed) {
-  //  // Release the metadata that we would have written out
-
-  //  if (s->listed) {
-  //    grpc_diffproc_stream* p = s->stream_list_prev;
-  //    grpc_diffproc_stream* n = s->stream_list_next;
-  //    if (p != nullptr) {
-  //      p->stream_list_next = n;
-  //    } else {
-  //      s->t->stream_list = n;
-  //    }
-  //    if (n != nullptr) {
-  //      n->stream_list_prev = p;
-  //    }
-  //    s->listed = false;
-  //    //grpc_diffproc_stream_unref(s,"close_stream:list");
-  //  }
-
-  //  s->closed = true;
-  //  grpc_diffproc_stream_unref(s, "close_stream:closing");
-  //}
-
   if (s->read_closed && s->write_closed) {
     /* already closed */
     //grpc_chttp2_maybe_complete_recv_trailing_metadata(t, s);
@@ -634,6 +582,26 @@ void close_stream_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s, in
     grpc_diffproc_fail_pending_writes(t, s, GRPC_ERROR_REF(error));
   }
   if (s->read_closed && s->write_closed) {
+    if (!s->closed) {
+      //  // Release the metadata that we would have written out
+
+      if (s->listed) {
+        grpc_diffproc_stream* p = s->stream_list_prev;
+        grpc_diffproc_stream* n = s->stream_list_next;
+        if (p != nullptr) {
+          p->stream_list_next = n;
+        } else {
+          s->t->stream_list = n;
+        }
+        if (n != nullptr) {
+          n->stream_list_prev = p;
+        }
+        s->listed = false;
+        // grpc_diffproc_stream_unref(s,"close_stream:list");
+      }
+
+      s->closed = true;
+    }
     became_closed = true;
   }
   if (closed_read) {
