@@ -134,6 +134,7 @@ static void on_read(void* npp, grpc_error* error) {
     //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, GRPC_ERROR_NONE);
     np->read_cb = NULL;
     namedpipe_unref(np);
+    //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
     cb->cb(cb->cb_arg, error);
 }
 
@@ -158,8 +159,8 @@ static void on_write(void* npp, grpc_error* error) {
   }
 
   namedpipe_unref(np);
-  //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
-  cb->cb(cb->cb_arg, error);
+  grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
+  //cb->cb(cb->cb_arg, error);
 }
 
 
