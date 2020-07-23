@@ -178,7 +178,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
     buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->read_slices->slices[i]);
     fSuccess = ReadFile(handle,                 // handle to pipe
                         buffers[i].buf,         // buffer to receive data
-                        (DWORD)buffers[i].len,  // size of buffer
+                        (DWORD)buffers[i].len-1,  // size of buffer
                         &bytes_read,            // number of bytes read
                         NULL);                  // not overlapped I/O
 
@@ -191,7 +191,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
       }
       break;
     } else {
-      buffers[i].buf[bytes_read] = '\0';
+      //buffers[i].buf[bytes_read] = '\0';
       printf("Read message :%s and bytes read: %d \n", buffers[i].buf, bytes_read);
       np->bytes_read = bytes_read;
     }

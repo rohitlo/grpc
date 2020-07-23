@@ -42,7 +42,7 @@
 #include <tchar.h>
 #include <strsafe.h>
 #include <src/core/ext/transport/diffproc/namedpipe_thread.h>
-#define INSTANCES 5
+#define INSTANCES 10
 #define BUFSIZE 4096
 //#define BUFSIZE 1023;
 typedef struct grpc_pipeInstance {
@@ -229,7 +229,7 @@ static HANDLE CreateInstance(const char* addr) {
                        PIPE_TYPE_MESSAGE |          // message-type pipe
                            PIPE_READMODE_MESSAGE |  // message-read mode
                            PIPE_WAIT,               // blocking mode
-                       INSTANCES,                   // number of instances
+                       PIPE_UNLIMITED_INSTANCES,                   // number of instances
                        BUFSIZE * sizeof(BYTE),      // output buffer size
                        BUFSIZE * sizeof(BYTE),      // input buffer size
                        0,                           // client time-out
