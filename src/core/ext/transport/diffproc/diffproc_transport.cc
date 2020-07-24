@@ -129,13 +129,29 @@ void mdToBuffer(grpc_diffproc_stream* s,const grpc_metadata_batch* metadata, boo
 }
 
 
-grpc_slice bufferToMd( grpc_slice_buffer* read_buffer) {
-  for (size_t i = 0; i <  read_buffer->count; i++) {
-   printf(" %s \n", grpc_slice_to_c_string(read_buffer->slices[i]));
-    return read_buffer->slices[i];
-  } 
+//grpc_slice bufferToMd( grpc_slice_buffer* read_buffer) {
+//  for (size_t i = 0; i <  read_buffer->count; i++) {
+//   printf(" %s \n", grpc_slice_to_c_string(read_buffer->slices[i]));
+//    return read_buffer->slices[i];
+//  } 
+//
+//}
 
+
+grpc_slice bufferToMd(grpc_slice_buffer* slice_buffer) {
+  char* payload_bytes =
+      static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
+  size_t offset = 0;
+  for (size_t i = 0; i < slice_buffer->count; ++i) {
+    memcpy(payload_bytes + offset,
+           GRPC_SLICE_START_PTR(slice_buffer->slices[i]),
+           GRPC_SLICE_LENGTH(slice_buffer->slices[i]));
+    offset += GRPC_SLICE_LENGTH(slice_buffer->slices[i]);
+  }
+  *(payload_bytes + offset) = '\0';
+  return grpc_slice_from_static_string(payload_bytes);
 }
+
 
 
 grpc_error* fill_in_metadata(grpc_diffproc_stream* s,
@@ -251,10 +267,10 @@ void grpc_diffproc_stream_map_add(grpc_diffproc_transport* t, uint32_t id, void*
     grpc_stream_unref(s->refcount, reason);
   }
 #else
-  void grpc_chttp2_stream_ref(grpc_chttp2_stream* s) {
+  void grpc_diffproc_stream_ref(grpc_diffproc_stream* s) {
     grpc_stream_ref(s->refcount);
   }
-  void grpc_chttp2_stream_unref(grpc_chttp2_stream* s) {
+  void grpc_diffproc_stream_unref(grpc_diffproc_stream* s) {
     grpc_stream_unref(s->refcount);
   }
 #endif
