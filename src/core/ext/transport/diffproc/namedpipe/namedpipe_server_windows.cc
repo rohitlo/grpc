@@ -34,9 +34,6 @@
 #include "src/core/ext/transport/diffproc/namedpipe/namedpipe_server.h"
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/iomgr/iocp_windows.h"
-#include "src/core/lib/iomgr/sockaddr.h"
-#include "src/core/lib/iomgr/sockaddr_utils.h"
-#include "src/core/lib/iomgr/socket_windows.h"
 #include "src/core/lib/iomgr/timer.h"
 #include <src\core\ext\transport\diffproc\namedpipe\namedpipe_windows.h>
 #include <tchar.h>
@@ -102,9 +99,9 @@ struct grpc_np_server {
 
 
 
-static VOID DisconnectAndReconnect(grpc_np_server*, DWORD);
-static BOOL ConnectToNewClient(HANDLE, LPOVERLAPPED);
-static VOID GetAnswerToRequest(LPgrpc_piepInstance); 
+//static VOID DisconnectAndReconnect(grpc_np_server*, DWORD);
+//static BOOL ConnectToNewClient(HANDLE, LPOVERLAPPED);
+//static VOID GetAnswerToRequest(LPgrpc_piepInstance); 
 
 
 //VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
@@ -149,7 +146,7 @@ static void destroy_server(void* arg, grpc_error* error) {
     grpc_pipeInstance* sp = s->head;
     s->head = sp->next;
     sp->next = NULL;
-    grpc_winsocket_destroy((grpc_winsocket*)sp->handle);
+    grpc_nphandle_destroy(sp->np_handle);
     gpr_free(sp);
   }
   grpc_channel_args_destroy(s->channel_args);
@@ -178,8 +175,7 @@ static void finish_shutdown_locked(grpc_np_server* s) {
 static void np_server_shutdown_starting_add(grpc_np_server* s,
                                              grpc_closure* shutdown_starting) {
   gpr_mu_lock(&s->mu);
-  grpc_closure_list_append(&s->shutdown_starting, shutdown_starting,
-                           GRPC_ERROR_NONE);
+  grpc_closure_list_append(&s->shutdown_starting, shutdown_starting, GRPC_ERROR_NONE);
   gpr_mu_unlock(&s->mu);
 }
 
@@ -194,7 +190,7 @@ static void np_server_destroy(grpc_np_server* s) {
   } else {
     for (sp = s->head; sp; sp = sp->next) {
       sp->shutting_down = 1;
-      grpc_winsocket_shutdown((grpc_winsocket*)sp->handle);
+      grpc_nphandle_shutdown(sp->np_handle);
     }
   }
   gpr_mu_unlock(&s->mu);
@@ -470,8 +466,6 @@ void grpc_np_server_start(grpc_np_server* s, grpc_pollset** pollset,size_t polls
    int i=0;
    for (sp = s->head; sp; sp = sp->next) {
      GPR_ASSERT(GRPC_LOG_IF_ERROR("start_accept", start_accept_locked(sp)));
-     //s->hEvents[i++] = sp->hEvent;
-     //on_accept(sp, GRPC_ERROR_NONE);
      s->active_ports++;
    }
    

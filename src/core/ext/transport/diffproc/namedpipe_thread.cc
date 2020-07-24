@@ -35,6 +35,26 @@ grpc_thread_handle* grpc_createHandle(HANDLE hd, const char* name) {
 }
 
 
+static void destroy(grpc_thread_handle* handle) {
+  gpr_mu_destroy(&handle->state_mu);
+  gpr_free(handle);
+}
+
+static bool check_destroyable(grpc_thread_handle* handle) {
+  return handle->destroy_called == true;
+}
+
+void grpc_nphandle_destroy(grpc_thread_handle* handle) {
+  gpr_mu_lock(&handle->state_mu);
+  GPR_ASSERT(!handle->destroy_called);
+  handle->destroy_called = true;
+  bool should_destroy = check_destroyable(handle);
+  gpr_mu_unlock(&handle->state_mu);
+  if (should_destroy) destroy(handle);
+}
+
+
+
 /* Schedule a shutdown of the namedpipe handle operations. Will call the pending
    operations to abort them. We need to do that this way because of the
    various callsites of that function, which happens to be in various
@@ -71,7 +91,6 @@ DWORD WINAPI InstanceThread(LPVOID lparam) {
   
  // grpc_core::ExecCtx::Run(DEBUG_LOCATION, thread->complete_closure,
                           //GRPC_ERROR_NONE);
-    return 1;
   }
  
 

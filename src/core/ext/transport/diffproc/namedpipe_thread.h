@@ -62,7 +62,7 @@ typedef struct grpc_thread_handle {
 
   void* arg;
 
-
+  bool destroy_called;
   // on_accept callback function
   void (*grpc_on_error)(void* arg, grpc_error* error);
 } grpc_thread_handle;
@@ -76,7 +76,7 @@ grpc_error* CreateThreadProcess(grpc_thread_handle* thread);
 
 grpc_thread_handle* grpc_createHandle(HANDLE hd, const char* name);
 
-
+void grpc_nphandle_destroy(grpc_thread_handle* handle);
 
 
 #endif /* GRPC_CORE_EXT_TRANSPORT_DIFFPROC_NAMEDPIPE_THREAD_H */
