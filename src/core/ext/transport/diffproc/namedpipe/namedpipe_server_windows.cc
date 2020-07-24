@@ -43,7 +43,7 @@
 #include <strsafe.h>
 #include <src/core/ext/transport/diffproc/namedpipe_thread.h>
 #define INSTANCES 10
-#define BUFSIZE 4096
+#define BUFSIZE 8192
 //#define BUFSIZE 1023;
 typedef struct grpc_pipeInstance {
   //HANDLE handle;
@@ -54,15 +54,15 @@ typedef struct grpc_pipeInstance {
   int shutting_down;
   /* closure for socket notification of accept being ready */
   grpc_closure on_accept;
-  OVERLAPPED op;
-  BOOL fPendingIO;
+  //OVERLAPPED op;
+  //BOOL fPendingIO;
   DWORD dwState;
   DWORD cbRead;
   DWORD cbToWrite;
-  TCHAR chReply[BUFSIZE];
+  //TCHAR chReply[BUFSIZE];
   int outstanding_calls;
   HANDLE new_handle;
-  TCHAR chRequest[BUFSIZE] = {};
+  //TCHAR chRequest[BUFSIZE] = {};
 
   grpc_thread_handle* np_handle;
 
@@ -91,11 +91,11 @@ struct grpc_np_server {
   grpc_channel_args* channel_args;
 
 
-  HANDLE hEvents[INSTANCES];
+  //HANDLE hEvents[INSTANCES];
   int active_ports;
 
   //Pipe storage in server--
-  grpc_pipeInstance* pipes[INSTANCES];
+  //grpc_pipeInstance* pipes[INSTANCES];
   int count;
   int pipesCount;
 };
@@ -107,17 +107,17 @@ static BOOL ConnectToNewClient(HANDLE, LPOVERLAPPED);
 static VOID GetAnswerToRequest(LPgrpc_piepInstance); 
 
 
-VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
-  _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->chRequest);
-  StringCchCopy(pipe->chReply, BUFSIZE, TEXT("Default answer from server"));
-  pipe->cbToWrite = (lstrlen(pipe->chReply) + 1) * sizeof(TCHAR);
-}
+//VOID GetAnswerToRequest(LPgrpc_piepInstance pipe) {
+//  _tprintf(TEXT("[%d] %s\n"), pipe->handle, pipe->chRequest);
+//  StringCchCopy(pipe->chReply, BUFSIZE, TEXT("Default answer from server"));
+//  pipe->cbToWrite = (lstrlen(pipe->chReply) + 1) * sizeof(TCHAR);
+//}
 
 
 /* Public function. Allocates the proper data structures to hold a
    grpc_pipe_server. */
 
-   // 1.
+// 1.
 grpc_error* grpc_namedpipe_create(grpc_closure* shutdown_complete,
                                      const grpc_channel_args* args,
                                      grpc_np_server** server) {
@@ -144,9 +144,7 @@ grpc_error* grpc_namedpipe_create(grpc_closure* shutdown_complete,
 static void destroy_server(void* arg, grpc_error* error) {
   grpc_np_server* s = (grpc_np_server*)arg;
 
-  /* Now that the accepts have been aborted, we can destroy the sockets.
-     The IOCP won't get notified on these, so we can flag them as already
-     closed by the system. */
+  /* Now that the accepts have been aborted, we can destroy the pipe hanlde. */
   while (s->head) {
     grpc_pipeInstance* sp = s->head;
     s->head = sp->next;
@@ -238,48 +236,48 @@ static HANDLE CreateInstance(const char* addr) {
   return hd;
 }
 
-BOOL ConnectToNewClient(HANDLE hPipe, LPOVERLAPPED lpo) {
-  BOOL fConnected, fPendingIO = FALSE;
+//BOOL ConnectToNewClient(HANDLE hPipe, LPOVERLAPPED lpo) {
+//  BOOL fConnected, fPendingIO = FALSE;
+//
+//  // Start an overlapped connection for this pipe instance.
+//  fConnected = ConnectNamedPipe(hPipe, lpo);
+//
+//  // Overlapped ConnectNamedPipe should return zero.
+//  if (fConnected) {
+//    printf("ConnectNamedPipe failed with %d.\n", GetLastError());
+//    return 0;
+//  }
+//  //else {
+//  //  puts("Client Successfully connected...");
+//  //}
+//
+//  switch (GetLastError()) {
+//      // The overlapped connection in progress.
+//    case ERROR_IO_PENDING:
+//      puts("Pipe IO PENDING connected ");
+//      fPendingIO = TRUE;
+//      break;
+//
+//      // Client is already connected, so signal an event.
+//
+//    case ERROR_PIPE_CONNECTED:
+//      puts("Pipe already connected ");
+//      if (SetEvent(lpo->hEvent)) break;
+//
+//      // If an error occurs during the connect operation...
+//    default: {
+//      printf("ConnectNamedPipe failed with %d.\n", GetLastError());
+//      return 0;
+//    }
+//  }
+//
+//  return fPendingIO;
+//}
 
-  // Start an overlapped connection for this pipe instance.
-  fConnected = ConnectNamedPipe(hPipe, lpo);
-
-  // Overlapped ConnectNamedPipe should return zero.
-  if (fConnected) {
-    printf("ConnectNamedPipe failed with %d.\n", GetLastError());
-    return 0;
-  }
-  //else {
-  //  puts("Client Successfully connected...");
-  //}
-
-  switch (GetLastError()) {
-      // The overlapped connection in progress.
-    case ERROR_IO_PENDING:
-      puts("Pipe IO PENDING connected ");
-      fPendingIO = TRUE;
-      break;
-
-      // Client is already connected, so signal an event.
-
-    case ERROR_PIPE_CONNECTED:
-      puts("Pipe already connected ");
-      if (SetEvent(lpo->hEvent)) break;
-
-      // If an error occurs during the connect operation...
-    default: {
-      printf("ConnectNamedPipe failed with %d.\n", GetLastError());
-      return 0;
-    }
-  }
-
-  return fPendingIO;
-}
-
-DWORD WINAPI Ins(LPVOID lpvaram) {
-  puts("In instance thread");
-  return 1;
-}
+//DWORD WINAPI Ins(LPVOID lpvaram) {
+//  puts("In instance thread");
+//  return 1;
+//}
 
 /*Error callback at namedpipe connection*/
 static void on_error(void* arg, grpc_error* error) {
@@ -288,9 +286,7 @@ static void on_error(void* arg, grpc_error* error) {
 
 static void on_accept(void* arg, grpc_error* error);
 
-#define CONNECTING_STATE 0
-#define READING_STATE 1
-#define WRITING_STATE 2
+
 // 5. START ACCEPT LOCKED FOR ASYNC INCOMING CONNECTIONS
 static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
   //grpc_core::ExecCtx exec_ctx;
@@ -304,7 +300,9 @@ static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
     goto failure;
   }
   printf("Handle to listen to : %p \n", pipeInstance->np_handle->pipeHandle);
-  //pipeInstance->np_handle->complete_closure = &pipeInstance->on_accept;
+
+
+  //Initiating on_accept callback function to be called in thread process, when a client successfully connects to server.
   pipeInstance->np_handle->grpc_on_accept = on_accept;
   pipeInstance->np_handle->grpc_on_error = on_error;
   pipeInstance->np_handle->arg = pipeInstance;
@@ -325,26 +323,26 @@ static grpc_error* start_accept_locked(grpc_pipeInstance* pipeInstance) {
   }
 
 
-VOID DisconnectAndReconnect(grpc_np_server* server, DWORD i) {
-  // Disconnect the pipe instance.
-
-  if (!DisconnectNamedPipe(server->pipes[i]->handle)) {
-    printf("DisconnectNamedPipe failed with %d.\n", GetLastError());
-  }
-
-  // Call a subroutine to connect to the new client.
-
-  server->pipes[i]->fPendingIO =
-      ConnectToNewClient(server->pipes[i]->handle, &server->pipes[i]->op);
-  printf("\n DisconnectAndReconnect :: Pendiong IO ? : %d\n",
-         server->pipes[i]->fPendingIO);
-  server->pipes[i]->dwState =
-      server->pipes[i]->fPendingIO ? CONNECTING_STATE                  :  // still connecting
-                                READING_STATE;                       // ready to read
-  printf("\n DisconnectAndReconnect :: DW State ? : %d\n",
-         server->pipes[i]->dwState);
-  
-} 
+//VOID DisconnectAndReconnect(grpc_np_server* server, DWORD i) {
+//  // Disconnect the pipe instance.
+//
+//  if (!DisconnectNamedPipe(server->pipes[i]->handle)) {
+//    printf("DisconnectNamedPipe failed with %d.\n", GetLastError());
+//  }
+//
+//  // Call a subroutine to connect to the new client.
+//
+//  server->pipes[i]->fPendingIO =
+//      ConnectToNewClient(server->pipes[i]->handle, &server->pipes[i]->op);
+//  printf("\n DisconnectAndReconnect :: Pendiong IO ? : %d\n",
+//         server->pipes[i]->fPendingIO);
+//  server->pipes[i]->dwState =
+//      server->pipes[i]->fPendingIO ? CONNECTING_STATE                  :  // still connecting
+//                                READING_STATE;                       // ready to read
+//  printf("\n DisconnectAndReconnect :: DW State ? : %d\n",
+//         server->pipes[i]->dwState);
+//  
+//} 
 
 
 
@@ -457,10 +455,6 @@ done:
  }
 
 
-
-
-
-
 //4. 
 void grpc_np_server_start(grpc_np_server* s, grpc_pollset** pollset,size_t pollset_count,
                              grpc_np_server_cb on_accept_cb,
@@ -483,9 +477,6 @@ void grpc_np_server_start(grpc_np_server* s, grpc_pollset** pollset,size_t polls
    
    gpr_mu_unlock(&s->mu);
  }
-
-
-
 
 
 //#endif  // GRPC_WINSOCK_SOCKET
