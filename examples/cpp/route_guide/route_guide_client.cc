@@ -101,12 +101,15 @@ class RouteGuideClient {
 
     std::unique_ptr<ClientReader<Feature> > reader(
         stub_->ListFeatures(&context, rect));
+    int cnt = 0;
     while (reader->Read(&feature)) {
+      cnt++;
       std::cout << "Found feature called "
                 << feature.name() << " at "
                 << feature.location().latitude()/kCoordFactor_ << ", "
                 << feature.location().longitude()/kCoordFactor_ << std::endl;
     }
+    printf("\n ***************** READING FINISHED : %d*********************** \n",cnt);
     Status status = reader->Finish();
     if (status.ok()) {
       std::cout << "ListFeatures rpc succeeded." << std::endl;
@@ -220,21 +223,21 @@ class RouteGuideClient {
 };
 
 int main(int argc, char** argv) {
-  // Expect only arg: --db_path=path/to/route_guide_db.json.
+  // Expect only arg: --db_path=path/to/route_guide_db.json. --db_path=E:/Job/Project/repo1/grpc/examples/cpp/route_guide/route_guide_db.json
   std::string db = routeguide::GetDbFileContent(argc, argv);
   RouteGuideClient guide(
-      grpc::CreateChannel("localhost:50051",
+      grpc::CreateChannel("\\\\.\\pipe\\namedpipe",
                           grpc::InsecureChannelCredentials()),
       db);
 
   std::cout << "-------------- GetFeature --------------" << std::endl;
   guide.GetFeature();
-  std::cout << "-------------- ListFeatures --------------" << std::endl;
-  guide.ListFeatures();
-  std::cout << "-------------- RecordRoute --------------" << std::endl;
-  guide.RecordRoute();
-  std::cout << "-------------- RouteChat --------------" << std::endl;
-  guide.RouteChat();
+  //std::cout << "-------------- ListFeatures --------------" << std::endl;
+  //guide.ListFeatures();
+  //std::cout << "-------------- RecordRoute --------------" << std::endl;
+  //guide.RecordRoute();
+  //std::cout << "-------------- RouteChat --------------" << std::endl;
+  //guide.RouteChat();
 
   return 0;
 }

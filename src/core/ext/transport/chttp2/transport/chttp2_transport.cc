@@ -1377,15 +1377,6 @@ static void perform_stream_op_locked(void* stream_op,
                  s->id,s->t->is_client, false);
   }
 
-  //  if (op->recv_initial_metadata) {
-  //  log_metadata(op->payload->recv_initial_metadata.recv_initial_metadata,
-  //               s->id, s->t->is_client, true);
-  //}
-  //if (op->recv_initial_metadata) {
-  //  log_metadata(op->payload->recv_trailing_metadata.recv_trailing_metadata,
-  //               s->id, s->t->is_client, false);
-  //}
-
   if (GRPC_TRACE_FLAG_ENABLED(grpc_http_trace)) {
     char* str = grpc_transport_stream_op_batch_string(op);
     gpr_log(GPR_INFO, "perform_stream_op_locked: %s; on_complete = %p", str,
@@ -1667,6 +1658,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (on_complete != nullptr) {
+    puts(" ******************* ON COMPLETE ******************");
     grpc_chttp2_complete_closure_step(t, s, &on_complete, GRPC_ERROR_NONE,
                                       "op->on_complete");
   }

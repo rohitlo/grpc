@@ -209,16 +209,16 @@ static void on_read(void* tcpp, grpc_error* error) {
         }
         GPR_ASSERT((size_t)info->bytes_transferred == tcp->read_slices->length);
 
-        if (grpc_tcp_trace.enabled()) {
+        //if (grpc_tcp_trace.enabled()) {
           size_t i;
           for (i = 0; i < tcp->read_slices->count; i++) {
             char* dump = grpc_dump_slice(tcp->read_slices->slices[i],
                                          GPR_DUMP_HEX | GPR_DUMP_ASCII);
-            gpr_log(GPR_INFO, "READ %p (peer=%s): %s", tcp, tcp->peer_string,
+            printf( "READ %p (peer=%s): %s", tcp, tcp->peer_string,
                     dump);
             gpr_free(dump);
           }
-        }
+        //}
       } else {
         if (grpc_tcp_trace.enabled()) {
           gpr_log(GPR_INFO, "TCP:%p unref read_slice", tcp);

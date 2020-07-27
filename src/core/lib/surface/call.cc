@@ -1973,7 +1973,10 @@ grpc_call_error grpc_call_start_batch(grpc_call* call, const grpc_op* ops,
       "grpc_call_start_batch(call=%p, ops=%p, nops=%lu, tag=%p, "
       "reserved=%p)",
       5, (call, ops, (unsigned long)nops, tag, reserved));
-
+  printf(
+      "grpc_call_start_batch(call=%p, ops=%p, nops=%lu, tag=%p, "
+      "reserved=%p) \n",
+      5, (call, ops, (unsigned long)nops, tag, reserved));
   if (reserved != nullptr) {
     err = GRPC_CALL_ERROR;
   } else {

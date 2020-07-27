@@ -1,0 +1,8 @@
+*.o
+*.pb.cc
+*.pb.h
+route_guide_client
+route_guide_server
+
+
+/bin/

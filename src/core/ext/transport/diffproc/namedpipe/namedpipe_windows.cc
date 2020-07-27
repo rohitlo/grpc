@@ -84,6 +84,7 @@ static void on_read(void* npp, grpc_error* error) {
   grpc_closure* cb = np->read_cb;
   cb = np->read_cb;
   GRPC_ERROR_REF(error);
+  printf(" ********** BYTES READ :%d ************** \n", np->bytes_read);
   if (error == GRPC_ERROR_NONE) {
       if (np->readError != 0 && !np->shutting_down) {
         char* utf8_message = gpr_format_message(np->readError);
@@ -159,8 +160,8 @@ static void on_write(void* npp, grpc_error* error) {
   }
 
   namedpipe_unref(np);
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
-  //cb->cb(cb->cb_arg, error);
+  //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
+  cb->cb(cb->cb_arg, error);
 }
 
 
@@ -211,11 +212,19 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   printf(" Count in read :%d \n", np->read_slices->count);
   i = 0;
   for (i = 0; i < np->read_slices->count; i++) {
+    puts("******************* IN READ LOOP ********************");
+    DWORD bytesAvail = 0;
+    if (!PeekNamedPipe(handle, NULL, 0, NULL, &bytesAvail, NULL)) {
+      puts("Failed to call PeekNamedPipe");
+    }
+    printf("*********** BYTES Avail ************ %d\n", bytesAvail);
+  /*  if (bytesAvail == 1) {
+      np->readError = 0;
+      np->bytes_read = 1;
+      break;
+    }*/
     // Read client requests from the pipe. This simplistic code only allows
     // messages up to BUFSIZE characters in length.
-    buffers[i].len = (ULONG)GRPC_SLICE_LENGTH(
-        np->read_slices->slices[i]);  // we know slice size fits in 32bit.
-    buffers[i].buf = (char*)GRPC_SLICE_START_PTR(np->read_slices->slices[i]);
     fSuccess = ReadFile(handle,                     // handle to pipe
                         buffers[i].buf,             // buffer to receive data
                         (DWORD)buffers[i].len,  // size of buffer

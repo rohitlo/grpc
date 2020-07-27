@@ -112,7 +112,7 @@ void grpc_diffproc_transport::unref() {
   if (!gpr_unref(&refs)) {
     return;
   }
-  DIFFPROC_LOG(GPR_INFO, "really_destroy_transport %p", this);
+  printf( "really_destroy_transport %p \n", this);
   this->~grpc_diffproc_transport();
   gpr_free(this);
 }
@@ -184,71 +184,71 @@ grpc_error* fill_in_metadata(grpc_diffproc_stream* s,
 
 static void fail_helper_locked(grpc_diffproc_stream* s, grpc_error*){}
 
-void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
-  // This function gets called when we have contents in the unprocessed reads
-  // Get what we want based on our ops wanted
-  // Schedule our appropriate closures
-  // and then return to ops_needed state if still needed
-  if (s->cancel_self_error != GRPC_ERROR_NONE) {
-    fail_helper_locked(s, GRPC_ERROR_REF(s->cancel_self_error));
-    goto done;
-  } else if (error != GRPC_ERROR_NONE) {
-    fail_helper_locked(s, GRPC_ERROR_REF(error));
-    goto done;
-  }
+//void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
+//  // This function gets called when we have contents in the unprocessed reads
+//  // Get what we want based on our ops wanted
+//  // Schedule our appropriate closures
+//  // and then return to ops_needed state if still needed
+//  if (s->cancel_self_error != GRPC_ERROR_NONE) {
+//    fail_helper_locked(s, GRPC_ERROR_REF(s->cancel_self_error));
+//    goto done;
+//  } else if (error != GRPC_ERROR_NONE) {
+//    fail_helper_locked(s, GRPC_ERROR_REF(error));
+//    goto done;
+//  }
+//
+//  //Send Trailing Metadata && write buffer empty
+//  if (s->send_trailing_md_op && !s->write_buffer_trailing_md_filled) {
+//    grpc_metadata_batch* dest = &s->write_buffer_trailing_md;
+//    fill_in_metadata(s,
+//                     s->send_trailing_md_op->payload->send_trailing_metadata
+//                         .send_trailing_metadata,
+//                     0, dest, nullptr, &s->write_buffer_trailing_md_filled);
+//    s->trailing_md_sent = true;
+//  } 
+//  ////Receive Trailing Metadata && Read buffer empty
+//  else if (s->recv_trailing_md_op && !s->to_read_trailing_md_filled) {
+//    s->trailing_md_recvd = true;
+//    grpc_error* new_err =
+//        fill_in_metadata(s, &s->to_read_trailing_md, 0,
+//                         s->recv_trailing_md_op->payload->recv_trailing_metadata
+//                             .recv_trailing_metadata,
+//                         nullptr, nullptr);
+//    //If client need to send complete status as this is last batch operation.
+//    if (s->t->is_client) {
+//        printf("op_state_machine %p scheduling trailing-md-on-complete %p", s,
+//                 new_err);
+//      grpc_core::ExecCtx::Run(
+//          DEBUG_LOCATION,
+//          s->recv_trailing_md_op->payload->recv_trailing_metadata
+//              .recv_trailing_metadata_ready,
+//          GRPC_ERROR_REF(new_err));
+//      grpc_core::ExecCtx::Run(DEBUG_LOCATION,
+//                              s->recv_trailing_md_op->on_complete,
+//                              GRPC_ERROR_REF(new_err));
+//      s->recv_trailing_md_op = nullptr;
+//      //needs_close = s->trailing_md_sent;
+//    } 
+//    //Server so wait..
+//    else {
+//      printf("op_state_machine %p server needs to delay handling "
+//          "trailing-md-on-complete %p",
+//          s, new_err);
+//    }
+//  }
+//
+//
+//
+//done:
+//  puts("Error Here ******");
+//}
 
-  //Send Trailing Metadata && write buffer empty
-  if (s->send_trailing_md_op && !s->write_buffer_trailing_md_filled) {
-    grpc_metadata_batch* dest = &s->write_buffer_trailing_md;
-    fill_in_metadata(s,
-                     s->send_trailing_md_op->payload->send_trailing_metadata
-                         .send_trailing_metadata,
-                     0, dest, nullptr, &s->write_buffer_trailing_md_filled);
-    s->trailing_md_sent = true;
-  } 
-  ////Receive Trailing Metadata && Read buffer empty
-  else if (s->recv_trailing_md_op && !s->to_read_trailing_md_filled) {
-    s->trailing_md_recvd = true;
-    grpc_error* new_err =
-        fill_in_metadata(s, &s->to_read_trailing_md, 0,
-                         s->recv_trailing_md_op->payload->recv_trailing_metadata
-                             .recv_trailing_metadata,
-                         nullptr, nullptr);
-    //If client need to send complete status as this is last batch operation.
-    if (s->t->is_client) {
-        printf("op_state_machine %p scheduling trailing-md-on-complete %p", s,
-                 new_err);
-      grpc_core::ExecCtx::Run(
-          DEBUG_LOCATION,
-          s->recv_trailing_md_op->payload->recv_trailing_metadata
-              .recv_trailing_metadata_ready,
-          GRPC_ERROR_REF(new_err));
-      grpc_core::ExecCtx::Run(DEBUG_LOCATION,
-                              s->recv_trailing_md_op->on_complete,
-                              GRPC_ERROR_REF(new_err));
-      s->recv_trailing_md_op = nullptr;
-      //needs_close = s->trailing_md_sent;
-    } 
-    //Server so wait..
-    else {
-      printf("op_state_machine %p server needs to delay handling "
-          "trailing-md-on-complete %p",
-          s, new_err);
-    }
-  }
-
-
-
-done:
-  puts("Error Here ******");
-}
-
-void maybe_process_ops_locked(grpc_diffproc_stream* s, grpc_error* error) {
-  if (s && (error != GRPC_ERROR_NONE || s->ops_needed)) {
-    s->ops_needed = false;
-    op_state_machine_locked(s, error);
-  }
-}
+//void maybe_process_ops_locked(grpc_diffproc_stream* s, grpc_error* error) {
+//  if (s && (error != GRPC_ERROR_NONE || s->ops_needed)) {
+//    s->ops_needed = false;
+//    op_state_machine_locked(s, error);
+//  }
+//}
 
 
 void grpc_diffproc_stream_map_add(grpc_diffproc_transport* t, uint32_t id, void* value) {
@@ -449,7 +449,7 @@ bool cancel_stream_locked( grpc_diffproc_stream* stream, grpc_error* error) {
     ret = true;
     stream->cancel_self_error = GRPC_ERROR_REF(error);
     // Send trailing md to other side.
-    maybe_process_ops_locked(stream, stream->cancel_self_error);
+    //maybe_process_ops_locked(stream, stream->cancel_self_error);
     stream->trailing_md_sent = true;
     grpc_metadata_batch cancel_md;
     grpc_metadata_batch_init(&cancel_md);
@@ -497,6 +497,11 @@ void message_transfer_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s
   sender->send_message_op = nullptr;
 }
 
+static void null_then_sched_closure(grpc_closure** closure) {
+  grpc_closure* c = *closure;
+  *closure = nullptr;
+  grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
+}
 
 //Read Buffer
 void message_read_locked(grpc_diffproc_transport* t,
@@ -504,19 +509,13 @@ void message_read_locked(grpc_diffproc_transport* t,
 
   receiver->recv_stream.Init(&t->read_buffer, 0);
   receiver->recv_message_op->payload->recv_message.recv_message->reset(
-      receiver->recv_stream.get());
+  receiver->recv_stream.get());
 
   //printf("message_transfer_locked %p scheduling message-ready", receiver);
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION,receiver->recv_message_op->payload->recv_message.recv_message_ready,GRPC_ERROR_NONE);
 
   receiver->recv_message_op = nullptr;
 }
 
-static void null_then_sched_closure(grpc_closure** closure) {
-  grpc_closure* c = *closure;
-  *closure = nullptr;
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
-}
 
 void grpc_chttp2_complete_closure_step(grpc_diffproc_transport* t,
                                        grpc_diffproc_stream* /*s*/,
@@ -642,6 +641,7 @@ static void perform_stream_op_locked(void* stream_op,
                                      grpc_error* /*error_ignored*/) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   bool needs_close = false;
+  bool isSched = false;
   grpc_transport_stream_op_batch* op = static_cast<grpc_transport_stream_op_batch*>(stream_op);
   grpc_diffproc_stream* s = static_cast<grpc_diffproc_stream*>(op->handler_private.extra_arg);
   printf("Stream in perform_stream_op_locked :%p && Stream op batch : %p & ""Trasnport : %p \n",s, op, s->t);
@@ -674,44 +674,30 @@ static void perform_stream_op_locked(void* stream_op,
     printf("*************  SEND INIT MD ******************* :      %s \n",s->t->is_client?"CLT":"SRV");
     grpc_closure* send_initial_metadata_finished = op->on_complete;
     GPR_ASSERT(s->send_initial_metadata_finished == nullptr);
-    // grpc_slice_buffer_init(&s->compressed_data_buffer);
-    // s->send_initial_metadata_finished = add_closure_barrier(on_complete);
-    s->send_initial_metadata =
-        op->payload->send_initial_metadata.send_initial_metadata;
-    const size_t metadata_size =
-        grpc_metadata_batch_size(s->send_initial_metadata);
+    s->send_initial_metadata = op->payload->send_initial_metadata.send_initial_metadata;
+    const size_t metadata_size = grpc_metadata_batch_size(s->send_initial_metadata);
     if (t->is_client) {
       s->deadline = GPR_MIN(s->deadline, s->send_initial_metadata->deadline);
     }
-    // if (contains_non_ok_status(s->send_initial_metadata)) {
-    //  s->seen_error = true;
-    //}
     if (!s->write_closed) {
-      if (t->is_client) {
+      if (t->is_client) { // Client--  Add path and authority
         bool markFilled = false;
         if (t->closed_with_error == GRPC_ERROR_NONE) {
           mdToBuffer(s, s->send_initial_metadata, &markFilled, &s->t->outbuf);
           grpc_diffproc_initiate_write(t);
         } else {
-          cancel_stream_locked(
-               s,
-              grpc_error_set_int(
-                  GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-                      "Transport closed", &t->closed_with_error, 1),
-                  GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_UNAVAILABLE));
+          cancel_stream_locked(s,grpc_error_set_int(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING("Transport closed", &t->closed_with_error, 1)
+            ,GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_UNAVAILABLE));
         }
-      } else {
+      } else { // Nothing just send null
         if (!(op->send_message)) {
           grpc_diffproc_initiate_write(t);
         }
       }
     } else {
       s->send_initial_metadata = nullptr;
-      grpc_core::ExecCtx::Run(
-          DEBUG_LOCATION, s->send_initial_metadata_finished,
-          GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-              "Attempt to send initial metadata after stream was closed",
-              &s->write_closed_error, 1));
+      grpc_core::ExecCtx::Run(DEBUG_LOCATION, s->send_initial_metadata_finished, 
+        GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING("Attempt to send initial metadata after stream was closed", &s->write_closed_error, 1));
     }
     if (op->payload->send_initial_metadata.peer_string != nullptr) {
       gpr_atm_rel_store(op->payload->send_initial_metadata.peer_string,
@@ -739,6 +725,12 @@ static void perform_stream_op_locked(void* stream_op,
     } else {
       s->send_message_op = op;
       message_transfer_locked(t, s);
+      //Send message complete
+      //if (!isSched) {
+      //  isSched = true;
+      //  grpc_core::ExecCtx::Run(DEBUG_LOCATION, s->send_message_finished,
+      //                          GRPC_ERROR_NONE);
+      //}
       //grpc_diffproc_initiate_write(t);
     }
   }
@@ -777,6 +769,15 @@ static void perform_stream_op_locked(void* stream_op,
         }
         s->trailing_md_sent = true;
         needs_close = s->trailing_md_sent;
+        // Send trailing MD complete
+        //puts("************* Send trailing MD complete ***************");
+        
+        /*if (!isSched) {
+          isSched = true;
+          grpc_core::ExecCtx::Run(DEBUG_LOCATION,
+                                  s->send_trailing_metadata_finished,
+                                  GRPC_ERROR_NONE);
+        }*/
       //  grpc_core::ExecCtx::Run(DEBUG_LOCATION,
       //                          s->send_trailing_metadata_finished,
       //                          GRPC_ERROR_NONE);
@@ -835,7 +836,11 @@ static void perform_stream_op_locked(void* stream_op,
     s->recv_message_op = op;
     read_action_locked(t);
     message_read_locked(t, s);
-
+    if (s->recv_message_ready != nullptr) {
+      grpc_closure* c = s->recv_message_ready;
+      s->recv_message_ready = nullptr;
+      grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
+    }
   }
 
   //// RECV TRAILING MD
@@ -871,22 +876,31 @@ static void perform_stream_op_locked(void* stream_op,
       }
       s->to_read_trailing_md_filled = false;
     }
-    if (s->t->is_client || s->trailing_md_sent) {
-      grpc_core::ExecCtx::Run(
-          DEBUG_LOCATION,
-          s->recv_trailing_md_op->payload->recv_trailing_metadata
-              .recv_trailing_metadata_ready,
-          GRPC_ERROR_REF(GRPC_ERROR_NONE));
-      /*grpc_core::ExecCtx::Run(DEBUG_LOCATION,
+    if (s->t->is_client) {
+      if (s->recv_trailing_metadata_finished != nullptr) {
+        grpc_closure* c = s->recv_trailing_metadata_finished;
+        s->recv_trailing_metadata_finished = nullptr;
+        grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
+      }
+      grpc_core::ExecCtx::Run(DEBUG_LOCATION,
                               s->recv_trailing_md_op->on_complete,
-                              GRPC_ERROR_REF(GRPC_ERROR_NONE));*/
+                              GRPC_ERROR_REF(GRPC_ERROR_NONE));
       s->recv_trailing_md_op = nullptr;
+    } else {
+      if (s->recv_trailing_metadata_finished != nullptr) {
+        grpc_closure* c = s->recv_trailing_metadata_finished;
+        s->recv_trailing_metadata_finished = nullptr;
+        grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
+      }
     }
   }
 
-  if (on_complete != nullptr) {
-    grpc_core::ExecCtx::Run(DEBUG_LOCATION, on_complete, GRPC_ERROR_NONE);
-  }
+  //if (on_complete != nullptr) {
+  //  puts("*********** On COMPLETE CLOSURE ************");
+  //  grpc_closure* closure = on_complete;
+  //  on_complete = nullptr;
+  //  grpc_core::ExecCtx::Run(DEBUG_LOCATION, closure, GRPC_ERROR_NONE);
+  //}
 
   grpc_diffproc_stream_unref(s, "perform_stream_op");
 

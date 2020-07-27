@@ -104,6 +104,7 @@ class RouteGuideImpl final : public RouteGuide::Service {
                       ServerWriter<Feature>* writer) override {
     auto lo = rectangle->lo();
     auto hi = rectangle->hi();
+    int cnt = 0;
     long left = (std::min)(lo.longitude(), hi.longitude());
     long right = (std::max)(lo.longitude(), hi.longitude());
     long top = (std::max)(lo.latitude(), hi.latitude());
@@ -113,9 +114,12 @@ class RouteGuideImpl final : public RouteGuide::Service {
           f.location().longitude() <= right &&
           f.location().latitude() >= bottom &&
           f.location().latitude() <= top) {
+        cnt++;
         writer->Write(f);
       }
     }
+    printf("*********************** Total Written : %d ****************** \n",
+            cnt);
     return Status::OK;
   }
 
@@ -173,11 +177,11 @@ class RouteGuideImpl final : public RouteGuide::Service {
 };
 
 void RunServer(const std::string& db_path) {
-  std::string server_address("0.0.0.0:50051");
+  std::string server_address("\\\\.\\pipe\\namedpipe");
   RouteGuideImpl service(db_path);
 
   ServerBuilder builder;
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  builder.AddListeningPort(server_address, grpc::NamedPipeServerCredentials());
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Server listening on " << server_address << std::endl;

@@ -49,7 +49,7 @@ class GreeterServiceImpl final : public Greeter::Service {
 };
 
 void RunServer() {
-  std::string server_address("\\\\.\\pipe\\namedpipe");
+  std::string server_address("0.0.0.0:50051");
   GreeterServiceImpl service;
 
   grpc::EnableDefaultHealthCheckService(true);
