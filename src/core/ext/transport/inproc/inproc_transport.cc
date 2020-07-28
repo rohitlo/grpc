@@ -378,6 +378,7 @@ void close_other_side_locked(inproc_stream* s, const char* reason) {
 void complete_if_batch_end_locked(inproc_stream* s, grpc_error* error,
                                   grpc_transport_stream_op_batch* op,
                                   const char* msg) {
+  puts("************** ON_COMPLETE ******************");
   int is_sm = static_cast<int>(op == s->send_message_op);
   int is_stm = static_cast<int>(op == s->send_trailing_md_op);
   // TODO(vjpai): We should not consider the recv ops here, since they

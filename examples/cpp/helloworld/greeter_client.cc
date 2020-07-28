@@ -104,7 +104,10 @@ int main(int argc, char** argv) {
   std::string reply = greeter.SayHello(user);
   std::cout << "Greeter received: " << reply << std::endl;
 
+  std::cout << "New GReeeter*********************" << std::endl;
 
+  std::string re = greeter.SayHello(user);
+  std::cout << "Greeter received: " << re << std::endl;
  /* HANDLE cFile;
   BOOL fSuccess;
   char writeBuffer[] = "Hey Server, How are you? \n";

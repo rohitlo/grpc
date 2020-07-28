@@ -1667,6 +1667,7 @@ static void perform_stream_op_locked(void* stream_op,
   }
 
   if (on_complete != nullptr) {
+    puts("************* On_Complete ***************");
     grpc_chttp2_complete_closure_step(t, s, &on_complete, GRPC_ERROR_NONE,
                                       "op->on_complete");
   }
