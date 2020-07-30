@@ -33,8 +33,9 @@ typedef struct grpc_np_callback_info {
 
   int fPending;
 
+  int numOfOps = 0;
   DWORD bytes_transferred;
-
+  DWORD bytes_read;
   int np_error;
 
 }grpc_np_callback_info;

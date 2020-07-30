@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-#pragma once
+
 #ifndef GRPC_CORE_EXT_TRANSPORT_diffproc_diffproc_TRANSPORT_H
 #define GRPC_CORE_EXT_TRANSPORT_diffproc_diffproc_TRANSPORT_H
 
@@ -23,6 +23,24 @@
 #include <src/core/lib/iomgr/endpoint.h>
 #include "src/core/lib/transport/transport_impl.h"
 #include  <stdio.h>
+
+typedef enum {
+  GRPC_DIFFPROC_WRITE_STATE_IDLE,
+  GRPC_DIFFPROC_WRITE_STATE_WRITING,
+  GRPC_DIFFPROC_WRITE_STATE_WRITING_WITH_MORE,
+} grpc_diffproc_write_state;
+
+
+typedef enum {
+  GRPC_DIFFPROC_INITIATE_WRITE_INITIAL_WRITE,
+  GRPC_DIFFPROC_INITIATE_WRITE_START_NEW_STREAM,
+  GRPC_DIFFPROC_INITIATE_WRITE_SEND_MESSAGE,
+  GRPC_DIFFPROC_INITIATE_WRITE_SEND_INITIAL_METADATA,
+  GRPC_DIFFPROC_INITIATE_WRITE_SEND_TRAILING_METADATA,
+} grpc_diffproc_initiate_write_reason;
+
+const char* grpc_diffproc_initiate_write_reason_string(
+    grpc_diffproc_initiate_write_reason reason);
 
 
 
@@ -72,13 +90,19 @@ struct grpc_diffproc_transport {
   /** data to write now */
   grpc_slice_buffer outbuf;
   bool processed = 0;
+  uint32_t incoming_stream_id = 0;
+  uint32_t next_stream_id = 0;
   //Map to maintain streams
   std::map<int, grpc_diffproc_stream*> stream_map;
-
-
+  bool first_read = true;
+  grpc_closure_list run_after_write = GRPC_CLOSURE_LIST_INIT;
   //Client and Server write states
   bool client_write_completed = false;
   bool server_write_completed = false;
+  grpc_error* close_transport_on_writes_finished = GRPC_ERROR_NONE;
+
+
+  grpc_diffproc_write_state write_state = GRPC_DIFFPROC_WRITE_STATE_IDLE;
 
    };
 
@@ -103,7 +127,7 @@ struct grpc_diffproc_stream {
      //Streama ID to store streams
      uint32_t id = 0;
 
-
+     bool ops_toBeSent = true;
      grpc_metadata_batch to_read_initial_md;
      uint32_t to_read_initial_md_flags = 0;
      bool to_read_initial_md_filled = false;

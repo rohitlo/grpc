@@ -93,14 +93,9 @@ static void on_read(void* npp, grpc_error* error) {
         grpc_slice_buffer_reset_and_unref_internal(np->read_slices);
       } else {
         if (np->bytes_read != 0 && !np->shutting_down) {
-          GPR_ASSERT((size_t)np->bytes_read <=
-                     np->read_slices->length);
-          if (static_cast<size_t>(np->bytes_read) !=
-              np->read_slices->length) {
-            grpc_slice_buffer_trim_end(
-                np->read_slices,
-                np->read_slices->length - static_cast<size_t>(np->bytes_read),
-                &np->last_read_buffer);
+          GPR_ASSERT((size_t)np->bytes_read <=np->read_slices->length);
+          if (static_cast<size_t>(np->bytes_read) != np->read_slices->length) {
+            grpc_slice_buffer_trim_end(np->read_slices,np->read_slices->length - static_cast<size_t>(np->bytes_read),&np->last_read_buffer);
           }
           GPR_ASSERT((size_t)np->bytes_read == np->read_slices->length);
 
@@ -113,22 +108,27 @@ static void on_read(void* npp, grpc_error* error) {
                       dump);
               gpr_free(dump);
             }
+   
           //}
-        } else {
+        } 
+        //else if (np->bytes_read == 0 && !np->shutting_down) {
+        //  np->read_slices->length = 0;
+        //}
+        else {
           //if (grpc_tcp_trace.enabled()) {
-            gpr_log(GPR_INFO, "TCP:%p unref read_slice", np);
+            gpr_log(GPR_INFO, "NP:%p unref read_slice", np);
           //}
           grpc_slice_buffer_reset_and_unref_internal(np->read_slices);
           error =
               np->shutting_down
                   ? GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-                        "TCP stream shutting down", &np->shutdown_error, 1)
-                  : GRPC_ERROR_CREATE_FROM_STATIC_STRING("End of TCP stream");
+                        "NP stream shutting down", &np->shutdown_error, 1)
+                  : GRPC_ERROR_CREATE_FROM_STATIC_STRING("End of NP stream");
         }
       }
     }
     
-    //FlushFileBuffers(np->threadHandle->pipeHandle);
+    //dFlushFileBuffers(np->threadHandle->pipeHandle);
     //printf( " ***************  DIsconnectiong hanlde read complete : %p *******************", np->threadHandle->pipeHandle);
     //DisconnectNamedPipe(np->threadHandle->pipeHandle);
     //CloseHandle(np->handle);
@@ -158,8 +158,10 @@ static void on_write(void* npp, grpc_error* error) {
       GPR_ASSERT(np->bytes_written == np->write_slices->length);
     }
   }
-
+  puts("B4 flush file ");
+  //FlushFileBuffers(np->threadHandle->pipeHandle);
   namedpipe_unref(np);
+  puts("A4 Unref & flush file ");
   //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
   cb->cb(cb->cb_arg, error);
 }
@@ -173,6 +175,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
+  int ops = np->threadHandle->read_info.numOfOps;
   printf(" ****************************  WIN READ HANDLE : %p ", handle);
   int status;
   DWORD bytes_read = 0;
@@ -218,11 +221,6 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
       puts("Failed to call PeekNamedPipe");
     }
     printf("*********** BYTES Avail ************ %d\n", bytesAvail);
-  /*  if (bytesAvail == 1) {
-      np->readError = 0;
-      np->bytes_read = 1;
-      break;
-    }*/
     // Read client requests from the pipe. This simplistic code only allows
     // messages up to BUFSIZE characters in length.
     fSuccess = ReadFile(handle,                     // handle to pipe
@@ -230,12 +228,14 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                         (DWORD)buffers[i].len,  // size of buffer
                         &bytes_read,                // number of bytes read
                         NULL);                      // not overlapped I/O
+    np->threadHandle->read_info.numOfOps++;
     int lastError = GetLastError();
     printf("LastError in Read %d & fSuccess: %d \n", lastError, fSuccess);
     if (fSuccess == 0) {
       np->readError = lastError;
       break;
     } else {
+      //buffers[i].buf[bytes_read] = '\0';
       np->bytes_read += bytes_read;
       continue;
     }
@@ -300,6 +300,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices, grpc_closure
   size_t len;
   DWORD cbWritten;
   size_t i;
+  printf(" ************* To write in pipe :%d ************ \n", slices->count);
   for (i = 0; i < slices->count; i++) {
     char* data = grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
     printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);

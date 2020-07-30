@@ -81,10 +81,10 @@ class RouteGuideClient {
   void GetFeature() {
     Point point;
     Feature feature;
-    point = MakePoint(409146138, -746188906);
+   point = MakePoint(409146138, -746188906);
     GetOneFeature(point, &feature);
-    point = MakePoint(0, 0);
-    GetOneFeature(point, &feature);
+   // point = MakePoint(0, 0);
+   // GetOneFeature(point, &feature);
   }
 
   void ListFeatures() {
@@ -230,13 +230,13 @@ int main(int argc, char** argv) {
                           grpc::InsecureChannelCredentials()),
       db);
 
-  std::cout << "-------------- GetFeature --------------" << std::endl;
-  guide.GetFeature();
-  //std::cout << "-------------- ListFeatures --------------" << std::endl;
-  //guide.ListFeatures();
-  //std::cout << "-------------- RecordRoute --------------" << std::endl;
+ // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
+ // guide.GetFeature();
+  std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
+  guide.ListFeatures();
+  //std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
   //guide.RecordRoute();
-  //std::cout << "-------------- RouteChat --------------" << std::endl;
+  //std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
   //guide.RouteChat();
 
   return 0;
