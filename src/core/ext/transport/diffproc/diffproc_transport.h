@@ -216,7 +216,7 @@ struct grpc_diffproc_stream {
      //bool variables
      bool trailing_metadata_available;
      bool final_metadata_requested;
-
+     bool sent_msg = false;
      grpc_closure* send_message_finished = nullptr;
 
      bool listed = true;
