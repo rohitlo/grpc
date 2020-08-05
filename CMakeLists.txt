@@ -1129,7 +1129,6 @@ add_library(alts_test_util
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/windows_sockets_win.cc
   src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
@@ -1629,7 +1628,6 @@ add_library(grpc
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/windows_sockets_win.cc
   src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
@@ -2139,7 +2137,6 @@ add_library(grpc_cronet
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/windows_sockets_win.cc
   src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
@@ -2574,7 +2571,6 @@ add_library(grpc_test_util
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/windows_sockets_win.cc
   src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
@@ -2924,7 +2920,6 @@ add_library(grpc_test_util_unsecure
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/windows_sockets_win.cc
   src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
@@ -3250,7 +3245,6 @@ add_library(grpc_unsecure
   src/core/lib/iomgr/timer_uv.cc
   src/core/lib/iomgr/udp_server.cc
   src/core/lib/iomgr/unix_sockets_posix.cc
-  src/core/lib/iomgr/windows_sockets_win.cc
   src/core/lib/iomgr/unix_sockets_posix_noop.cc
   src/core/lib/iomgr/wakeup_fd_eventfd.cc
   src/core/lib/iomgr/wakeup_fd_nospecial.cc
