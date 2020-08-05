@@ -503,14 +503,15 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
   // matched to a receive. This happens on the client if the server has
   // already sent status or on the server if the client has requested
   // status
-  // If trailing md and 
-  //If client and already sent trail md or trailing md is already filled (OR)
-  //If this is Server and client already recvd trailmd (or) trailmd filled (or) trailmdop
+  // If send trailing md and 
+  // If not send msg op (OR) (If client & already recvd trail md or trailing md is already filled) (OR)
+  // If this is Server and client already recvd trailmd (or) client recv trailmd filled (or) client recv trailmdop
   if (s->send_trailing_md_op &&
-    (!s->send_message_op ||(s->t->is_client &&
-        (s->trailing_md_recvd || s->to_read_trailing_md_filled)) ||
-       (!s->t->is_client && s->t->ep &&
-        (s->trailing_md_sent)))) {
+        (!s->send_message_op ||
+          (s->t->is_client &&  (s->trailing_md_recvd || s->to_read_trailing_md_filled)) ||
+          (!s->t->is_client && s->t->ep && (s->trailing_md_sent))
+        )
+    ) {
     printf("************** SEND TRAIL MD ********************: %s \n",s->t->is_client ? "CLT" : "SRV");
     grpc_metadata_batch* dest = &s->write_buffer_trailing_md;
     bool* destfilled = &s->write_buffer_trailing_md_filled;
@@ -547,7 +548,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
       }
     }
     //this was other-- changed to s
-    maybe_process_ops_locked(s, GRPC_ERROR_NONE);
+    //maybe_process_ops_locked(s, GRPC_ERROR_NONE);
     complete_if_batch_end_locked(
         s, GRPC_ERROR_NONE, s->send_trailing_md_op,
         "op_state_machine scheduling send-trailing-metadata-on-complete");
