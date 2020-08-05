@@ -232,12 +232,12 @@ int main(int argc, char** argv) {
 
  // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
  // guide.GetFeature();
-  std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
-  guide.ListFeatures();
+  //std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
+  //guide.ListFeatures();
   //std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
   //guide.RecordRoute();
-  //std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
-  //guide.RouteChat();
+  std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
+  guide.RouteChat();
 
   return 0;
 }

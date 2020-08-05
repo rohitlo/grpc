@@ -459,6 +459,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
     } else {
       //If enpoint is open send trailing metadata through endpoint..
       if (s->t->ep) {
+        s->sent_msg = true;
         fill_in_metadata(s,
                          s->send_trailing_md_op->payload->send_trailing_metadata
                              .send_trailing_metadata,
@@ -548,7 +549,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
 
 
   //Recv Message
-  if (s->recv_message_op) {
+  if ((s->recv_message_op && s->t->is_client && s->sent_msg) || (s->recv_message_op && !s->t->is_client)) {
     printf("************** RECV MSG ********: %s \n", s->t->is_client ? "CLT" : "SRV");
     if (s->t->ep) {
       //Read from buffer then copy it to recv message
