@@ -324,7 +324,7 @@ size_t grpc_call_get_initial_size_estimate() {
 
 grpc_error* grpc_call_create(const grpc_call_create_args* args,
                              grpc_call** out_call) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("grpc_call_create", 0);
 
   GRPC_CHANNEL_INTERNAL_REF(args->channel, "call");
@@ -361,7 +361,7 @@ grpc_error* grpc_call_create(const grpc_call_create_args* args,
               GRPC_MDKEY(args->add_initial_metadata[i]), GRPC_MDSTR_PATH)) {
         path = grpc_slice_ref_internal(
             GRPC_MDVALUE(args->add_initial_metadata[i]));
-        printf("grpc_call_Create path first created ************************ : %p and ptr : %p\n", grpc_slice_to_c_string(path), path);
+        //printf("grpc_call_Create path first created ************************ : %p and ptr : %p\n", grpc_slice_to_c_string(path), path);
       }
     }
     call->send_extra_metadata_count =
@@ -480,7 +480,7 @@ grpc_error* grpc_call_create(const grpc_call_create_args* args,
   }
 
   grpc_slice_unref_internal(path);
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   return error;
 }
 
@@ -620,7 +620,7 @@ grpc_call_error grpc_call_cancel(grpc_call* call, void* reserved) {
 // This is called via the call combiner to start sending a batch down
 // the filter stack.
 static void execute_batch_in_call_combiner(void* arg, grpc_error* /*ignored*/) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("execute_batch_in_call_combiner", 0);
   grpc_transport_stream_op_batch* batch =
       static_cast<grpc_transport_stream_op_batch*>(arg);
@@ -635,7 +635,7 @@ static void execute_batch_in_call_combiner(void* arg, grpc_error* /*ignored*/) {
 static void execute_batch(grpc_call* call,
                           grpc_transport_stream_op_batch* batch,
                           grpc_closure* start_batch_closure) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   batch->handler_private.extra_arg = call;
   GRPC_CLOSURE_INIT(start_batch_closure, execute_batch_in_call_combiner, batch,
                     grpc_schedule_on_exec_ctx);
@@ -1534,7 +1534,7 @@ static void receiving_trailing_metadata_ready(void* bctlp, grpc_error* error) {
 }
 
 static void finish_batch(void* bctlp, grpc_error* error) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   batch_control* bctl = static_cast<batch_control*>(bctlp);
   grpc_call* call = bctl->call;
   GRPC_CALL_COMBINER_STOP(&call->call_combiner, "on_complete");
@@ -1556,7 +1556,7 @@ static void free_no_op_completion(void* /*p*/, grpc_cq_completion* completion) {
 static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
                                         size_t nops, void* notify_tag,
                                         int is_notify_tag_closure) {
-  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("call_start_batch", 0);
 
   size_t i;
@@ -1599,7 +1599,7 @@ static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
   /* rewrite batch ops into a transport op */
   for (i = 0; i < nops; i++) {
     op = &ops[i];
-    printf(" OPS LOOP in call.cc ****************** %d \n", i);
+    //printf(" OPS LOOP in call.cc ****************** %d \n", i);
     if (op->reserved != nullptr) {
       error = GRPC_CALL_ERROR;
       goto done_with_error;
@@ -1931,7 +1931,7 @@ static grpc_call_error call_start_batch(grpc_call* call, const grpc_op* ops,
                       grpc_schedule_on_exec_ctx);
     stream_op->on_complete = &bctl->finish_batch;
   }
-  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   gpr_atm_rel_store(&call->any_ops_sent_atm, 1);
   execute_batch(call, stream_op, &bctl->start_batch);
 
@@ -1966,21 +1966,16 @@ done_with_error:
 
 grpc_call_error grpc_call_start_batch(grpc_call* call, const grpc_op* ops,
                                       size_t nops, void* tag, void* reserved) {
-  ////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //////printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_error err;
 
   GRPC_API_TRACE(
       "grpc_call_start_batch(call=%p, ops=%p, nops=%lu, tag=%p, "
       "reserved=%p)",
       5, (call, ops, (unsigned long)nops, tag, reserved));
-  printf(
-      "grpc_call_start_batch(call=%p, ops=%p, nops=%lu, tag=%p, "
-      "reserved=%p) \n",
-      5, (call, ops, (unsigned long)nops, tag, reserved));
   if (reserved != nullptr) {
     err = GRPC_CALL_ERROR;
   } else {
-    //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_core::ApplicationCallbackExecCtx callback_exec_ctx;
     grpc_core::ExecCtx exec_ctx;
     err = call_start_batch(call, ops, nops, tag, 0);
