@@ -570,7 +570,9 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
     grpc_metadata_batch fake_md;
     grpc_metadata_batch_init(&fake_md);
     s->initial_md_recvd = true;
-    s->to_read_initial_md_filled = false;
+    if (s->t->is_client) {
+      s->to_read_initial_md_filled = true;
+    }
     if (!s->t->is_client) { // Server Recv INIT MD
       read_action_locked(s->t);
       fake_md = bufferToMd(&s->t->read_buffer, s->to_read_initial_md_filled, s, 1);
@@ -620,7 +622,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
       read_action_locked(s->t);
       message_read_locked(s->t, s);
       //This was other cahnged to S
-     // maybe_process_ops_locked(s, GRPC_ERROR_NONE);
+      maybe_process_ops_locked(s, GRPC_ERROR_NONE);
     }
   }
 

@@ -231,12 +231,12 @@ int main(int argc, char** argv) {
       db);
 
  // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
- // guide.GetFeature();
+// guide.GetFeature();
   //std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
-  //guide.ListFeatures();
+ // guide.ListFeatures();
   //std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
   //guide.RecordRoute();
-  std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
+  ///std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
   guide.RouteChat();
 
   return 0;
