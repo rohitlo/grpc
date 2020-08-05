@@ -269,7 +269,7 @@ grpc_metadata_batch bufferToMd(grpc_slice_buffer* slice_buffer, bool& filled,
     auth_md->md = grpc_mdelem_from_slices(g_fake_auth_key, g_fake_auth_value);
     GPR_ASSERT(grpc_metadata_batch_link_tail(&md, auth_md) == GRPC_ERROR_NONE);
   }
-
+  filled = true;
   return md;
 }
 
@@ -348,30 +348,46 @@ grpc_error* fill_in_metadata(grpc_diffproc_stream* s,
 }
 
 static void fail_helper_locked(grpc_diffproc_stream* s, grpc_error* error) {
+  printf( "op_state_machine %p fail_helper \n", s);
+  DIFFPROC_LOG(GPR_INFO, "op_state_machine %p fail_helper", s);
+
+  if (!s->trailing_md_sent) {
+    // Send trailing md to the other side indicating cancellation
+    s->trailing_md_sent = true;
+    grpc_metadata_batch fake_md;
+    grpc_metadata_batch_init(&fake_md);
+    grpc_metadata_batch* dest =  &s->write_buffer_trailing_md;
+    bool* destfilled = &s->write_buffer_trailing_md_filled;
+    fill_in_metadata(s, &fake_md, 0, dest, nullptr, destfilled);
+    grpc_metadata_batch_destroy(&fake_md);
+
+    if (s->t->ep) {
+      maybe_process_ops_locked(s, error);
+      if(s->write_buffer_cancel_error == GRPC_ERROR_NONE) {
+      s->write_buffer_cancel_error = GRPC_ERROR_REF(error);
+      }
+    }
+  }
+
+
+
+
   if (s->recv_initial_md_op) {
     grpc_error* err;
     if (!s->t->is_client) {
       // If this is a server, provide initial metadata with a path and authority
       // since it expects that as well as no error yet
-      grpc_metadata_batch fake_md;
-      grpc_metadata_batch_init(&fake_md);
-      grpc_linked_mdelem* path_md =
-          static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*path_md)));
-      path_md->md = grpc_mdelem_from_slices(g_fake_path_key, g_fake_path_value);
-      GPR_ASSERT(grpc_metadata_batch_link_tail(&fake_md, path_md) ==
-                 GRPC_ERROR_NONE);
-      grpc_linked_mdelem* auth_md =
-          static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*auth_md)));
-      auth_md->md = grpc_mdelem_from_slices(g_fake_auth_key, g_fake_auth_value);
-      GPR_ASSERT(grpc_metadata_batch_link_tail(&fake_md, auth_md) ==
-                 GRPC_ERROR_NONE);
-
+      read_action_locked(s->t);
+      s->to_read_initial_md_filled = false;
+      grpc_metadata_batch fake_md =
+          bufferToMd(&s->t->read_buffer, s->to_read_initial_md_filled, s, 1);
       fill_in_metadata(
           s, &fake_md, 0,
           s->recv_initial_md_op->payload->recv_initial_metadata
               .recv_initial_metadata,
           s->recv_initial_md_op->payload->recv_initial_metadata.recv_flags,
           nullptr);
+      s->to_read_trailing_md_filled = false;
       grpc_metadata_batch_destroy(&fake_md);
       err = GRPC_ERROR_NONE;
     } else {
@@ -400,6 +416,54 @@ static void fail_helper_locked(grpc_diffproc_stream* s, grpc_error* error) {
     s->recv_initial_md_op = nullptr;
   }
 
+
+    if (s->recv_message_op) {
+    DIFFPROC_LOG(GPR_INFO, "fail_helper %p scheduling message-ready %p", s,
+               error);
+    grpc_core::ExecCtx::Run(
+        DEBUG_LOCATION,
+        s->recv_message_op->payload->recv_message.recv_message_ready,
+        GRPC_ERROR_REF(error));
+    complete_if_batch_end_locked(
+        s, error, s->recv_message_op,
+        "fail_helper scheduling recv-message-on-complete");
+    s->recv_message_op = nullptr;
+  }
+
+    if (s->send_message_op) {
+    s->send_message_op->payload->send_message.send_message.reset();
+    complete_if_batch_end_locked(
+        s, error, s->send_message_op,
+        "fail_helper scheduling send-message-on-complete");
+    s->send_message_op = nullptr;
+    }
+
+    if (s->send_trailing_md_op) {
+      complete_if_batch_end_locked(
+          s, error, s->send_trailing_md_op,
+          "fail_helper scheduling send-trailng-md-on-complete");
+      s->send_trailing_md_op = nullptr;
+    }
+
+    if (s->recv_trailing_md_op) {
+      DIFFPROC_LOG(GPR_INFO,
+                 "fail_helper %p scheduling trailing-metadata-ready %p", s,
+                 error);
+      grpc_core::ExecCtx::Run(
+          DEBUG_LOCATION,
+          s->recv_trailing_md_op->payload->recv_trailing_metadata
+              .recv_trailing_metadata_ready,
+          GRPC_ERROR_REF(error));
+      DIFFPROC_LOG(GPR_INFO,
+                 "fail_helper %p scheduling trailing-md-on-complete %p", s,
+                 error);
+      complete_if_batch_end_locked(
+          s, error, s->recv_trailing_md_op,
+          "fail_helper scheduling recv-trailing-metadata-on-complete");
+      s->recv_trailing_md_op = nullptr;
+    }
+    close_stream_locked(s->t, s, 1, 1, error);
+    GRPC_ERROR_UNREF(error);
 }
 
 void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
@@ -506,7 +570,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
     grpc_metadata_batch fake_md;
     grpc_metadata_batch_init(&fake_md);
     s->initial_md_recvd = true;
-    s->to_read_initial_md_filled = true;
+    s->to_read_initial_md_filled = false;
     if (!s->t->is_client) { // Server Recv INIT MD
       read_action_locked(s->t);
       fake_md = bufferToMd(&s->t->read_buffer, s->to_read_initial_md_filled, s, 1);
@@ -556,7 +620,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
       read_action_locked(s->t);
       message_read_locked(s->t, s);
       //This was other cahnged to S
-      maybe_process_ops_locked(s, GRPC_ERROR_NONE);
+     // maybe_process_ops_locked(s, GRPC_ERROR_NONE);
     }
   }
 
@@ -692,8 +756,8 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
 
 done:
   if (needs_close) {
+    puts(" *************** Cancel Stream called **************");
     cancel_stream_locked(s, new_err);
-    puts("Error Here ******");
   }
 }
 
@@ -909,6 +973,9 @@ bool cancel_stream_locked(grpc_diffproc_stream* stream, grpc_error* error) {
     grpc_metadata_batch cancel_md;
     grpc_metadata_batch_init(&cancel_md);
 
+    // if we are a server and already received trailing md but
+    // couldn't complete that because we hadn't yet sent out trailing
+    // md, now's the chance
     if (!stream->t->is_client && stream->trailing_md_recvd &&
         stream->recv_trailing_md_op) {
       grpc_core::ExecCtx::Run(
@@ -916,6 +983,10 @@ bool cancel_stream_locked(grpc_diffproc_stream* stream, grpc_error* error) {
           stream->recv_trailing_md_op->payload->recv_trailing_metadata
               .recv_trailing_metadata_ready,
           GRPC_ERROR_REF(stream->cancel_self_error));
+      complete_if_batch_end_locked(
+          stream, stream->cancel_self_error, stream->recv_trailing_md_op,
+          "cancel_stream scheduling trailing-md-on-complete");
+      stream->recv_trailing_md_op = nullptr;
     }
   }
   close_stream_locked(stream->t, stream, 1, 1, error);
