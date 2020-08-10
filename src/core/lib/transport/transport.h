@@ -98,6 +98,8 @@ void grpc_stream_destroy(grpc_stream_refcount* refcount);
 #ifndef NDEBUG
 inline void grpc_stream_unref(grpc_stream_refcount* refcount,
                               const char* reason) {
+  printf("%s %p:%p UNREF %s \n", refcount->object_type, refcount,
+         refcount->destroy.cb_arg, reason);
   if (grpc_trace_stream_refcount.enabled()) {
     gpr_log(GPR_DEBUG, "%s %p:%p UNREF %s", refcount->object_type, refcount,
             refcount->destroy.cb_arg, reason);

@@ -117,6 +117,7 @@ void grpc_diffproc_transport::unref() {
     return;
   }
   DIFFPROC_LOG(GPR_INFO, "really_destroy_transport %p", this);
+  printf("really_destroy_transport %p \n", this);
   this->~grpc_diffproc_transport();
   gpr_free(this);
 }
