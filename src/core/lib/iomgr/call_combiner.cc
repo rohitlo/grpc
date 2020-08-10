@@ -145,7 +145,6 @@ void CallCombiner::Start(grpc_closure* closure, grpc_error* error,
 }
 
 void CallCombiner::Stop(DEBUG_ARGS const char* reason) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   GPR_TIMER_SCOPE("CallCombiner::Stop", 0);
   if (GRPC_TRACE_FLAG_ENABLED(grpc_call_combiner_trace)) {
     gpr_log(GPR_INFO, "==> CallCombiner::Stop() [%p] [" DEBUG_FMT_STR "%s]",
