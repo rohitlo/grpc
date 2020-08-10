@@ -623,7 +623,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
       read_action_locked(s->t);
       message_read_locked(s->t, s);
       //This was other cahnged to S
-      maybe_process_ops_locked(s, GRPC_ERROR_NONE);
+      //maybe_process_ops_locked(s, GRPC_ERROR_NONE);
     }
   }
 
@@ -929,17 +929,6 @@ void write_action_end(void* tp, grpc_error* error) {
   t->unref();
 }
 
-// void read_action_end(void* tp, grpc_error* error) {
-//  grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
-//  grpc_error* err;
-
-//  err = GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(
-//      "Read action closed", &error, 1);
-//  close_transport_locked(t, GRPC_ERROR_REF(error));
-//  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-//  GRPC_ERROR_UNREF(error);
-//}
-
 static void log_metadata(const grpc_metadata_batch* md_batch, bool is_client,
                          bool is_initial) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
@@ -1032,8 +1021,6 @@ void message_transfer_locked(grpc_diffproc_transport* t,
 // Read Buffer
 void message_read_locked(grpc_diffproc_transport* t,
                          grpc_diffproc_stream* receiver) {
-  //if (&t->read_buffer.count == 0) t->read_buffer.count = 1;
-
   receiver->recv_stream.Init(&t->read_buffer, 0);
   receiver->recv_message_op->payload->recv_message.recv_message->reset(
       receiver->recv_stream.get());
@@ -1049,127 +1036,148 @@ void message_read_locked(grpc_diffproc_transport* t,
   receiver->recv_message_op = nullptr;
 }
 
-static void null_then_sched_closure(grpc_closure** closure) {
-  grpc_closure* c = *closure;
-  *closure = nullptr;
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
-}
+//static void null_then_sched_closure(grpc_closure** closure) {
+//  grpc_closure* c = *closure;
+//  *closure = nullptr;
+//  grpc_core::ExecCtx::Run(DEBUG_LOCATION, c, GRPC_ERROR_NONE);
+//}
 
-void grpc_chttp2_complete_closure_step(grpc_diffproc_transport* t,
-                                       grpc_diffproc_stream* /*s*/,
-                                       grpc_closure** pclosure,
-                                       grpc_error* error, const char* desc) {
-  grpc_closure* closure = *pclosure;
-  *pclosure = nullptr;
-  if (closure == nullptr) {
-    GRPC_ERROR_UNREF(error);
-    return;
-  }
-  if (error != GRPC_ERROR_NONE) {
-    if (closure->error_data.error == GRPC_ERROR_NONE) {
-      closure->error_data.error = GRPC_ERROR_CREATE_FROM_STATIC_STRING(
-          "Error in DIFFPROC transport completing operation");
-      closure->error_data.error = grpc_error_set_str(
-          closure->error_data.error, GRPC_ERROR_STR_TARGET_ADDRESS,
-          grpc_slice_from_copied_string(t->peer_string));
-    }
-    closure->error_data.error =
-        grpc_error_add_child(closure->error_data.error, error);
-  }
-  // if (t->write_state == GRPC_CHTTP2_WRITE_STATE_IDLE) {
-  // Using GRPC_CLOSURE_SCHED instead of GRPC_CLOSURE_RUN to avoid running
-  // closures earlier than when it is safe to do so.
-  grpc_core::ExecCtx::Run(DEBUG_LOCATION, closure, closure->error_data.error);
-  //}
-}
+//void grpc_chttp2_complete_closure_step(grpc_diffproc_transport* t,
+//                                       grpc_diffproc_stream* /*s*/,
+//                                       grpc_closure** pclosure,
+//                                       grpc_error* error, const char* desc) {
+//  grpc_closure* closure = *pclosure;
+//  *pclosure = nullptr;
+//  if (closure == nullptr) {
+//    GRPC_ERROR_UNREF(error);
+//    return;
+//  }
+//  if (error != GRPC_ERROR_NONE) {
+//    if (closure->error_data.error == GRPC_ERROR_NONE) {
+//      closure->error_data.error = GRPC_ERROR_CREATE_FROM_STATIC_STRING(
+//          "Error in DIFFPROC transport completing operation");
+//      closure->error_data.error = grpc_error_set_str(
+//          closure->error_data.error, GRPC_ERROR_STR_TARGET_ADDRESS,
+//          grpc_slice_from_copied_string(t->peer_string));
+//    }
+//    closure->error_data.error =
+//        grpc_error_add_child(closure->error_data.error, error);
+//  }
+//  // if (t->write_state == GRPC_CHTTP2_WRITE_STATE_IDLE) {
+//  // Using GRPC_CLOSURE_SCHED instead of GRPC_CLOSURE_RUN to avoid running
+//  // closures earlier than when it is safe to do so.
+//  grpc_core::ExecCtx::Run(DEBUG_LOCATION, closure, closure->error_data.error);
+//  //}
+//}
 
-void grpc_diffproc_fail_pending_writes(grpc_diffproc_transport* t,
-                                       grpc_diffproc_stream* s,
-                                       grpc_error* error) {
-  s->send_initial_metadata = nullptr;
-  grpc_chttp2_complete_closure_step(t, s, &s->send_initial_metadata_finished,
-                                    GRPC_ERROR_REF(error),
-                                    "send_initial_metadata_finished");
+//void grpc_diffproc_fail_pending_writes(grpc_diffproc_transport* t,
+//                                       grpc_diffproc_stream* s,
+//                                       grpc_error* error) {
+//  s->send_initial_metadata = nullptr;
+//  grpc_chttp2_complete_closure_step(t, s, &s->send_initial_metadata_finished,
+//                                    GRPC_ERROR_REF(error),
+//                                    "send_initial_metadata_finished");
+//
+//  s->send_trailing_metadata = nullptr;
+//  grpc_chttp2_complete_closure_step(t, s, &s->send_trailing_metadata_finished,
+//                                    GRPC_ERROR_REF(error),
+//                                    "send_trailing_metadata_finished");
+//}
 
-  s->send_trailing_metadata = nullptr;
-  grpc_chttp2_complete_closure_step(t, s, &s->send_trailing_metadata_finished,
-                                    GRPC_ERROR_REF(error),
-                                    "send_trailing_metadata_finished");
-}
+//void grpc_diffproc_maybe_complete_recv_message(grpc_diffproc_transport* /*t*/,
+//                                               grpc_diffproc_stream* s) {
+//  grpc_error* err = GRPC_ERROR_NONE;
+//  if (s->recv_message_ready != nullptr) {
+//    if (err == GRPC_ERROR_NONE) {
+//      null_then_sched_closure(&s->recv_message_ready);
+//    }
+//    GRPC_ERROR_UNREF(err);
+//  }
+//}
 
-void grpc_diffproc_maybe_complete_recv_message(grpc_diffproc_transport* /*t*/,
-                                               grpc_diffproc_stream* s) {
-  grpc_error* err = GRPC_ERROR_NONE;
-  if (s->recv_message_ready != nullptr) {
-    if (err == GRPC_ERROR_NONE) {
-      null_then_sched_closure(&s->recv_message_ready);
-    }
-    GRPC_ERROR_UNREF(err);
-  }
-}
-
-void grpc_diffproc_maybe_complete_recv_trailing_metadata(
-    grpc_diffproc_transport* t, grpc_diffproc_stream* s) {
-  grpc_diffproc_maybe_complete_recv_message(t, s);
-  if (s->recv_trailing_metadata_finished != nullptr) {
-    if (s->recv_trailing_metadata_finished != nullptr) {
-      null_then_sched_closure(&s->recv_trailing_metadata_finished);
-    }
-  }
-}
+//void grpc_diffproc_maybe_complete_recv_trailing_metadata(
+//    grpc_diffproc_transport* t, grpc_diffproc_stream* s) {
+//  grpc_diffproc_maybe_complete_recv_message(t, s);
+//  if (s->recv_trailing_metadata_finished != nullptr) {
+//    if (s->recv_trailing_metadata_finished != nullptr) {
+//      null_then_sched_closure(&s->recv_trailing_metadata_finished);
+//    }
+//  }
+//}
 
 // Close Stream
 void close_stream_locked(grpc_diffproc_transport* t, grpc_diffproc_stream* s,
                          int close_reads, int close_writes, grpc_error* error) {
-  if (s->read_closed && s->write_closed) {
-    /* already closed */
-    // grpc_chttp2_maybe_complete_recv_trailing_metadata(t, s);
-    GRPC_ERROR_UNREF(error);
-    return;
-  }
-  bool closed_read = false;
-  bool became_closed = false;
-  if (close_reads && !s->read_closed) {
-    s->read_closed_error = GRPC_ERROR_REF(error);
-    s->read_closed = true;
-    closed_read = true;
-  }
-  if (close_writes && !s->write_closed) {
-    s->write_closed_error = GRPC_ERROR_REF(error);
-    s->write_closed = true;
-    grpc_diffproc_fail_pending_writes(t, s, GRPC_ERROR_REF(error));
-  }
-  if (s->read_closed && s->write_closed) {
-    if (!s->closed) {
-      //  // Release the metadata that we would have written out
+  //if (s->read_closed && s->write_closed) {
+  //  /* already closed */
+  //  // grpc_chttp2_maybe_complete_recv_trailing_metadata(t, s);
+  //  GRPC_ERROR_UNREF(error);
+  //  return;
+  //}
+  //bool closed_read = false;
+  //bool became_closed = false;
+  //if (close_reads && !s->read_closed) {
+  //  s->read_closed_error = GRPC_ERROR_REF(error);
+  //  s->read_closed = true;
+  //  closed_read = true;
+  //}
+  //if (close_writes && !s->write_closed) {
+  //  s->write_closed_error = GRPC_ERROR_REF(error);
+  //  s->write_closed = true;
+  //  grpc_diffproc_fail_pending_writes(t, s, GRPC_ERROR_REF(error));
+  //}
+  //if (s->read_closed && s->write_closed) {
+  //  if (!s->closed) {
+  //    //  // Release the metadata that we would have written out
 
-      if (s->listed) {
-        grpc_diffproc_stream* p = s->stream_list_prev;
-        grpc_diffproc_stream* n = s->stream_list_next;
-        if (p != nullptr) {
-          p->stream_list_next = n;
-        } else {
-          s->t->stream_list = n;
-        }
-        if (n != nullptr) {
-          n->stream_list_prev = p;
-        }
-        s->listed = false;
-        // grpc_diffproc_stream_unref(s,"close_stream:list");
+  //    if (s->listed) {
+  //      grpc_diffproc_stream* p = s->stream_list_prev;
+  //      grpc_diffproc_stream* n = s->stream_list_next;
+  //      if (p != nullptr) {
+  //        p->stream_list_next = n;
+  //      } else {
+  //        s->t->stream_list = n;
+  //      }
+  //      if (n != nullptr) {
+  //        n->stream_list_prev = p;
+  //      }
+  //      s->listed = false;
+  //      // grpc_diffproc_stream_unref(s,"close_stream:list");
+  //    }
+
+  //    s->closed = true;
+  //  }
+  //  became_closed = true;
+  //}
+  //if (closed_read) {
+  //  if (s->recv_initial_metadata_ready != nullptr) {
+  //    null_then_sched_closure(&s->recv_initial_metadata_ready);
+  //  }
+  //}
+  //if (became_closed) {
+  //  grpc_diffproc_maybe_complete_recv_trailing_metadata(t, s);
+  //  grpc_diffproc_stream_unref(s, "diffproc");
+  //}
+
+  if (!s->closed) {
+    // Release the metadata that we would have written out
+    grpc_metadata_batch_destroy(&s->write_buffer_initial_md);
+    grpc_metadata_batch_destroy(&s->write_buffer_trailing_md);
+    if (s->listed) {
+      grpc_diffproc_stream* p = s->stream_list_prev;
+      grpc_diffproc_stream* n = s->stream_list_next;
+      if (p != nullptr) {
+        p->stream_list_next = n;
+      } else {
+        s->t->stream_list = n;
       }
-
-      s->closed = true;
+      if (n != nullptr) {
+        n->stream_list_prev = p;
+      }
+      s->listed = false;
     }
-    became_closed = true;
-  }
-  if (closed_read) {
-    if (s->recv_initial_metadata_ready != nullptr) {
-      null_then_sched_closure(&s->recv_initial_metadata_ready);
-    }
-  }
-  if (became_closed) {
-    grpc_diffproc_maybe_complete_recv_trailing_metadata(t, s);
-    grpc_diffproc_stream_unref(s, "diffproc");
+    s->closed = true;
+    grpc_diffproc_stream_unref(s, "close_stream");
   }
   GRPC_ERROR_UNREF(error);
 }
