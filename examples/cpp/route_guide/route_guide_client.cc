@@ -232,7 +232,7 @@ int main(int argc, char** argv) {
 
  // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
 // guide.GetFeature();
-  //std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
+  std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
  // guide.ListFeatures();
   //std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
   //guide.RecordRoute();
