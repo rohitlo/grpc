@@ -431,7 +431,7 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   s->count++;
   if (namedPipe == INVALID_HANDLE_VALUE) {
       puts("Error");
-      error = GRPC_WSA_ERROR(GetLastError(), "NamedPipe");
+    error = GRPC_WSA_ERROR(GetLastError(), "NamedPipe");
       goto done;
   }else{
     puts("Succesfully created pipe instance *****************");
