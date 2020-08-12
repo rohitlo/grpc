@@ -220,8 +220,8 @@ static HANDLE CreateInstance(const char* addr) {
   HANDLE hd = CreateNamedPipe(TEXT(addr),                  // pipe name
                        PIPE_ACCESS_DUPLEX |         // read/write access
                            FILE_FLAG_OVERLAPPED,    // overlapped mode
-                       PIPE_TYPE_MESSAGE |          // message-type pipe
-                           PIPE_READMODE_MESSAGE |  // message-read mode
+                       PIPE_TYPE_BYTE |          // message-type pipe
+                           PIPE_READMODE_BYTE |  // message-read mode
                            PIPE_WAIT,               // blocking mode
                        PIPE_UNLIMITED_INSTANCES,                   // number of instances
                        BUFSIZE * sizeof(BYTE),      // output buffer size
@@ -431,7 +431,7 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   s->count++;
   if (namedPipe == INVALID_HANDLE_VALUE) {
       puts("Error");
-      error = GRPC_WSA_ERROR(WSAGetLastError(), "NamedPipe");
+      error = GRPC_WSA_ERROR(GetLastError(), "NamedPipe");
       goto done;
   }else{
     puts("Succesfully created pipe instance *****************");

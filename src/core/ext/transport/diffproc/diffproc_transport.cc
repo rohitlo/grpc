@@ -150,10 +150,9 @@ void mdToBuffer(grpc_diffproc_stream* s, const grpc_metadata_batch* metadata,
 
   } else if (!s->t->is_client && !isInitial) { //Server trailing MD---  Need -1 for server streaming indicating EOP.. Status -0 Mandatory field
     //grpc_slice msg_slice = grpc_slice_from_static_string("-1");
-
     grpc_slice status_slice = GRPC_MDVALUE(metadata->idx.named.grpc_status->md);
-    grpc_slice_buffer_add(outbuf,
-    grpc_core::UnmanagedMemorySlice("0"));  // Message -2
+    grpc_slice_buffer_add(outbuf,grpc_core::UnmanagedMemorySlice("0"));  // Message -2
+    //grpc_slice_buffer_add(outbuf, GRPC_MDSTR_GRPC_STATUS);
     grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice)); // Status -1 
     
 
@@ -1475,11 +1474,12 @@ void grpc_diffproc_transport_start_reading(grpc_transport* transport,
   //  grpc_slice_buffer_move_into(read_buffer, &t->read_buffer);
   //  gpr_free(read_buffer);
   //}
-  // grpc_endpoint_read(
-  //    t->ep, &t->read_buffer,
-  //    GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_locked, t,
-  //                      grpc_schedule_on_exec_ctx),
-  //    GRPC_ERROR_NONE);
+   //grpc_endpoint_read(
+   //   t->ep, read_buffer,
+   //                  GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end,
+   //                                    t,
+   //                     grpc_schedule_on_exec_ctx),
+   //   GRPC_ERROR_NONE);
   grpc_core::ExecCtx::Run(
       DEBUG_LOCATION,
       GRPC_CLOSURE_INIT(&t->read_action_locked, read_action_end, t,

@@ -107,11 +107,11 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
     
     if (clientHandle == INVALID_HANDLE_VALUE) {
         printf("Cannot create and connnect to named pipe at server end..");
-        error = GRPC_WSA_ERROR(WSAGetLastError(), "WSASocket");
+        error = GRPC_WSA_ERROR(GetLastError(), "Client Pipe Connection");
         goto failure;
     } else {
       puts("Connected to server successfully...");
-      pipeMode = PIPE_READMODE_MESSAGE;
+      pipeMode = PIPE_READMODE_BYTE;
       fSuccess = SetNamedPipeHandleState(clientHandle,  // pipe handle
                                          &pipeMode,     // new pipe mode
                                          NULL,   // don't set maximum bytes
@@ -119,7 +119,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
 
       if (!fSuccess) {
         puts("Failed changing modes");
-        error = GRPC_WSA_ERROR(WSAGetLastError(), "PIPEMODE");
+        error = GRPC_WSA_ERROR(GetLastError(), "PIPEMODE");
         goto failure;
       }
 
