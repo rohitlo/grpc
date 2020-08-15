@@ -27,7 +27,7 @@
 #include "src/core/lib/iomgr/closure.h"
 #include "src/core/lib/iomgr/endpoint.h"
 #include "src/core/lib/iomgr/resolve_address.h"
-
+#include <src/core/ext/transport/diffproc/namedpipe_thread.h>
 /* Forward decl of grpc_np_server */
 typedef struct grpc_np_server grpc_np_server;
 
@@ -41,6 +41,7 @@ typedef struct grpc_np_server_acceptor {
   /* Data when the connection is passed to np_server from external. */
   bool external_connection;
   int listener_fd;
+  grpc_thread_handle* np_handle;
   grpc_byte_buffer* pending_data;
   grpc_channel_args* args;
 } ggrpc_np_server_acceptor;

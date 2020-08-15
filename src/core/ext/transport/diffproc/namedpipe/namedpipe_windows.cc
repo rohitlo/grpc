@@ -225,7 +225,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
     // messages up to BUFSIZE characters in length.
     fSuccess = ReadFile(handle,                     // handle to pipe
                         buffers[i].buf,             // buffer to receive data
-                        (DWORD)buffers[i].len,  // size of buffer
+                        (DWORD)buffers[i].len-1,  // size of buffer
                         &bytes_read,                // number of bytes read
                         NULL);                      // not overlapped I/O
     np->threadHandle->read_info.numOfOps++;

@@ -218,9 +218,9 @@ static void decrement_active_ports_and_notify_locked(grpc_pipeInstance* sp) {
 
 static HANDLE CreateInstance(const char* addr) {
   HANDLE hd = CreateNamedPipe(TEXT(addr),                  // pipe name
-                       PIPE_ACCESS_DUPLEX |         // read/write access
-                           FILE_FLAG_OVERLAPPED,    // overlapped mode
-                       PIPE_TYPE_BYTE |          // message-type pipe
+                       PIPE_ACCESS_DUPLEX ,         // read/write access
+                           //FILE_FLAG_OVERLAPPED,    // overlapped mode
+                       PIPE_TYPE_BYTE|          // message-type pipe
                            PIPE_READMODE_BYTE |  // message-read mode
                            PIPE_WAIT,               // blocking mode
                        PIPE_UNLIMITED_INSTANCES,                   // number of instances
@@ -351,7 +351,6 @@ static void on_accept(void* arg, grpc_error* error) {
   grpc_endpoint* ep = NULL;
   gpr_mu_unlock(&pipe->server->mu);
   gpr_mu_lock(&pipe->server->mu);
-
   if (error != GRPC_ERROR_NONE) {
     const char* msg = grpc_error_string(error);
     gpr_log(GPR_INFO, "Skipping on_accept due to error: %s", msg);
@@ -372,8 +371,8 @@ static void on_accept(void* arg, grpc_error* error) {
     grpc_np_server_acceptor* acceptor =
         (grpc_np_server_acceptor*)gpr_malloc(sizeof(*acceptor));
     acceptor->from_server = pipe->server;
-
-    pipe->server->on_accept_cb(pipe->server->on_accept_cb_arg, ep, NULL, acceptor);
+    acceptor->np_handle = pipe->np_handle;
+    pipe->server->on_accept_cb(pipe->server->on_accept_cb_arg, ep, NULL, acceptor); // Transport ops.
     pipe->handle = NULL;
   }
 
@@ -407,7 +406,7 @@ static grpc_error* add_pipe_to_server(grpc_np_server* s, HANDLE hd,
   s->tail = sp;
   sp->server = s;
   sp->addr = target_addr;
-  sp->np_handle = grpc_createHandle(hd, "listener");
+  sp->np_handle = grpc_createHandle(hd, "listener"); //Listener thread
   sp->handle = hd;
   sp->shutting_down = 0;
   sp->outstanding_calls = 0;
