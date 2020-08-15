@@ -41,6 +41,7 @@
 #include "src/core/lib/surface/server.h"
 #include <src\core\ext\transport\diffproc\namedpipe\namedpipe_server.h>
 #include <iostream>
+#include <src\core\ext\transport\diffproc\namedpipe_thread.h>
 
 
 //Server-State
@@ -52,9 +53,8 @@ typedef struct {
   bool shutdown;
   grpc_closure grpc_np_server_shutdown_complete;
   grpc_closure* server_destroy_listener_done;
-
-  grpc_core::RefCountedPtr<grpc_core::channelz::ListenSocketNode>
-      channelz_listen_socket;
+  grpc_transport* transport = nullptr;
+  grpc_core::RefCountedPtr<grpc_core::channelz::ListenSocketNode>channelz_listen_socket;
   BOOL pendingOp = 0;
 } server_state;
 
@@ -65,11 +65,20 @@ typedef struct {
   server_state* svr_state;
   grpc_pollset* accepting_pollset;
   grpc_np_server_acceptor* acceptor;
-  // State for enforcing handshake timeout on receiving HTTP/2 settings.
   grpc_diffproc_transport* transport;
   grpc_millis deadline;
   grpc_pollset_set* interested_parties;
 } server_connection_state;
+
+
+
+static void accept_stream(void* arg, grpc_error* error) {
+  grpc_core::ExecCtx execctx;  
+  grpc_transport* tp = static_cast<grpc_transport*>(arg);
+  grpc_slice_buffer read_buffer;
+  grpc_slice_buffer_init(&read_buffer);
+  grpc_diffproc_transport_start_reading(tp, &read_buffer);
+}
 
 //Accept callback sent to pipe server
 static void on_accept(void* arg, grpc_endpoint* np,
@@ -98,16 +107,20 @@ static void on_accept(void* arg, grpc_endpoint* np,
                                       args_to_remove,
                                       GPR_ARRAY_SIZE(args_to_remove));
     grpc_transport* transport =  grpc_create_diffproc_transport(server_args, np, false, nullptr);
+    state->transport = transport;
     grpc_server_setup_transport(state->server, transport, nullptr, server_args,
                                 nullptr, nullptr);
-      grpc_diffproc_transport_start_reading(transport, &read_buffer);
+//    grpc_diffproc_transport_start_reading(transport, &read_buffer);
     //}
+    acceptor->np_handle->grpc_on_accept_stream = accept_stream;
+    acceptor->np_handle->arg = transport;
+    CreateDataProcess(acceptor->np_handle);
     grpc_channel_args_destroy(server_args);
 
     gpr_mu_unlock(&state->mu);
     gpr_free(acceptor);
     grpc_np_server_unref(state->np_server);
-    }   
+  }
 }
 
 

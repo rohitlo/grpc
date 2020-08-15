@@ -22,6 +22,7 @@
 #include <grpc/support/port_platform.h>
 #include  <stdio.h>
 #include <src\core\lib\iomgr\closure.h>
+#include <src\core\lib\iomgr\endpoint.h>
 
 //typedef 
 
@@ -60,9 +61,9 @@ typedef struct grpc_thread_handle {
 
   //on_accept callback function
   void (*grpc_on_accept)(void* arg, grpc_error* error);
-
+  void (*grpc_on_accept_stream) (void* arg, grpc_error*);
   void* arg;
-
+  grpc_endpoint* ep = NULL;
   bool destroy_called;
   // on_accept callback function
   void (*grpc_on_error)(void* arg, grpc_error* error);
@@ -71,8 +72,8 @@ typedef struct grpc_thread_handle {
 
 void grpc_nphandle_shutdown(grpc_thread_handle* thread);
 
-
-/* Creates a thread for namedpipe to run operations after succesfull connection*/
+grpc_error* CreateDataProcess(grpc_thread_handle* thread);
+    /* Creates a thread for namedpipe to run operations after succesfull connection*/
 grpc_error* CreateThreadProcess(grpc_thread_handle* thread);
 
 grpc_thread_handle* grpc_createHandle(HANDLE hd, const char* name);

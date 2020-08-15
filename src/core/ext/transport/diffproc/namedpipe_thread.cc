@@ -74,7 +74,40 @@ void grpc_nphandle_shutdown(grpc_thread_handle* thread) {
 
 
 
-DWORD WINAPI InstanceThread(LPVOID lparam) { 
+//DWORD WINAPI InstanceThread(LPVOID lparam) { 
+//  grpc_thread_handle* thread = (grpc_thread_handle*)lparam;
+//  puts("In instance thread");
+//  int connectSuccess = ConnectNamedPipe(thread->pipeHandle, NULL);
+//  if (connectSuccess == 1) {
+//    puts("Connection Successful; Now Creating a new Thread Instance");
+//    thread->grpc_on_accept(thread->arg, GRPC_ERROR_NONE);
+//    return 1;
+//  } else {
+//    puts("Error connecting to pipe..");
+//    thread->grpc_on_error(thread->arg, GRPC_ERROR_NONE);
+//    CloseHandle(thread->pipeHandle);
+//    return (DWORD) - 1;
+//  }
+//  
+// // grpc_core::ExecCtx::Run(DEBUG_LOCATION, thread->complete_closure,
+//                          //GRPC_ERROR_NONE);
+//  }
+
+DWORD WINAPI DataThread(LPVOID lparam) {
+  grpc_thread_handle* thread = (grpc_thread_handle*)lparam;
+  puts("******** In data thread ************* \n");
+    // thread->grpc_on_accept(thread->arg, GRPC_ERROR_NONE);
+  do{
+    puts("\n************* calling new batch ops **************** ");
+    thread->grpc_on_accept_stream(thread->arg, GRPC_ERROR_NONE);
+    puts(" \n**************** After batch completion in Instance thread *****************");
+  } while (WAIT_OBJECT_0 == WaitForSingleObject(thread->pipeHandle,INFINITE));
+
+  puts("\n *************** DATA THREAD EXITING ***************** ");
+  return 1;
+}
+
+ DWORD WINAPI InstanceThread(LPVOID lparam) {
   grpc_thread_handle* thread = (grpc_thread_handle*)lparam;
   puts("In instance thread");
   int connectSuccess = ConnectNamedPipe(thread->pipeHandle, NULL);
@@ -88,11 +121,33 @@ DWORD WINAPI InstanceThread(LPVOID lparam) {
     CloseHandle(thread->pipeHandle);
     return (DWORD) - 1;
   }
-  
+
  // grpc_core::ExecCtx::Run(DEBUG_LOCATION, thread->complete_closure,
                           //GRPC_ERROR_NONE);
   }
  
+
+grpc_error* CreateDataProcess(grpc_thread_handle* thread) {
+  // grpc_core::ExecCtx exec_ctx;
+  DWORD dwThreadId = 0;
+  grpc_error* error = NULL;
+  HANDLE t;
+
+  t = CreateThread(NULL,            // no security attribute
+                   0,               // default stack size
+                   DataThread,  // thread proc
+                   (LPVOID)thread,  // thread parameter
+                   0,               // not suspended
+                   &dwThreadId);
+  if (t != NULL) {
+    puts("Data Thread Successfully created and running.....");
+    CloseHandle(t);
+  } else {
+    puts("Error, creating Data thread");
+    error = GRPC_WSA_ERROR(GetLastError(), "ThreadCreation");
+  }
+  return error;
+}
 
 grpc_error* CreateThreadProcess(grpc_thread_handle* thread) {
     //grpc_core::ExecCtx exec_ctx;
