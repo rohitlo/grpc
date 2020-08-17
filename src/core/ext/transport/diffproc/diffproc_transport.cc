@@ -150,18 +150,30 @@ void mdToBuffer(grpc_diffproc_stream* s, const grpc_metadata_batch* metadata,
 
   } else if (!s->t->is_client && !isInitial) { //Server trailing MD---  Need -1 for server streaming indicating EOP.. Status -0 Mandatory field
     //grpc_slice msg_slice = grpc_slice_from_static_string("-1");
+    //grpc_slice status_hdr = GRPC_MDKEY(metadata->idx.named.grpc_status->md);
     grpc_slice status_slice = GRPC_MDVALUE(metadata->idx.named.grpc_status->md);
+    //grpc_slice msg_slice = GRPC_MDVALUE(metadata->idx.named.grpc_status->md);
+    //grpc_slice msg_slice = grpc_slice_from_static_string("grpc-message 0");
     grpc_slice_buffer_add(outbuf,grpc_core::UnmanagedMemorySlice("0"));  // Message -2
     //grpc_slice_buffer_add(outbuf, GRPC_MDSTR_GRPC_STATUS);
+    //size_t estimated_len = GRPC_SLICE_LENGTH(status_hdr)+GRPC_SLICE_LENGTH(status_slice) + GRPC_SLICE_LENGTH(msg_slice);
+    //grpc_core::UnmanagedMemorySlice status_msg_slice(estimated_len+1);
+    //char* write_ptr = reinterpret_cast<char*> GRPC_SLICE_START_PTR(status_msg_slice);
+   // memcpy(write_ptr + 0, GRPC_SLICE_START_PTR(msg_slice), GRPC_SLICE_LENGTH(msg_slice));
+    //int offset = GRPC_SLICE_LENGTH(msg_slice) + 1;
+    //memcpy(write_ptr + offset, GRPC_SLICE_START_PTR(status_hdr),GRPC_SLICE_LENGTH(status_hdr));
+    //offset += GRPC_SLICE_LENGTH(status_hdr) + 1;
+    //memcpy(write_ptr+ offset, GRPC_SLICE_START_PTR(status_slice),GRPC_SLICE_LENGTH(status_slice));
+    //grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_msg_slice));
     grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice)); // Status -1 
-    
+    puts("Here");
 
-  } else if (s->t->is_client && !isInitial) { //Client trailing MD
-    grpc_slice status_slice = grpc_slice_from_static_string("0"); // message = -1 -- End of batch perations -1
-    grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice)); // status 0, 12, 14 -2 
-
-
-  } else if (!s->t->is_client && isInitial) { //Server Init MD
+    } 
+      else if (s->t->is_client && !isInitial) { //Client trailing MD
+      grpc_slice status_slice = grpc_slice_from_static_string("0"); // message = -1 -- End of batch perations -1
+      grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice)); // status 0, 12, 14 -2 
+    } 
+     else if (!s->t->is_client && isInitial) { //Server Init MD
     grpc_slice status_slice = grpc_slice_from_static_string("-1");
     grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice));
   }
@@ -707,6 +719,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
                                 s->recv_trailing_md_op->on_complete,
                                 GRPC_ERROR_REF(new_err));
         s->recv_trailing_md_op = nullptr;
+        s->t->processed = 1;
         needs_close = s->trailing_md_sent;
       } else {
        printf("op_state_machine %p server needs to delay handling trailing-md-on-complete %p \n",s, new_err);
@@ -1018,9 +1031,21 @@ void message_transfer_locked(grpc_diffproc_transport* t,
     sender->send_message_op = nullptr;
 }
 
+
+void checkForEndMessage(grpc_slice_buffer buf) {
+  char* bs = static_cast<char*> (gpr_malloc(sizeof(buf.length + 1)));
+  size_t offset = 0;
+  for (size_t i = 0; i < buf.count; ++i) {
+    memcpy(bs + offset, GRPC_SLICE_START_PTR(buf.slices[i]), GRPC_SLICE_LENGTH(buf.slices[i]));
+    offset += GRPC_SLICE_LENGTH(buf.slices[i]);
+  }
+  printf("First char in Message : %c", bs[0]);
+}
+
 // Read Buffer
 void message_read_locked(grpc_diffproc_transport* t,
                          grpc_diffproc_stream* receiver) {
+ // checkForEndMessage(t->read_buffer);
   receiver->recv_stream.Init(&t->read_buffer, 0);
   receiver->recv_message_op->payload->recv_message.recv_message->reset(
       receiver->recv_stream.get());
@@ -1440,14 +1465,14 @@ void read_action_end(void* tp, grpc_error* error) {
     if (err != GRPC_ERROR_NONE) {
       close_transport_locked(t, GRPC_ERROR_REF(error));
     } else {
-      if (t->accept_stream_cb != nullptr && !t->is_client && !t->processed) {
+      if (t->accept_stream_cb != nullptr && !t->is_client && t->processed) {
         grpc_diffproc_stream* accepting = nullptr;
         GPR_ASSERT(t->accepting_stream == nullptr);
         t->accepting_stream = &accepting;
         t->accept_stream_cb(t->accept_stream_data, &t->base,
                             (void*)(&t->accepting_stream));
         t->accepting_stream = nullptr;
-        t->processed = 1;
+        t->processed = 0;
       }
       printf("Read buf count after namedpipe read :%d \n",
              t->read_buffer.count);
