@@ -310,8 +310,8 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
       return;
     }
   }
-
   grpc_socket_notify_on_read(tcp->socket, &tcp->on_read);
+
 }
 
 /* Asynchronous callback from the IOCP, or the background thread. */

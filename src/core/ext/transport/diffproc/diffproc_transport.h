@@ -88,7 +88,7 @@ struct grpc_diffproc_transport {
   grpc_error* closed_with_error = GRPC_ERROR_NONE;
   /** data to write now */
   grpc_slice_buffer outbuf;
-  bool processed = 0;
+  bool processed = 1;
   uint32_t incoming_stream_id = 0;
   uint32_t next_stream_id = 0;
   // Map to maintain streams

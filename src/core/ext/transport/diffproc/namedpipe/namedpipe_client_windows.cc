@@ -98,7 +98,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
     printf("\n Address of pipe is %s\n", addr);
     clientHandle = CreateFile(TEXT(addr),
         GENERIC_READ | GENERIC_WRITE, // Read and Write Access
-        0, //No sharing of file
+                   FILE_SHARE_READ,               // No sharing of file
         NULL, // Security
         OPEN_EXISTING, // Open existing pipe
                     FILE_ATTRIBUTE_NORMAL,              // Default Attrs
@@ -111,7 +111,7 @@ static void on_connect(void* arg, void* cdc, grpc_error* error){
         goto failure;
     } else {
       puts("Connected to server successfully...");
-      pipeMode = PIPE_READMODE_BYTE;
+      pipeMode = PIPE_READMODE_MESSAGE | PIPE_WAIT;
       fSuccess = SetNamedPipeHandleState(clientHandle,  // pipe handle
                                          &pipeMode,     // new pipe mode
                                          NULL,   // don't set maximum bytes

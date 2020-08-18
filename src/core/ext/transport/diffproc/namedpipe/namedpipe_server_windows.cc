@@ -220,8 +220,8 @@ static HANDLE CreateInstance(const char* addr) {
   HANDLE hd = CreateNamedPipe(TEXT(addr),                  // pipe name
                        PIPE_ACCESS_DUPLEX ,         // read/write access
                            //FILE_FLAG_OVERLAPPED,    // overlapped mode
-                       PIPE_TYPE_BYTE|          // message-type pipe
-                           PIPE_READMODE_BYTE |  // message-read mode
+                       PIPE_TYPE_MESSAGE|          // message-type pipe
+                           PIPE_READMODE_MESSAGE |  // message-read mode
                            PIPE_WAIT,               // blocking mode
                        PIPE_UNLIMITED_INSTANCES,                   // number of instances
                        BUFSIZE * sizeof(BYTE),      // output buffer size
