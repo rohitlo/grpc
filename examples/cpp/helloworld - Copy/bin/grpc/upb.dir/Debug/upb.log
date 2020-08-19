@@ -1,0 +1,17 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt
+  decode.c
+  encode.c
+  msg.c
+E:\Job\Project\repo1\grpc\third_party\upb\upb/table.int.h(239,28): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+E:\Job\Project\repo1\grpc\third_party\upb\upb\msg.c(36,10): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+E:\Job\Project\repo1\grpc\third_party\upb\upb\msg.c(40,10): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+E:\Job\Project\repo1\grpc\third_party\upb\upb\msg.c(46,10): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+  port.c
+  table.c
+E:\Job\Project\repo1\grpc\third_party\upb\upb/table.int.h(239,28): warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
+  upb.c
+E:\Job\Project\repo1\grpc\third_party\upb\upb\upb.c(192,10): warning C4116: unnamed type definition in parentheses
+  Generating Code...
+E:\Job\Project\repo1\grpc\third_party\upb\upb\encode.c(310): warning C4715: 'upb_encode_scalarfield': not all control paths return a value
+E:\Job\Project\repo1\grpc\third_party\upb\upb\decode.c(488): warning C4715: 'upb_decode_toarray': not all control paths return a value
+  upb.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\upb.lib

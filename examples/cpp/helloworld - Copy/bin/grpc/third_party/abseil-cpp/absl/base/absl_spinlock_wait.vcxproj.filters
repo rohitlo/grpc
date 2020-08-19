@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\internal\spinlock_wait.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\internal\spinlock_wait.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\internal\spinlock_akaros.inc" />
+    <None Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\internal\spinlock_linux.inc" />
+    <None Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\internal\spinlock_posix.inc" />
+    <None Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\base\internal\spinlock_win32.inc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6E06606A-FACF-3EE0-9F3E-418AEAA2BA5A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{A0228857-B07E-32A8-9FAD-777E78DB55CF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

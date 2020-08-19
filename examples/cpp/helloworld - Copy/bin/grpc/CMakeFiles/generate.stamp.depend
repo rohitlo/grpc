@@ -1,0 +1,19 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.17/Modules/BasicConfigVersion-AnyNewerVersion.cmake.in
+C:/Program Files/CMake/share/cmake-3.17/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/CheckLanguage.cmake
+C:/Program Files/CMake/share/cmake-3.17/Modules/WriteBasicConfigVersionFile.cmake
+C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in
+E:/Job/Project/repo1/grpc/CMakeLists.txt
+E:/Job/Project/repo1/grpc/cmake/abseil-cpp.cmake
+E:/Job/Project/repo1/grpc/cmake/address_sorting.cmake
+E:/Job/Project/repo1/grpc/cmake/benchmark.cmake
+E:/Job/Project/repo1/grpc/cmake/cares.cmake
+E:/Job/Project/repo1/grpc/cmake/gRPCConfig.cmake.in
+E:/Job/Project/repo1/grpc/cmake/gflags.cmake
+E:/Job/Project/repo1/grpc/cmake/msvc_static_runtime.cmake
+E:/Job/Project/repo1/grpc/cmake/pkg-config-template.pc.in
+E:/Job/Project/repo1/grpc/cmake/protobuf.cmake
+E:/Job/Project/repo1/grpc/cmake/ssl.cmake
+E:/Job/Project/repo1/grpc/cmake/upb.cmake
+E:/Job/Project/repo1/grpc/cmake/zlib.cmake

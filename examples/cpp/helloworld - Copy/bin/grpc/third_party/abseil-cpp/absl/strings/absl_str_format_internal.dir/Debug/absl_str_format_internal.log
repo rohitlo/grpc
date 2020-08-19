@@ -1,0 +1,9 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/absl/strings/CMakeLists.txt
+  arg.cc
+  bind.cc
+  extension.cc
+  float_conversion.cc
+  output.cc
+  parser.cc
+  Generating Code...
+  absl_str_format_internal.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\strings\Debug\absl_str_format_internal.lib

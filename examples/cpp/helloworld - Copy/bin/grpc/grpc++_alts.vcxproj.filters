@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\Job\Project\repo1\grpc\src\cpp\common\alts_context.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo1\grpc\src\cpp\common\alts_util.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo1\grpc\src\core\ext\upb-generated\src\proto\grpc\gcp\altscontext.upb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo1\grpc\src\core\ext\upb-generated\src\proto\grpc\gcp\handshaker.upb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\Job\Project\repo1\grpc\src\core\ext\upb-generated\src\proto\grpc\gcp\transport_security_common.upb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo1\grpc\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{A0228857-B07E-32A8-9FAD-777E78DB55CF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

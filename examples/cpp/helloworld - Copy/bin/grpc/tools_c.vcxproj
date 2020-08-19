@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A9BDA68C-C81E-3794-A905-B87436774704}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>tools_c</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\tools_c.dir\nasm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>E:\Job\Project\repo1\grpc\third_party\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>E:\Job\Project\repo1\grpc\third_party\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>E:\Job\Project\repo1\grpc\third_party\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>E:\Job\Project\repo1\grpc\third_party\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\CMakeFiles\7101dab98d4c115181e5d9efa2b4be5e\tools_c.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\check_epollexclusive.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\grpc_create_jwt.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\grpc_print_google_default_creds_token.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\grpc_verify_jwt.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\tools_c</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Release\check_epollexclusive.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Release\grpc_create_jwt.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Release\grpc_print_google_default_creds_token.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Release\grpc_verify_jwt.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\tools_c</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</VerifyInputsAndOutputsExist>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\MinSizeRel\check_epollexclusive.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\MinSizeRel\grpc_create_jwt.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\MinSizeRel\grpc_print_google_default_creds_token.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\MinSizeRel\grpc_verify_jwt.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\tools_c</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</VerifyInputsAndOutputsExist>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\RelWithDebInfo\check_epollexclusive.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\RelWithDebInfo\grpc_create_jwt.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\RelWithDebInfo\grpc_print_google_default_creds_token.exe;E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\RelWithDebInfo\grpc_verify_jwt.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\tools_c</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</VerifyInputsAndOutputsExist>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo1\grpc\CMakeLists.txt">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\cmake\abseil-cpp.cmake;E:\Job\Project\repo1\grpc\cmake\address_sorting.cmake;E:\Job\Project\repo1\grpc\cmake\benchmark.cmake;E:\Job\Project\repo1\grpc\cmake\cares.cmake;E:\Job\Project\repo1\grpc\cmake\gRPCConfig.cmake.in;E:\Job\Project\repo1\grpc\cmake\gflags.cmake;E:\Job\Project\repo1\grpc\cmake\msvc_static_runtime.cmake;E:\Job\Project\repo1\grpc\cmake\pkg-config-template.pc.in;E:\Job\Project\repo1\grpc\cmake\protobuf.cmake;E:\Job\Project\repo1\grpc\cmake\ssl.cmake;E:\Job\Project\repo1\grpc\cmake\upb.cmake;E:\Job\Project\repo1\grpc\cmake\zlib.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\cmake\abseil-cpp.cmake;E:\Job\Project\repo1\grpc\cmake\address_sorting.cmake;E:\Job\Project\repo1\grpc\cmake\benchmark.cmake;E:\Job\Project\repo1\grpc\cmake\cares.cmake;E:\Job\Project\repo1\grpc\cmake\gRPCConfig.cmake.in;E:\Job\Project\repo1\grpc\cmake\gflags.cmake;E:\Job\Project\repo1\grpc\cmake\msvc_static_runtime.cmake;E:\Job\Project\repo1\grpc\cmake\pkg-config-template.pc.in;E:\Job\Project\repo1\grpc\cmake\protobuf.cmake;E:\Job\Project\repo1\grpc\cmake\ssl.cmake;E:\Job\Project\repo1\grpc\cmake\upb.cmake;E:\Job\Project\repo1\grpc\cmake\zlib.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\cmake\abseil-cpp.cmake;E:\Job\Project\repo1\grpc\cmake\address_sorting.cmake;E:\Job\Project\repo1\grpc\cmake\benchmark.cmake;E:\Job\Project\repo1\grpc\cmake\cares.cmake;E:\Job\Project\repo1\grpc\cmake\gRPCConfig.cmake.in;E:\Job\Project\repo1\grpc\cmake\gflags.cmake;E:\Job\Project\repo1\grpc\cmake\msvc_static_runtime.cmake;E:\Job\Project\repo1\grpc\cmake\pkg-config-template.pc.in;E:\Job\Project\repo1\grpc\cmake\protobuf.cmake;E:\Job\Project\repo1\grpc\cmake\ssl.cmake;E:\Job\Project\repo1\grpc\cmake\upb.cmake;E:\Job\Project\repo1\grpc\cmake\zlib.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\BasicConfigVersion-AnyNewerVersion.cmake.in;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLanguage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\cmake\abseil-cpp.cmake;E:\Job\Project\repo1\grpc\cmake\address_sorting.cmake;E:\Job\Project\repo1\grpc\cmake\benchmark.cmake;E:\Job\Project\repo1\grpc\cmake\cares.cmake;E:\Job\Project\repo1\grpc\cmake\gRPCConfig.cmake.in;E:\Job\Project\repo1\grpc\cmake\gflags.cmake;E:\Job\Project\repo1\grpc\cmake\msvc_static_runtime.cmake;E:\Job\Project\repo1\grpc\cmake\pkg-config-template.pc.in;E:\Job\Project\repo1\grpc\cmake\protobuf.cmake;E:\Job\Project\repo1\grpc\cmake\ssl.cmake;E:\Job\Project\repo1\grpc\cmake\upb.cmake;E:\Job\Project\repo1\grpc\cmake\zlib.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\CMakeFiles\tools_c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\ZERO_CHECK.vcxproj">
+      <Project>{6A8A8BAE-5F5D-3F83-8612-4290E373C895}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\check_epollexclusive.vcxproj">
+      <Project>{503BC341-9292-3F59-A77A-1B5C727DDAA0}</Project>
+      <Name>check_epollexclusive</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\grpc_create_jwt.vcxproj">
+      <Project>{AC69C15D-94B4-368D-8CE4-706C63083B70}</Project>
+      <Name>grpc_create_jwt</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\grpc_print_google_default_creds_token.vcxproj">
+      <Project>{F8A4B332-5C95-37B2-B6BA-DFD42BECCFC7}</Project>
+      <Name>grpc_print_google_default_creds_token</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\grpc_verify_jwt.vcxproj">
+      <Project>{2EBD0138-9B19-3FD1-847E-C59A845A32DF}</Project>
+      <Name>grpc_verify_jwt</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.targets" />
+  </ImportGroup>
+</Project>

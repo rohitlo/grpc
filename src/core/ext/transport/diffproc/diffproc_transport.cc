@@ -96,7 +96,7 @@ grpc_diffproc_transport::grpc_diffproc_transport(
 
 // DOTR
 grpc_diffproc_transport::~grpc_diffproc_transport() {
-  printf(" TRANSPORT DOTR ... \n");
+  //printf(" TRANSPORT DOTR ... \n");
   grpc_endpoint_destroy(ep);
   grpc_slice_buffer_destroy_internal(&outbuf);
   grpc_slice_buffer_destroy_internal(&read_buffer);
@@ -106,18 +106,18 @@ grpc_diffproc_transport::~grpc_diffproc_transport() {
 
 // REF
 void grpc_diffproc_transport::ref() {
-  printf("ref_transport: %p \n", this);
+  //printf("ref_transport: %p \n", this);
   gpr_ref(&refs);
 }
 
 // UNREF
 void grpc_diffproc_transport::unref() {
-  printf("unref_transport: %p \n", this);
+  //printf("unref_transport: %p \n", this);
   if (!gpr_unref(&refs)) {
     return;
   }
   DIFFPROC_LOG(GPR_INFO, "really_destroy_transport %p", this);
-  printf("really_destroy_transport %p \n", this);
+  //printf("really_destroy_transport %p \n", this);
   this->~grpc_diffproc_transport();
   gpr_free(this);
 }
@@ -698,7 +698,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
       //    (If the server hasn't already sent its trailing md, it doesn't have
       //     a final status, so don't mark this op complete)
       if (s->t->is_client || (!s->t->is_client && s->trailing_md_sent)) {
-        printf("op_state_machine %p scheduling trailing-md-on-complete %p \n", s, new_err);
+       // printf("op_state_machine %p scheduling trailing-md-on-complete %p \n", s, new_err);
         grpc_core::ExecCtx::Run(
             DEBUG_LOCATION,
             s->recv_trailing_md_op->payload->recv_trailing_metadata
@@ -710,10 +710,10 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
         s->recv_trailing_md_op = nullptr;
         needs_close = s->trailing_md_sent;
       } else {
-       printf("op_state_machine %p server needs to delay handling trailing-md-on-complete %p \n",s, new_err);
+       //printf("op_state_machine %p server needs to delay handling trailing-md-on-complete %p \n",s, new_err);
       }
     } else {
-      printf("op_state_machine %p has trailing md but not yet waiting for it", s);
+      //printf("op_state_machine %p has trailing md but not yet waiting for it", s);
     }
   }
 
@@ -749,9 +749,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
       s->recv_message_op || s->recv_trailing_md_op) {
     // Didn't get the item we wanted so we still need to get
     // rescheduled
-    printf( "op_state_machine %p still needs closure %p %p %p %p %p \n", s,
-        s->send_message_op, s->send_trailing_md_op, s->recv_initial_md_op,
-        s->recv_message_op, s->recv_trailing_md_op);
+    //printf( "op_state_machine %p still needs closure %p %p %p %p %p \n", s,s->send_message_op, s->send_trailing_md_op, s->recv_initial_md_op,s->recv_message_op, s->recv_trailing_md_op);
     s->ops_toBeSent = true;
   }
 
@@ -990,9 +988,9 @@ bool cancel_stream_locked(grpc_diffproc_stream* stream, grpc_error* error) {
 void message_transfer_locked(grpc_diffproc_transport* t,
                              grpc_diffproc_stream* sender) {
   size_t remaining = sender->send_message_op->payload->send_message.send_message->length();
-  printf("************ Remaining here in msg transfer locked *********** %d \n", remaining);
+ // printf("************ Remaining here in msg transfer locked *********** %d \n", remaining);
   grpc_slice_buffer_init(&t->outbuf);
-  printf("Remainign  :%d",remaining);
+  //printf("Remainign  :%d",remaining);
     sender->recv_inited = true;
     do {
       grpc_slice message_slice;
@@ -1422,7 +1420,7 @@ grpc_transport* grpc_create_diffproc_transport(
 }
 
 void grpc_diffproc_initiate_write(grpc_diffproc_transport* t) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   t->ref();
   grpc_endpoint_write(
       t->ep, &t->outbuf,
@@ -1433,7 +1431,7 @@ void grpc_diffproc_initiate_write(grpc_diffproc_transport* t) {
 }
 
 void read_action_end(void* tp, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_diffproc_transport* t = static_cast<grpc_diffproc_transport*>(tp);
 
   GRPC_ERROR_REF(error);
@@ -1450,8 +1448,7 @@ void read_action_end(void* tp, grpc_error* error) {
         t->accepting_stream = nullptr;
         t->processed = 1;
       }
-      printf("Read buf count after namedpipe read :%d \n",
-             t->read_buffer.count);
+      //printf("Read buf count after namedpipe read :%d \n",t->read_buffer.count);
     }
     t->unref();
 }
@@ -1511,7 +1508,7 @@ void complete_if_batch_end_locked(grpc_diffproc_stream* s, grpc_error* error,
   int is_rtm = static_cast<int>(op == s->recv_trailing_md_op);
 
   if ((is_sm + is_stm + is_rim + is_rm + is_rtm) == 1) {
-    printf( "%s %p %p %p \n", msg, s, op, error);
+    //printf( "%s %p %p %p \n", msg, s, op, error);
     grpc_core::ExecCtx::Run(DEBUG_LOCATION, op->on_complete,
                             GRPC_ERROR_REF(error));
   }

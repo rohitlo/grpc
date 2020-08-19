@@ -1,0 +1,10 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt
+  cpp_generator.cc
+  csharp_generator.cc
+  node_generator.cc
+  objective_c_generator.cc
+  php_generator.cc
+  python_generator.cc
+  ruby_generator.cc
+  Generating Code...
+  grpc_plugin_support.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\grpc_plugin_support.lib

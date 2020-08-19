@@ -1,0 +1,8 @@
+﻿  Running gRPC C++ protocol buffer compiler on src/proto/grpc/reflection/v1alpha/reflection.proto
+  Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt
+  proto_server_reflection.cc
+  proto_server_reflection_plugin.cc
+  reflection.pb.cc
+  reflection.grpc.pb.cc
+  Generating Code...
+  grpc++_reflection.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\grpc++_reflection.lib

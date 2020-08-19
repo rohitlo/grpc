@@ -1,0 +1,15 @@
+﻿  create_channel_internal.cc
+  secure_credentials.cc
+E:\Job\Project\repo1\grpc\src/core/lib/security/credentials/credentials.h(205,16): warning C5208: unnamed class used in typedef name cannot declare members other than non-static data members, member enumerations, or member classes
+  channel_filter.cc
+  secure_auth_context.cc
+E:\Job\Project\repo1\grpc\src/core/lib/security/credentials/credentials.h(205,16): warning C5208: unnamed class used in typedef name cannot declare members other than non-static data members, member enumerations, or member classes
+  secure_create_auth_context.cc
+E:\Job\Project\repo1\grpc\src/core/lib/security/credentials/credentials.h(205,16): warning C5208: unnamed class used in typedef name cannot declare members other than non-static data members, member enumerations, or member classes
+  validate_service_config.cc
+  secure_server_credentials.cc
+E:\Job\Project\repo1\grpc\src/core/lib/security/credentials/credentials.h(205,16): warning C5208: unnamed class used in typedef name cannot declare members other than non-static data members, member enumerations, or member classes
+  server_cc.cc
+  server_context.cc
+  Generating Code...
+  grpc++.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\grpc++.lib

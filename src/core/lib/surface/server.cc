@@ -632,7 +632,7 @@ static void start_new_rpc(grpc_call_element* elem) {
   if (chand->registered_methods && calld->path_set && calld->host_set) {
     /* TODO(ctiller): unify these two searches */
     /* check for an exact match with host */
-    printf("Called path : %p \n", grpc_slice_to_c_string(calld->path));
+    //printf("Called path : %p \n", grpc_slice_to_c_string(calld->path));
     hash = GRPC_MDSTR_KV_HASH(grpc_slice_hash_internal(calld->host),
                               grpc_slice_hash_internal(calld->path));
     for (i = 0; i <= chand->registered_method_max_probes; i++) {
@@ -652,7 +652,7 @@ static void start_new_rpc(grpc_call_element* elem) {
       return;
     }
     /* check for a wildcard method definition (no host set) */
-    printf("Called path : %p and ptr : %p \n", grpc_slice_to_c_string(calld->path), calld->path);
+    //printf("Called path : %p and ptr : %p \n", grpc_slice_to_c_string(calld->path), calld->path);
     hash = GRPC_MDSTR_KV_HASH(0, grpc_slice_hash_internal(calld->path));
     for (i = 0; i <= chand->registered_method_max_probes; i++) {
       rm = &chand->registered_methods[(hash + i) %
@@ -758,9 +758,6 @@ static void server_on_recv_initial_metadata(void* ptr, grpc_error* error) {
     GPR_DEBUG_ASSERT(calld->recv_initial_metadata->idx.named.path != nullptr);
     GPR_DEBUG_ASSERT(calld->recv_initial_metadata->idx.named.authority !=
                      nullptr);
-    printf("***************** CALLD->PATH: %s",
-           grpc_slice_to_c_string(
-               GRPC_MDVALUE(calld->recv_initial_metadata->idx.named.path->md)));
     calld->path = grpc_slice_ref_internal(
         GRPC_MDVALUE(calld->recv_initial_metadata->idx.named.path->md));
     calld->host = grpc_slice_ref_internal(
@@ -853,7 +850,6 @@ static void got_initial_metadata(void* ptr, grpc_error* error) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_call_element* elem = static_cast<grpc_call_element*>(ptr);
   call_data* calld = static_cast<call_data*>(elem->call_data);
-  printf("Called element in got_init_md : %p", elem->filter);
   if (error == GRPC_ERROR_NONE) {
     start_new_rpc(elem);
   } else {
@@ -872,8 +868,6 @@ static void got_initial_metadata(void* ptr, grpc_error* error) {
 static void accept_stream(void* cd, grpc_transport* /*transport*/,
                           const void* transport_server_data) {
   printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  printf("Stream in accept_stream :%p \n",
-         transport_server_data);
   channel_data* chand = static_cast<channel_data*>(cd);
   /* create a call */
   grpc_call_create_args args;
@@ -1079,9 +1073,6 @@ void* grpc_server_register_method(
   registered_method* m;
   GRPC_API_TRACE(
       "grpc_server_register_method(server=%p, method=%s, host=%s, "
-      "flags=0x%08x)",
-      4, (server, method, host, flags));
-  printf("grpc_server_register_method(server=%p, method=%s, host=%s, "
       "flags=0x%08x)",
       4, (server, method, host, flags));
   if (!method) {

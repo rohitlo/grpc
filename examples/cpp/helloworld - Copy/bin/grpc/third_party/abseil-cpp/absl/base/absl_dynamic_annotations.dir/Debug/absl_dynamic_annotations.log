@@ -1,0 +1,3 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/absl/base/CMakeLists.txt
+  dynamic_annotations.cc
+  absl_dynamic_annotations.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\Debug\absl_dynamic_annotations.lib

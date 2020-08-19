@@ -1,0 +1,8 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/absl/base/CMakeLists.txt
+  cycleclock.cc
+  spinlock.cc
+  sysinfo.cc
+  thread_identity.cc
+  unscaledcycleclock.cc
+  Generating Code...
+  absl_base.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\Debug\absl_base.lib

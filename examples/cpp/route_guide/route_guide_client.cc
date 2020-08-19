@@ -147,6 +147,7 @@ class RouteGuideClient {
     }
     writer->WritesDone();
     Status status = writer->Finish();
+    puts(" ********************** Finished RPC ********************** \n");
     if (status.ok()) {
       std::cout << "Finished trip with " << stats.point_count() << " points\n"
                 << "Passed " << stats.feature_count() << " features\n"
@@ -232,12 +233,12 @@ int main(int argc, char** argv) {
 
  // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
 // guide.GetFeature();
-  std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
+  //std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
  // guide.ListFeatures();
-  //std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
-  //guide.RecordRoute();
+  std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
+  guide.RecordRoute();
   ///std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
-  guide.RouteChat();
+  //guide.RouteChat();
 
   return 0;
 }

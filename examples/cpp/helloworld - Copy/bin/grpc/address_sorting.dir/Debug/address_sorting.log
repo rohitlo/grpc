@@ -1,0 +1,6 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/CMakeLists.txt
+  address_sorting.c
+  address_sorting_posix.c
+  address_sorting_windows.c
+  Generating Code...
+  address_sorting.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\Debug\address_sorting.lib

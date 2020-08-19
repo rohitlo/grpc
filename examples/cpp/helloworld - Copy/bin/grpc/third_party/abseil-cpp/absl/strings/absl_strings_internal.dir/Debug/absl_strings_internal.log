@@ -1,0 +1,6 @@
+﻿  Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/absl/strings/CMakeLists.txt
+  ostringstream.cc
+  utf8.cc
+  escaping.cc
+  Generating Code...
+  absl_strings_internal.vcxproj -> E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\strings\Debug\absl_strings_internal.lib

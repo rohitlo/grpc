@@ -1,0 +1,398 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{EB0E765C-4065-3042-BE6A-2F55672CD140}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>ALL_BUILD</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\ALL_BUILD.dir\nasm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMakeLists.txt">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/third_party/abseil-cpp/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilDll.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilHelpers.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilInstallDirs.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\AbseilConfigureCopts.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\GENERATED_AbseilCopts.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/third_party/abseil-cpp/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilDll.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilHelpers.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilInstallDirs.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\AbseilConfigureCopts.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\GENERATED_AbseilCopts.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/third_party/abseil-cpp/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilDll.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilHelpers.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilInstallDirs.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\AbseilConfigureCopts.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\GENERATED_AbseilCopts.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule E:/Job/Project/repo1/grpc/third_party/abseil-cpp/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Job/Project/repo1/grpc/examples/cpp/helloworld -BE:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin --check-stamp-file E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/third_party/abseil-cpp/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-3.17\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\GNUInstallDirs.cmake;C:\Program Files\CMake\share\cmake-3.17\Modules\WriteBasicConfigVersionFile.cmake;C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.props.in;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilDll.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilHelpers.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\CMake\AbseilInstallDirs.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\AbseilConfigureCopts.cmake;E:\Job\Project\repo1\grpc\third_party\abseil-cpp\absl\copts\GENERATED_AbseilCopts.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\ZERO_CHECK.vcxproj">
+      <Project>{6A8A8BAE-5F5D-3F83-8612-4290E373C895}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\types\absl_bad_any_cast_impl.vcxproj">
+      <Project>{24B48B30-B034-3195-9B7C-C939D72280FA}</Project>
+      <Name>absl_bad_any_cast_impl</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\types\absl_bad_optional_access.vcxproj">
+      <Project>{123FADED-45AC-345C-A03D-E68FA5EA3DFE}</Project>
+      <Name>absl_bad_optional_access</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\types\absl_bad_variant_access.vcxproj">
+      <Project>{7F0EAB84-7E8B-3AB9-AFE1-BAB2AE27BABD}</Project>
+      <Name>absl_bad_variant_access</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_base.vcxproj">
+      <Project>{B74975B5-F827-3A67-8866-0155F705121C}</Project>
+      <Name>absl_base</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\hash\absl_city.vcxproj">
+      <Project>{4E536DCA-257E-35B0-BCAA-44AFEE517A77}</Project>
+      <Name>absl_city</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\time\absl_civil_time.vcxproj">
+      <Project>{30709D3A-A8D3-3C5D-94DC-1F0501FF265A}</Project>
+      <Name>absl_civil_time</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\strings\absl_cord.vcxproj">
+      <Project>{BC9D8D9A-D0F2-30AE-B448-44AA25364E68}</Project>
+      <Name>absl_cord</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_debugging_internal.vcxproj">
+      <Project>{13774017-9E73-3226-915F-3B72D763C820}</Project>
+      <Name>absl_debugging_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_demangle_internal.vcxproj">
+      <Project>{C18378F4-14D8-3B13-948A-D7198FECE4F8}</Project>
+      <Name>absl_demangle_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_dynamic_annotations.vcxproj">
+      <Project>{BE6028B2-E54D-3A2C-8A49-26290C533958}</Project>
+      <Name>absl_dynamic_annotations</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_examine_stack.vcxproj">
+      <Project>{C8975A6A-3292-321F-9923-ECB4CCEA8033}</Project>
+      <Name>absl_examine_stack</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_exponential_biased.vcxproj">
+      <Project>{BD8436C2-C1A1-3D33-92CE-BC56634984C2}</Project>
+      <Name>absl_exponential_biased</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_failure_signal_handler.vcxproj">
+      <Project>{F54FA9D9-32E9-329B-B827-C1FF5DBA878F}</Project>
+      <Name>absl_failure_signal_handler</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags.vcxproj">
+      <Project>{8D9B62AD-BFBE-3967-A94E-9505A28EA0F9}</Project>
+      <Name>absl_flags</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_config.vcxproj">
+      <Project>{09216CC1-492D-3697-8F2C-4E465022793F}</Project>
+      <Name>absl_flags_config</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_internal.vcxproj">
+      <Project>{D14F8B82-E7E9-3754-88E5-25FD408273B9}</Project>
+      <Name>absl_flags_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_marshalling.vcxproj">
+      <Project>{912555C3-00C7-383D-9C74-4AAAE5314CAC}</Project>
+      <Name>absl_flags_marshalling</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_parse.vcxproj">
+      <Project>{A58CC8E4-DECE-3A11-8D3B-028754FE0EAE}</Project>
+      <Name>absl_flags_parse</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_program_name.vcxproj">
+      <Project>{CB382A50-F821-3D37-A166-47D9022F972D}</Project>
+      <Name>absl_flags_program_name</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_registry.vcxproj">
+      <Project>{75E42B46-A210-3C17-8C60-2CD98FD5B23E}</Project>
+      <Name>absl_flags_registry</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_usage.vcxproj">
+      <Project>{DE00568D-E849-362D-876A-857D868763FF}</Project>
+      <Name>absl_flags_usage</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\flags\absl_flags_usage_internal.vcxproj">
+      <Project>{5E26E0BC-04A3-3852-AA11-0E955BF45D40}</Project>
+      <Name>absl_flags_usage_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\synchronization\absl_graphcycles_internal.vcxproj">
+      <Project>{5123B6A7-934A-31E7-8533-3084EDA0AB24}</Project>
+      <Name>absl_graphcycles_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\hash\absl_hash.vcxproj">
+      <Project>{05C71FCA-5916-3721-AD26-686DFBCB41C8}</Project>
+      <Name>absl_hash</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\container\absl_hashtablez_sampler.vcxproj">
+      <Project>{CC379960-585D-38F2-92B1-86770AF8BF73}</Project>
+      <Name>absl_hashtablez_sampler</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\numeric\absl_int128.vcxproj">
+      <Project>{0DCA40E4-98B4-3F30-A193-D8B2FFCEBF0C}</Project>
+      <Name>absl_int128</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_leak_check.vcxproj">
+      <Project>{257B77A9-8CBA-3597-BB3B-28C250A027C8}</Project>
+      <Name>absl_leak_check</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_leak_check_disable.vcxproj">
+      <Project>{5EB9B637-52FC-3353-AE06-684C9D9F5F0B}</Project>
+      <Name>absl_leak_check_disable</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_log_severity.vcxproj">
+      <Project>{2F9264B6-9C76-3796-97D1-22AE51DCF449}</Project>
+      <Name>absl_log_severity</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_malloc_internal.vcxproj">
+      <Project>{E4E5CD73-71AE-3569-AF01-F6F30F2BFAC2}</Project>
+      <Name>absl_malloc_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_periodic_sampler.vcxproj">
+      <Project>{829099C8-57FB-352E-8879-E786427DC227}</Project>
+      <Name>absl_periodic_sampler</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_distributions.vcxproj">
+      <Project>{9EF2CD0C-F294-3224-86AF-86EDFE2AE66B}</Project>
+      <Name>absl_random_distributions</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_distribution_test_util.vcxproj">
+      <Project>{A777A8A8-86BD-3C1A-A60E-7CEA03E82A95}</Project>
+      <Name>absl_random_internal_distribution_test_util</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_pool_urbg.vcxproj">
+      <Project>{41372F5E-AD9A-324D-8F50-95DD834C98BF}</Project>
+      <Name>absl_random_internal_pool_urbg</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_randen.vcxproj">
+      <Project>{0F877F1F-7CF9-35B1-BD9B-7FCE74FBB35B}</Project>
+      <Name>absl_random_internal_randen</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_randen_hwaes.vcxproj">
+      <Project>{C0DA7204-867E-3D5F-865E-95A5F71B9C71}</Project>
+      <Name>absl_random_internal_randen_hwaes</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_randen_hwaes_impl.vcxproj">
+      <Project>{00B2E1A7-0995-3318-97FA-FA08BB3C7026}</Project>
+      <Name>absl_random_internal_randen_hwaes_impl</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_randen_slow.vcxproj">
+      <Project>{21572F4D-D246-3FCD-BE3B-662175A132A3}</Project>
+      <Name>absl_random_internal_randen_slow</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_internal_seed_material.vcxproj">
+      <Project>{7977BDE4-E030-35E5-A689-93D51DAB0A97}</Project>
+      <Name>absl_random_internal_seed_material</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_seed_gen_exception.vcxproj">
+      <Project>{CC459C82-8DE0-30BB-A2DF-62AB5F71F30B}</Project>
+      <Name>absl_random_seed_gen_exception</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\random\absl_random_seed_sequences.vcxproj">
+      <Project>{0B657CE1-ED00-3685-9FE3-A16C959917BE}</Project>
+      <Name>absl_random_seed_sequences</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\container\absl_raw_hash_set.vcxproj">
+      <Project>{1201FA1E-706F-3CC9-A217-7FF6F6488559}</Project>
+      <Name>absl_raw_hash_set</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_raw_logging_internal.vcxproj">
+      <Project>{89BAD4CD-7049-3EED-9FEF-8FC70B89F47A}</Project>
+      <Name>absl_raw_logging_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_scoped_set_env.vcxproj">
+      <Project>{E6285B3B-ECBE-3C3A-BBB0-62A26C74E233}</Project>
+      <Name>absl_scoped_set_env</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_spinlock_wait.vcxproj">
+      <Project>{FFC96838-6B37-3A42-A81F-2B2BB9BCBA76}</Project>
+      <Name>absl_spinlock_wait</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_stacktrace.vcxproj">
+      <Project>{5EF6636A-3075-385E-880A-E53D056A0301}</Project>
+      <Name>absl_stacktrace</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\status\absl_status.vcxproj">
+      <Project>{AA9D6419-B484-32DC-9830-8A3A8FB2E415}</Project>
+      <Name>absl_status</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\strings\absl_str_format_internal.vcxproj">
+      <Project>{E2A1244D-4C1F-3BF1-929E-F8D4EA311857}</Project>
+      <Name>absl_str_format_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\strings\absl_strings.vcxproj">
+      <Project>{5F66D171-1855-3115-9371-D20E4780D1A7}</Project>
+      <Name>absl_strings</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\strings\absl_strings_internal.vcxproj">
+      <Project>{000E26BE-8E6C-3734-B069-F4BB89D1A993}</Project>
+      <Name>absl_strings_internal</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\debugging\absl_symbolize.vcxproj">
+      <Project>{43204AC2-9A61-301A-9B51-A7077BEA208C}</Project>
+      <Name>absl_symbolize</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\synchronization\absl_synchronization.vcxproj">
+      <Project>{58152739-93F7-3715-97CF-B2DACA5BC06B}</Project>
+      <Name>absl_synchronization</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\base\absl_throw_delegate.vcxproj">
+      <Project>{3143DE48-2D0B-354D-A566-4AD632BFC7D2}</Project>
+      <Name>absl_throw_delegate</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\time\absl_time.vcxproj">
+      <Project>{B3749920-D1B0-3257-A74F-42A96BCB02DB}</Project>
+      <Name>absl_time</Name>
+    </ProjectReference>
+    <ProjectReference Include="E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\abseil-cpp\absl\time\absl_time_zone.vcxproj">
+      <Project>{173E0446-594F-33E6-8D88-BABAA2BE494D}</Project>
+      <Name>absl_time_zone</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="C:\Program Files\CMake\share\cmake-3.17\Templates\MSBuild\nasm.targets" />
+  </ImportGroup>
+</Project>

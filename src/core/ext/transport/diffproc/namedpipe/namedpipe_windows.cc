@@ -79,12 +79,12 @@ static void namedpipe_unref(grpc_namedpipe* np) { gpr_unref(&np->refcount); }
 
 
 static void on_read(void* npp, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)npp;
   grpc_closure* cb = np->read_cb;
   cb = np->read_cb;
   GRPC_ERROR_REF(error);
-  printf(" ********** BYTES READ :%d ************** \n", np->bytes_read);
+  //printf(" ********** BYTES READ :%d ************** \n", np->bytes_read);
   if (error == GRPC_ERROR_NONE) {
       if (np->readError != 0 && !np->shutting_down) {
         char* utf8_message = gpr_format_message(np->readError);
@@ -104,7 +104,7 @@ static void on_read(void* npp, grpc_error* error) {
             for (i = 0; i < np->read_slices->count; i++) {
               char* dump = grpc_dump_slice(np->read_slices->slices[i],
                                            GPR_DUMP_HEX | GPR_DUMP_ASCII);
-              printf("READ %p (peer=%s): %s", np, np->peer_string,
+              printf("READ %p (peer=%s): %s \n", np, np->peer_string,
                       dump);
               gpr_free(dump);
             }
@@ -140,7 +140,7 @@ static void on_read(void* npp, grpc_error* error) {
 }
 
 static void on_write(void* npp, grpc_error* error) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  //printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)npp;
   grpc_closure* cb;
 
@@ -158,10 +158,10 @@ static void on_write(void* npp, grpc_error* error) {
       GPR_ASSERT(np->bytes_written == np->write_slices->length);
     }
   }
-  puts("B4 flush file ");
+  //puts("B4 flush file ");
   //FlushFileBuffers(np->threadHandle->pipeHandle);
   namedpipe_unref(np);
-  puts("A4 Unref & flush file ");
+  //puts("A4 Unref & flush file ");
   //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
   cb->cb(cb->cb_arg, error);
 }
@@ -172,11 +172,11 @@ static void on_write(void* npp, grpc_error* error) {
 #define MAX_WSABUF_COUNT 16
 static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                      grpc_closure* cb, bool urgent) {
-  printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
+  //printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
   int ops = np->threadHandle->read_info.numOfOps;
-  printf(" ****************************  WIN READ HANDLE : %p ", handle);
+  //printf(" ****************************  WIN READ HANDLE : %p ", handle);
   int status;
   DWORD bytes_read = 0;
   DWORD dwErr;
@@ -212,15 +212,15 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   }
   namedpipe_ref(np);
 
-  printf(" Count in read :%d \n", np->read_slices->count);
+  //printf(" Count in read :%d \n", np->read_slices->count);
   i = 0;
   for (i = 0; i < np->read_slices->count; i++) {
-    puts("******************* IN READ LOOP ********************");
+   // puts("******************* IN READ LOOP ********************");
     DWORD bytesAvail = 0;
     if (!PeekNamedPipe(handle, NULL, 0, NULL, &bytesAvail, NULL)) {
       puts("Failed to call PeekNamedPipe");
     }
-    printf("*********** BYTES Avail ************ %d\n", bytesAvail);
+   // printf("*********** BYTES Avail ************ %d\n", bytesAvail);
     // Read client requests from the pipe. This simplistic code only allows
     // messages up to BUFSIZE characters in length.
     fSuccess = ReadFile(handle,                     // handle to pipe
@@ -230,7 +230,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
                         NULL);                      // not overlapped I/O
     np->threadHandle->read_info.numOfOps++;
     int lastError = GetLastError();
-    printf("LastError in Read %d & fSuccess: %d \n", lastError, fSuccess);
+    //printf("LastError in Read %d & fSuccess: %d \n", lastError, fSuccess);
     if (fSuccess == 0) {
       np->readError = lastError;
       break;
@@ -254,7 +254,7 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
   //    np->bytes_read += bytes_read;
   //  }
   //}
-  printf("np->readerror :%d \n", np->readError);
+  //printf("np->readerror :%d \n", np->readError);
   if (np->readError == 0) on_read(np, GRPC_ERROR_NONE);
   else on_read(np, GRPC_WSA_ERROR(np->readError, "Read"));
 
@@ -286,10 +286,10 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
 
 
 static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices, grpc_closure* cb, void* arg) {
-  printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
+  //printf("\n%d :: %s :: %s:: %d\n", __LINE__, __func__, __FILE__, getpid());
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   HANDLE handle = np->threadHandle->pipeHandle;
-  printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
+ // printf(" ****************************  WIN WRITE HANDLE : %p ", handle);
   int status;
   grpc_error* error = GRPC_ERROR_NONE;
 
@@ -300,10 +300,10 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices, grpc_closure
   size_t len;
   DWORD cbWritten;
   size_t i;
-  printf(" ************* To write in pipe :%d ************ \n", slices->count);
+  //printf(" ************* To write in pipe :%d ************ \n", slices->count);
   for (i = 0; i < slices->count; i++) {
     char* data = grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
-    printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);
+    //printf("WRITE %p (peer=%s): %s \n", np, np->peer_string, data);
     gpr_free(data);
   }
   if (np->shutting_down) {
@@ -319,7 +319,7 @@ static void win_write(grpc_endpoint* ep, grpc_slice_buffer* slices, grpc_closure
     allocated = buffers;
   }
   for (i = 0; i < np->write_slices->count; i++) {
-    puts("Count ++");
+    //puts("Count ++");
     len = GRPC_SLICE_LENGTH(np->write_slices->slices[i]);
     GPR_ASSERT(len <= ULONG_MAX);
     buffers[i].len = (ULONG)len;
@@ -391,7 +391,7 @@ static void win_delete_from_pollset_set(grpc_endpoint* ep,
 
 /*  */
 static void win_shutdown(grpc_endpoint* ep, grpc_error* why) {
-  printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
+ // printf("\n%d :: %s :: %s \n", __LINE__, __func__, __FILE__);
   grpc_namedpipe* np = (grpc_namedpipe*)ep;
   gpr_mu_lock(&np->mu);
   /* At that point, what may happen is that we're already inside the IOCP
