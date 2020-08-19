@@ -81,10 +81,10 @@ class RouteGuideClient {
   void GetFeature() {
     Point point;
     Feature feature;
-   point = MakePoint(409146138, -746188906);
+    point = MakePoint(409146138, -746188906);
     GetOneFeature(point, &feature);
-   // point = MakePoint(0, 0);
-   // GetOneFeature(point, &feature);
+    point = MakePoint(409146138, -746188906);
+    GetOneFeature(point, &feature);
   }
 
   void ListFeatures() {
@@ -122,7 +122,7 @@ class RouteGuideClient {
     Point point;
     RouteSummary stats;
     ClientContext context;
-    const int kPoints = 10;
+    const int kPoints = 2;
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
     std::default_random_engine generator(seed);
@@ -231,12 +231,12 @@ int main(int argc, char** argv) {
       db);
 
  // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
- //guide.GetFeature();
+  guide.GetFeature();
  // std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
   guide.ListFeatures();
-  guide.GetFeature();
+ // guide.GetFeature();
   //std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
-  //guide.RecordRoute();
+  guide.RecordRoute();
   ///std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
   guide.RouteChat();
 

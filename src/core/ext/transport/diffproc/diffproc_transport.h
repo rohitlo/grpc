@@ -85,10 +85,16 @@ struct grpc_diffproc_transport {
   grpc_closure read_action_locked;
   /** incoming read bytes */
   grpc_slice_buffer read_buffer;
+  bool bufFilled = 0;
+  /* MD Buffer*/
+  grpc_slice_buffer buf;
   grpc_error* closed_with_error = GRPC_ERROR_NONE;
   /** data to write now */
   grpc_slice_buffer outbuf;
   bool processed = 1;
+
+
+  bool initMdJustRecvd = false;
   uint32_t incoming_stream_id = 0;
   uint32_t next_stream_id = 0;
   // Map to maintain streams
@@ -163,7 +169,7 @@ struct grpc_diffproc_stream {
   bool trailing_md_recvd = false;
 
   bool closed = false;
-
+  bool trailFound = false;
   grpc_error* cancel_self_error = GRPC_ERROR_NONE;
   grpc_error* cancel_other_error = GRPC_ERROR_NONE;
 

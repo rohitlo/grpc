@@ -149,34 +149,39 @@ void mdToBuffer(grpc_diffproc_stream* s, const grpc_metadata_batch* metadata,
     grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(path_slice));
 
   } else if (!s->t->is_client && !isInitial) { //Server trailing MD---  Need -1 for server streaming indicating EOP.. Status -0 Mandatory field
-    //grpc_slice msg_slice = grpc_slice_from_static_string("-1");
-    //grpc_slice status_hdr = GRPC_MDKEY(metadata->idx.named.grpc_status->md);
+    grpc_slice msg_slice = grpc_slice_from_static_string("@");
+    grpc_slice status_hdr = GRPC_MDKEY(metadata->idx.named.grpc_status->md);
     grpc_slice status_slice = GRPC_MDVALUE(metadata->idx.named.grpc_status->md);
+      //GRPC_MDVALUE(metadata->idx.named.grpc_status->md);
     //grpc_slice msg_slice = GRPC_MDVALUE(metadata->idx.named.grpc_status->md);
     //grpc_slice msg_slice = grpc_slice_from_static_string("grpc-message 0");
-    grpc_slice_buffer_add(outbuf,grpc_core::UnmanagedMemorySlice("0"));  // Message -2
+    //grpc_slice_buffer_add(outbuf,grpc_core::UnmanagedMemorySlice("0"));  // Message -2
     //grpc_slice_buffer_add(outbuf, GRPC_MDSTR_GRPC_STATUS);
-    //size_t estimated_len = GRPC_SLICE_LENGTH(status_hdr)+GRPC_SLICE_LENGTH(status_slice) + GRPC_SLICE_LENGTH(msg_slice);
-    //grpc_core::UnmanagedMemorySlice status_msg_slice(estimated_len+1);
-    //char* write_ptr = reinterpret_cast<char*> GRPC_SLICE_START_PTR(status_msg_slice);
-   // memcpy(write_ptr + 0, GRPC_SLICE_START_PTR(msg_slice), GRPC_SLICE_LENGTH(msg_slice));
-    //int offset = GRPC_SLICE_LENGTH(msg_slice) + 1;
-    //memcpy(write_ptr + offset, GRPC_SLICE_START_PTR(status_hdr),GRPC_SLICE_LENGTH(status_hdr));
-    //offset += GRPC_SLICE_LENGTH(status_hdr) + 1;
+    size_t estimated_len =
+        GRPC_SLICE_LENGTH(status_hdr) + GRPC_SLICE_LENGTH(status_slice) + 3;
+    grpc_core::UnmanagedMemorySlice status_msg_slice(estimated_len);
+    char* write_ptr = reinterpret_cast<char*> GRPC_SLICE_START_PTR(status_msg_slice);
+    memcpy(write_ptr + 0, GRPC_SLICE_START_PTR(msg_slice), GRPC_SLICE_LENGTH(msg_slice));
+    int offset = GRPC_SLICE_LENGTH(msg_slice) + 1;
+    memcpy(write_ptr + offset, GRPC_SLICE_START_PTR(status_hdr), GRPC_SLICE_LENGTH(status_hdr));
+    offset += GRPC_SLICE_LENGTH(status_hdr) + 1;
+    memcpy(write_ptr + offset, GRPC_SLICE_START_PTR(status_slice),GRPC_SLICE_LENGTH(status_slice));
+    offset += GRPC_SLICE_LENGTH(status_slice) + 1;
+    *(write_ptr + offset) = '\0';
     //memcpy(write_ptr+ offset, GRPC_SLICE_START_PTR(status_slice),GRPC_SLICE_LENGTH(status_slice));
     //grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_msg_slice));
-    grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice)); // Status -1 
+    grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_msg_slice));  // Status -1 
     puts("Here");
 
     } 
-      else if (s->t->is_client && !isInitial) { //Client trailing MD
-      grpc_slice status_slice = grpc_slice_from_static_string("-1"); // message = -1 -- End of batch perations -1
+    else if (s->t->is_client && !isInitial) { //Client trailing MD
+      grpc_slice status_slice = grpc_slice_from_static_string("@.-1"); // message = -1 -- End of batch perations -1
       grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice)); // status 0, 12, 14 -2 
     } 
-     else if (!s->t->is_client && isInitial) { //Server Init MD
-    grpc_slice status_slice = grpc_slice_from_static_string("-1");
-    grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice));
-  }
+  //   else if (!s->t->is_client && isInitial) { //Server Init MD
+  //    grpc_slice status_slice = grpc_slice_from_static_string("@");
+  //    grpc_slice_buffer_add(outbuf, grpc_slice_ref_internal(status_slice));
+  //}
 }
 
 
@@ -185,26 +190,26 @@ grpc_metadata_batch bufferToMd(grpc_slice_buffer* slice_buffer, bool& filled,
                                grpc_diffproc_stream* s, bool isInitial) {
   grpc_metadata_batch md;
   grpc_metadata_batch_init(&md);
-  // Client INIT MD -- Receive status from server if any
-  if (s->t->is_client && isInitial) {  
-    char* status_bytes = static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
-    grpc_linked_mdelem* path_md =
-        static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*path_md)));
-    size_t offset = 0;
-    memcpy(status_bytes + offset, GRPC_SLICE_START_PTR(slice_buffer->slices[0]),
-           GRPC_SLICE_LENGTH(slice_buffer->slices[0]));
-    offset += GRPC_SLICE_LENGTH(slice_buffer->slices[0]);
-    *(status_bytes + offset) = '\0';
-    // grpc_slice msg_slice = grpc_slice_from_static_buffer(slice_buffer,
-    // GRPC_SLICE_LENGTH(GRPC_MDSTR_GRPC_MESSAGE));
-    path_md->md = grpc_mdelem_from_slices(
-        GRPC_MDSTR_GRPC_MESSAGE, grpc_slice_from_static_string(status_bytes));
-    GPR_ASSERT(grpc_metadata_batch_link_tail(&md, path_md) == GRPC_ERROR_NONE);
-  } 
+  //// Client INIT MD -- Receive status from server if any
+  //if (s->t->is_client && isInitial) {  
+  //  char* status_bytes = static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
+  //  grpc_linked_mdelem* path_md =
+  //      static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*path_md)));
+  //  size_t offset = 0;
+  //  memcpy(status_bytes + offset, GRPC_SLICE_START_PTR(slice_buffer->slices[0]),
+  //         GRPC_SLICE_LENGTH(slice_buffer->slices[0]));
+  //  offset += GRPC_SLICE_LENGTH(slice_buffer->slices[0]);
+  //  *(status_bytes + offset) = '\0';
+  //  // grpc_slice msg_slice = grpc_slice_from_static_buffer(slice_buffer,
+  //  // GRPC_SLICE_LENGTH(GRPC_MDSTR_GRPC_MESSAGE));
+  //  path_md->md = grpc_mdelem_from_slices(
+  //      GRPC_MDSTR_GRPC_MESSAGE, grpc_slice_from_static_string(status_bytes));
+  //  GPR_ASSERT(grpc_metadata_batch_link_tail(&md, path_md) == GRPC_ERROR_NONE);
+  //} 
 
 
   // Client trailing MD -- Receive server status and msg if any
-  else if (s->t->is_client && !isInitial) {  
+  if (s->t->is_client && !isInitial) {  
     //read_action_locked(s->t);
     //char* msg_bytes = static_cast<char*>(
     //    gpr_malloc(slice_buffer->length + 1));
@@ -222,15 +227,15 @@ grpc_metadata_batch bufferToMd(grpc_slice_buffer* slice_buffer, bool& filled,
     //GPR_ASSERT(grpc_metadata_batch_link_tail(&md, msg_md) == GRPC_ERROR_NONE);
 
     // ****************** STATUS *******************
-    read_action_locked(s->t);
+    //read_action_locked(s->t);
     char* status_bytes = static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
     grpc_linked_mdelem* status_md =
         static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*status_md)));
     size_t offset1 = 0;
     memcpy(status_bytes + offset1,
-           GRPC_SLICE_START_PTR(slice_buffer->slices[0]),
-           GRPC_SLICE_LENGTH(slice_buffer->slices[0]));
-    offset1 += GRPC_SLICE_LENGTH(slice_buffer->slices[0]);
+           GRPC_SLICE_START_PTR(slice_buffer->slices[0])+14,
+           1);
+    offset1 += 1;
     *(status_bytes + offset1) = '\0';
     // grpc_slice msg_slice = grpc_slice_from_static_buffer(slice_buffer,
     // GRPC_SLICE_LENGTH(GRPC_MDSTR_GRPC_MESSAGE));
@@ -241,25 +246,25 @@ grpc_metadata_batch bufferToMd(grpc_slice_buffer* slice_buffer, bool& filled,
   } 
 
 
-  // Server trailing MD -- Receive client status if any
-  else if (!s->t->is_client && !isInitial) {  
-    read_action_locked(s->t);
-    char* status_bytes = static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
-    grpc_linked_mdelem* status_md =
-        static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*status_md)));
-    size_t offset = 0;
-    memcpy(status_bytes + offset, GRPC_SLICE_START_PTR(slice_buffer->slices[0]),
-           GRPC_SLICE_LENGTH(slice_buffer->slices[0]));
-    offset += GRPC_SLICE_LENGTH(slice_buffer->slices[0]);
-    *(status_bytes + offset) = '\0';
-    // grpc_slice msg_slice = grpc_slice_from_static_buffer(slice_buffer,
-    // GRPC_SLICE_LENGTH(GRPC_MDSTR_GRPC_MESSAGE));
-    status_md->md = grpc_mdelem_from_slices(
-        GRPC_MDSTR_GRPC_STATUS, grpc_slice_from_static_string(status_bytes));
-    GPR_ASSERT(grpc_metadata_batch_link_tail(&md, status_md) ==
-               GRPC_ERROR_NONE);
+  //// Server trailing MD -- Receive client status if any
+  //else if (!s->t->is_client && !isInitial) {  
+  //  read_action_locked(s->t);
+  //  char* status_bytes = static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
+  //  grpc_linked_mdelem* status_md =
+  //      static_cast<grpc_linked_mdelem*>(s->arena->Alloc(sizeof(*status_md)));
+  //  size_t offset = 0;
+  //  memcpy(status_bytes + offset, GRPC_SLICE_START_PTR(slice_buffer->slices[0]),
+  //         GRPC_SLICE_LENGTH(slice_buffer->slices[0]));
+  //  offset += GRPC_SLICE_LENGTH(slice_buffer->slices[0]);
+  //  *(status_bytes + offset) = '\0';
+  //  // grpc_slice msg_slice = grpc_slice_from_static_buffer(slice_buffer,
+  //  // GRPC_SLICE_LENGTH(GRPC_MDSTR_GRPC_MESSAGE));
+  //  status_md->md = grpc_mdelem_from_slices(
+  //      GRPC_MDSTR_GRPC_STATUS, grpc_slice_from_static_string(status_bytes));
+  //  GPR_ASSERT(grpc_metadata_batch_link_tail(&md, status_md) ==
+  //             GRPC_ERROR_NONE);
 
-  } 
+  //} 
   // Server Init MD -- Receives path and authority
   else if (!s->t->is_client && isInitial) {  
     char* path_bytes = static_cast<char*>(gpr_malloc(slice_buffer->length + 1));
@@ -556,6 +561,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
         printf("op_state_machine %p scheduling trailing-md-on-complete \n", s);
         grpc_core::ExecCtx::Run(DEBUG_LOCATION, s->recv_trailing_md_op->on_complete,GRPC_ERROR_NONE);
         s->recv_trailing_md_op = nullptr;
+        s->t->processed = 1;
         needs_close = true;
       }
     }
@@ -589,6 +595,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
     if (!s->t->is_client) { // Server Recv INIT MD
       read_action_locked(s->t);
       fake_md = bufferToMd(&s->t->read_buffer, s->to_read_initial_md_filled, s, 1);
+      s->t->initMdJustRecvd = true;
     }
     if (s->to_read_initial_md_filled) {
       s->initial_md_recvd = true;
@@ -641,7 +648,7 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
 
   if (s->recv_trailing_md_op) {
     printf("************** RECV TRAIL MD ********************: %s \n", s->t->is_client ? "CLT" : "SRV");
-    if (s->trailing_md_recvd) {
+    if (s->trailing_md_recvd && s->t->is_client) {
       //Already recvd trail md
       new_err =
           GRPC_ERROR_CREATE_FROM_STATIC_STRING("Already recvd trailing md");
@@ -685,8 +692,15 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
         // We wanted trailing metadata and we got it
         s->trailing_md_recvd = true;
         grpc_metadata_batch_init(&s->to_read_trailing_md);
-        s->to_read_trailing_md =
-            bufferToMd(&s->t->read_buffer, s->to_read_trailing_md_filled, s, 0);
+        if (!s->t->bufFilled) {
+          read_action_locked(s->t);
+          s->to_read_trailing_md = bufferToMd(
+              &s->t->read_buffer, s->to_read_trailing_md_filled, s, 0);
+        } else {
+          s->to_read_trailing_md = bufferToMd(
+              &s->t->buf, s->to_read_trailing_md_filled, s, 0);
+          grpc_slice_buffer_reset_and_unref_internal(&s->t->buf);
+        }
         /*grpc_linked_mdelem* status_md = static_cast<grpc_linked_mdelem*>(
             s->arena->Alloc(sizeof(*status_md)));
         status_md->md = grpc_mdelem_from_slices(
@@ -699,6 +713,38 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
             s->recv_trailing_md_op->payload->recv_trailing_metadata
                 .recv_trailing_metadata,
             nullptr, nullptr);
+        grpc_metadata_batch_clear(&s->to_read_trailing_md);
+        s->to_read_trailing_md_filled = false;
+      } else if (!s->t->is_client && !s->trailing_md_recvd && s->trailing_md_sent) {  // Server Recv trail
+        // We wanted trailing metadata and we got it
+        s->trailing_md_recvd = true;
+        grpc_metadata_batch_init(&s->to_read_trailing_md);
+        //if (!s->t->bufFilled) {
+        //  read_action_locked(s->t);
+        //  s->to_read_trailing_md = bufferToMd(&s->t->read_buffer, s->to_read_trailing_md_filled, s, 0);
+        //} else {
+        if (s->trailFound) { // Trailer Data found and buf is full so clear it
+          s->to_read_trailing_md =
+              bufferToMd(&s->t->buf, s->to_read_trailing_md_filled, s, 0);
+          grpc_slice_buffer_reset_and_unref_internal(&s->t->buf);
+        } else {
+          read_action_locked(s->t);
+          grpc_slice_buffer_reset_and_unref_internal(&s->t->read_buffer);
+        }
+        //}
+        /*grpc_linked_mdelem* status_md = static_cast<grpc_linked_mdelem*>(
+            s->arena->Alloc(sizeof(*status_md)));
+        status_md->md = grpc_mdelem_from_slices(
+            g_fake_status_key,
+            bufferToMd(&s->t->read_buffer, s->to_read_trailing_md_filled));
+        GPR_ASSERT(grpc_metadata_batch_link_tail(&s->to_read_trailing_md,
+                                                 status_md) ==
+        GRPC_ERROR_NONE);*/
+        //new_err = fill_in_metadata(
+        //    s, &s->to_read_trailing_md, 0,
+        //    s->recv_trailing_md_op->payload->recv_trailing_metadata
+        //        .recv_trailing_metadata,
+        //    nullptr, nullptr);
         grpc_metadata_batch_clear(&s->to_read_trailing_md);
         s->to_read_trailing_md_filled = false;
       }
@@ -719,8 +765,9 @@ void op_state_machine_locked(grpc_diffproc_stream* s, grpc_error* error) {
                                 s->recv_trailing_md_op->on_complete,
                                 GRPC_ERROR_REF(new_err));
         s->recv_trailing_md_op = nullptr;
+        puts("*************** Now accepting new streams **************** \n");
         s->t->processed = 1;
-        //needs_close = s->trailing_md_sent;
+        needs_close = s->trailing_md_sent;
       } else {
        printf("op_state_machine %p server needs to delay handling trailing-md-on-complete %p \n",s, new_err);
       }
@@ -1001,6 +1048,7 @@ bool cancel_stream_locked(grpc_diffproc_stream* stream, grpc_error* error) {
 // Write Buffer
 void message_transfer_locked(grpc_diffproc_transport* t,
                              grpc_diffproc_stream* sender) {
+  grpc_slice_buffer_reset_and_unref_internal(&t->outbuf);
   size_t remaining = sender->send_message_op->payload->send_message.send_message->length();
   printf("************ Remaining here in msg transfer locked *********** %d \n", remaining);
   grpc_slice_buffer_init(&t->outbuf);
@@ -1046,10 +1094,22 @@ void checkForEndMessage(grpc_slice_buffer buf) {
 void message_read_locked(grpc_diffproc_transport* t,
                          grpc_diffproc_stream* receiver) {
  // checkForEndMessage(t->read_buffer);
-  receiver->recv_stream.Init(&t->read_buffer, 0);
-  receiver->recv_message_op->payload->recv_message.recv_message->reset(
-      receiver->recv_stream.get());
-
+  grpc_slice* sl = grpc_slice_buffer_peek_first(&t->read_buffer);
+  char* c = grpc_slice_to_c_string(*sl);
+  if (c[0] != '@') {
+    receiver->recv_stream.Init(&t->read_buffer, 0);
+    receiver->recv_message_op->payload->recv_message.recv_message->reset(
+        receiver->recv_stream.get());
+  } else {
+    grpc_slice_buffer_init(&t->buf);
+    grpc_slice_buffer_swap(&t->buf, &t->read_buffer); // @.. status-0
+    grpc_slice_buffer_reset_and_unref_internal(&t->read_buffer);
+    t->bufFilled = true;
+    receiver->trailFound = true;
+    if (t->initMdJustRecvd) {
+      t->initMdJustRecvd = false;
+    }
+  }
   // printf("message_transfer_locked %p scheduling message-ready", receiver);
   grpc_core::ExecCtx::Run(
       DEBUG_LOCATION,
@@ -1459,8 +1519,9 @@ void grpc_diffproc_initiate_write(grpc_diffproc_transport* t) {
 
 
 void start_stream(grpc_diffproc_transport* t) {
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
+  
   if (t->accept_stream_cb != nullptr && !t->is_client && t->processed) {
+    printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
     grpc_diffproc_stream* accepting = nullptr;
     GPR_ASSERT(t->accepting_stream == nullptr);
     t->accepting_stream = &accepting;

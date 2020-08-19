@@ -98,9 +98,9 @@ DWORD WINAPI DataThread(LPVOID lparam) {
   puts("******** In data thread ************* \n");
     // thread->grpc_on_accept(thread->arg, GRPC_ERROR_NONE);
   do{
-    puts("\n************* calling new batch ops **************** ");
+   // puts("\n************* calling new batch ops **************** ");
     thread->grpc_on_accept_stream(thread->arg, GRPC_ERROR_NONE);
-    puts(" \n**************** After batch completion in Instance thread *****************");
+    //puts(" \n**************** After batch completion in Instance thread *****************");
   } while (WAIT_OBJECT_0 == WaitForSingleObject(thread->pipeHandle,INFINITE));
 
   puts("\n *************** DATA THREAD EXITING ***************** ");

@@ -86,13 +86,13 @@ static void on_read(void* npp, grpc_error* error) {
   GRPC_ERROR_REF(error);
   printf(" ********** BYTES READ :%d ************** \n", np->bytes_read);
   if (error == GRPC_ERROR_NONE) {
-      if (np->readError != 0 && !np->shutting_down) {
+      if (np->readError != 0 && !np->shutting_down) { //If Read Error 
         char* utf8_message = gpr_format_message(np->readError);
         error = GRPC_ERROR_CREATE_FROM_COPIED_STRING(utf8_message);
         gpr_free(utf8_message);
         grpc_slice_buffer_reset_and_unref_internal(np->read_slices);
       } else {
-        if (np->bytes_read != 0 && !np->shutting_down) {
+        if (np->bytes_read != 0 && !np->shutting_down) { //No error print bytes read
           GPR_ASSERT((size_t)np->bytes_read <=np->read_slices->length);
           if (static_cast<size_t>(np->bytes_read) != np->read_slices->length) {
             grpc_slice_buffer_trim_end(np->read_slices,np->read_slices->length - static_cast<size_t>(np->bytes_read),&np->last_read_buffer);
@@ -114,7 +114,7 @@ static void on_read(void* npp, grpc_error* error) {
         //else if (np->bytes_read == 0 && !np->shutting_down) {
         //  np->read_slices->length = 0;
         //}
-        else {
+        else { //bytes_read ==0 then end of stream or shutting down close stream
           //if (grpc_tcp_trace.enabled()) {
             gpr_log(GPR_INFO, "NP:%p unref read_slice", np);
           //}
@@ -158,10 +158,10 @@ static void on_write(void* npp, grpc_error* error) {
       GPR_ASSERT(np->bytes_written == np->write_slices->length);
     }
   }
-  puts("B4 flush file ");
+  //puts("B4 flush file ");
   //FlushFileBuffers(np->threadHandle->pipeHandle);
   namedpipe_unref(np);
-  puts("A4 Unref & flush file ");
+  //puts("A4 Unref & flush file ");
   //grpc_core::ExecCtx::Run(DEBUG_LOCATION, cb, error);
   cb->cb(cb->cb_arg, error);
 }
@@ -237,8 +237,8 @@ static void win_read(grpc_endpoint* ep, grpc_slice_buffer* read_slices,
       np->readError = lastError;
      // break;
     } else {
-      //buffers[i].buf[bytes_read] = '\0';
-      np->bytes_read += bytes_read;
+      buffer[bytes_read] = '\0';
+      np->bytes_read = bytes_read;
       //continue;
     }
 
