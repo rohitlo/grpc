@@ -1,2 +1,0 @@
-E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/CMakeFiles/CheckASM_NASM/CMakeFiles/ALL_BUILD.dir
-E:/Job/Project/repo1/grpc/examples/cpp/helloworld/bin/grpc/CMakeFiles/CheckASM_NASM/CMakeFiles/ZERO_CHECK.dir

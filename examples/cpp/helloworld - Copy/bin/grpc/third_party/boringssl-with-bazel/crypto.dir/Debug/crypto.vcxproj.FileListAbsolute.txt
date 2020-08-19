@@ -1,2 +1,0 @@
-E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\boringssl-with-bazel\Debug\crypto.pdb
-E:\Job\Project\repo1\grpc\examples\cpp\helloworld\bin\grpc\third_party\boringssl-with-bazel\crypto.dir\Debug\crypto.pdb
