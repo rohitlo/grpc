@@ -91,6 +91,13 @@ InsecureChannelCredentials() {
   return ::grpc_impl::InsecureChannelCredentials();
 }
 
+
+static inline std::shared_ptr<grpc_impl::ChannelCredentials> NamedPipeChannelCredentials() {
+  return ::grpc_impl::NamedPipeChannelCredentials();
+}
+
+
+
 typedef ::grpc_impl::MetadataCredentialsPlugin MetadataCredentialsPlugin;
 
 static inline std::shared_ptr<grpc_impl::CallCredentials>

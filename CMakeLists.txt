@@ -1773,6 +1773,7 @@ add_library(grpc
   src/core/tsi/transport_security.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create_posix.cc
+  src/core/ext/transport/diffproc/diffproc_channel_create.cc
   src/core/ext/transport/chttp2/client/authority.cc
   src/core/ext/transport/chttp2/client/chttp2_connector.cc
   src/core/ext/filters/client_channel/backend_metric.cc
@@ -2326,6 +2327,7 @@ add_library(grpc_cronet
   src/core/tsi/transport_security.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create_posix.cc
+  src/core/ext/transport/diffproc/diffproc_channel_create.cc
   src/core/ext/transport/chttp2/client/authority.cc
   src/core/ext/transport/chttp2/client/chttp2_connector.cc
   src/core/tsi/fake_transport_security.cc
@@ -3327,6 +3329,7 @@ add_library(grpc_unsecure
   src/core/ext/transport/diffproc/server/server_utils.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create.cc
   src/core/ext/transport/chttp2/client/insecure/channel_create_posix.cc
+  src/core/ext/transport/diffproc/diffproc_channel_create.cc
   src/core/ext/transport/chttp2/client/authority.cc
   src/core/ext/transport/chttp2/client/chttp2_connector.cc
   src/core/ext/filters/client_channel/backend_metric.cc
@@ -3752,6 +3755,7 @@ endif()
 
 add_library(grpc++
   src/cpp/client/insecure_credentials.cc
+  src/core/ext/transport/diffproc/credentials/namedpipe_client_credentials.cc
   src/cpp/client/secure_credentials.cc
   src/cpp/common/auth_property_iterator.cc
   src/cpp/common/secure_auth_context.cc
@@ -4897,6 +4901,7 @@ endif()
 
 add_library(grpc++_unsecure
   src/cpp/client/insecure_credentials.cc
+  src/core/ext/transport/diffproc/credentials/namedpipe_client_credentials.cc
   src/cpp/common/insecure_create_auth_context.cc
   src/cpp/server/insecure_server_credentials.cc
   src/core/ext/transport/diffproc/credentials/namedpipe_server_credentials.cc

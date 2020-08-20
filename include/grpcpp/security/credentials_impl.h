@@ -229,6 +229,9 @@ std::shared_ptr<CallCredentials> CompositeCallCredentials(
 /// Credentials for an unencrypted, unauthenticated channel
 std::shared_ptr<ChannelCredentials> InsecureChannelCredentials();
 
+/// Credentials for an namedpipe channel
+std::shared_ptr<ChannelCredentials> NamedPipeChannelCredentials();
+
 /// User defined metadata credentials.
 class MetadataCredentialsPlugin {
  public:

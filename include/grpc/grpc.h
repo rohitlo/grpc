@@ -312,6 +312,11 @@ GRPCAPI void grpc_channel_reset_connect_backoff(grpc_channel* channel);
 GRPCAPI grpc_channel* grpc_insecure_channel_create(
     const char* target, const grpc_channel_args* args, void* reserved);
 
+/** Create a name pipe client channel to target */
+GRPCAPI grpc_channel* grpc_np_channel_create(const char* target,
+                                             const grpc_channel_args* args,
+                                             void* reserved);
+
 /** Create a lame client: this client fails every operation attempted on it. */
 GRPCAPI grpc_channel* grpc_lame_client_channel_create(
     const char* target, grpc_status_code error_code, const char* error_message);

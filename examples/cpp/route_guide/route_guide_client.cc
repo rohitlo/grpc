@@ -118,6 +118,9 @@ class RouteGuideClient {
     }
   }
 
+
+
+  //Client Streaming ----
   void RecordRoute() {
     Point point;
     RouteSummary stats;
@@ -228,17 +231,28 @@ int main(int argc, char** argv) {
   std::string db = routeguide::GetDbFileContent(argc, argv);
   RouteGuideClient guide(
       grpc::CreateChannel("\\\\.\\pipe\\namedpipe",
-                          grpc::InsecureChannelCredentials()),
+                          grpc::NamedPipeChannelCredentials()),
       db);
 
- // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
-// guide.GetFeature();
-  //std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" << std::endl;
- // guide.ListFeatures();
-  std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING " << std::endl;
+
+
+  std::cout << "-------------- RecordRoute -------------- CLIENT STREAMING "<< std::endl;
   guide.RecordRoute();
-  ///std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL STREAMING" << std::endl;
-  //guide.RouteChat();
 
   return 0;
 }
+
+
+
+
+
+
+ // std::cout << "-------------- GetFeature -------------- UNARY" << std::endl;
+// guide.GetFeature();
+// std::cout << "-------------- ListFeatures -------------- SERVER STREAMING" <<
+// std::endl;
+// guide.ListFeatures();
+
+/// std::cout << "-------------- RouteChat --------------  BI DIRECTIONAL
+/// STREAMING" << std::endl;
+// guide.RouteChat();
