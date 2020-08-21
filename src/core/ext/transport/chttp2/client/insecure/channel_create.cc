@@ -53,8 +53,6 @@ class Chttp2InsecureClientChannelFactory : public ClientChannelFactory {
 
 
 namespace {
-
-
 static void done(conndetails* condetail, grpc_error* error) { 
   //conndetails* cd = (cob*) arg;
   puts("DONE CONNECTING");
@@ -67,46 +65,10 @@ static void done(conndetails* condetail, grpc_error* error) {
 }
 grpc_channel* CreateChannel(const char* target, const grpc_channel_args* args) {
   grpc_core::ExecCtx exec_ctx;
-  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  printf("Target at 54, :%s", target);
   if (target == nullptr) {
     gpr_log(GPR_ERROR, "cannot create channel with NULL target name");
     return nullptr;
   }
-
-  // Named pipe support
-  //if (target[0] == '\\' && target[1] == '\\' && target[2] == '.' &&
-  //    target[3] == '\\') {
-  //  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  //  grpc_arg arg = grpc_channel_arg_string_create(const_cast<char*>(GRPC_ARG_SERVER_URI),
-  //                                     const_cast<char*>(target+9));
-  //  grpc_arg default_authority_arg;
-  //  default_authority_arg.type = GRPC_ARG_STRING;
-  //  default_authority_arg.key = (char*)GRPC_ARG_DEFAULT_AUTHORITY;
-  //  default_authority_arg.value.string = (char*)"diffproc.authority";
-  //  grpc_channel_args* client_args =
-  //      grpc_channel_args_copy_and_add(args, &arg, 1);
-  //  client_args= grpc_channel_args_copy_and_add(args, &default_authority_arg, 1);
-  //  grpc_closure conn;
-  //  grpc_endpoint* endpoint = NULL;
-  //  grpc_endpoint** ep;
-  //  ep = &endpoint;
-  //  conndetails condetail;
-  //  condetail.args = client_args;
-  //  void (*ptr)(conndetails * condetail, grpc_error* error) = &done;
-
-  //  //GRPC_CLOSURE_INIT(&conn, done, &condetail, nullptr);
-  //  np_connect(&conn, ep, client_args, target, &condetail, done);
-  //  printf("\n%d :: %s :: %s\n", __LINE__, __func__, __FILE__);
-  //  printf("Channel side created transport :%p \n", condetail.transport);
-  //  grpc_channel* channel = grpc_channel_create(target, client_args, GRPC_CLIENT_DIRECT_CHANNEL, condetail.transport);
-  //  grpc_channel_stack* stk = grpc_channel_get_channel_stack(channel);
-  //  grpc_transport_op* op = grpc_make_transport_op(nullptr);
-  //  grpc_channel_element* elem = grpc_channel_stack_element(stk, 0);
-  //  elem->filter->start_transport_op(elem, op);
-  //  grpc_channel_args_destroy(client_args);
-  //  return channel;
-  //} else {
     // Add channel arg containing the server URI.
     grpc_core::UniquePtr<char> canonical_target =
         ResolverRegistry::AddDefaultPrefixIfNeeded(target);
